@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+print_usage() {
+  cat <<EOF
+Usage: get-kubepodip [-a] [-h]
+
+Displays IP addresses for all pods in the current namespace
+Output format is: <namespace>/<pod-name>: <pod-ip-address>
+
+Can display IP addresses for all pods in all namespaces
+
+Optional arguments:
+  -a, --all-namespaces   Get the pod IPs for all namespaces
+  -h, --help             Show this help meassage and exit
+EOF
+}
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+declare -i tabsize
+declare -i terminal_size
+
+# Calculate 3/5 of the total columns for tab size
+terminal_size=$(tput cols)
+tabsize=$((3*terminal_size/5))
+tabs ${tabsize}
+
+if [[ "${1}" == "-a" || "${1}" == "--all-namespaces" ]]; then
+  kubectl get pods --all-namespaces -o jsonpath='{range .items[*]}{"\n"}{.metadata.namespace}{"/"}{.metadata.name}{":\t"}{.status.podIP}{end}'
+else
+  kubectl get pods -o jsonpath='{range .items[*]}{"\n"}{.metadata.namespace}{"/"}{.metadata.name}{":\t"}{.status.podIP}{end}'
+fi
+
+# Reset tab size
+tabs 4

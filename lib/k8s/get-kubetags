@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+print_usage() {
+  cat <<EOF
+Usage: get-kubetags [-h]'
+
+Displays the K8s deployed images and tags from the current namespace'
+
+Optional arguments:'
+  -h, --help             Show this help message and exit'
+EOF
+}
+
+if [[ $# -gt 0 ]]; then
+    usage
+    exit 0
+fi
+
+namespace=$(kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null)
+log_title "Get Kubernetes Tags: '${namespace}'"
+
+log_header "Deployment Images"
+kubectl get deployment -o custom-columns=image:.spec.template.spec.containers[*].image --no-headers | sort
+
+log_header "StatefulSet Images"
+kubectl get statefulsets -o custom-columns=image:.spec.template.spec.containers[*].image --no-headers | sort

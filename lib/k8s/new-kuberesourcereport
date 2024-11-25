@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+
+import subprocess
+import json
+from collections import defaultdict
+import argparse
+from typing import Dict, List, Optional, Tuple
+
+description = '''
+Kubernetes Resource Usage Report
+
+Queries Kubernetes Cluster and return resource usage comparisons between requested and current usage.
+
+Returns CPU and memory for Pods, grouped by Namespace
+
+Kubectl context must be set up prior to running the script
+'''
+
+epilog = '''
+Example
+----------------------------------------------------------
+Run a report:
+$ k8s_resource_report
+
+Only show CPU in output:
+$ k8s_resource_report --resources cpu
+'''
+
+def run_command(command: str) -> Optional[str]:
+    """Run a shell command and return its output."""
+    try:
+        return subprocess.check_output(command, shell=True, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command: {command}")
+        print(f"Error message: {e}")
+        return None
+
+def get_pod_metrics(namespace: Optional[str] = None) -> Dict[str, Dict[str, Dict[str, str]]]:
+    """Retrieve pod metrics from Kubernetes API."""
+    metrics_data = run_command("kubectl get --raw /apis/metrics.k8s.io/v1beta1/pods")
+    if not metrics_data:
+        print("Failed to retrieve pod metrics. Please check your cluster connection and permissions.")
+        return {}
+    metrics = json.loads(metrics_data)
+    result = defaultdict(dict)
+    for item in metrics['items']:
+        pod_namespace = item['metadata']['namespace']
+        if namespace is None or pod_namespace == namespace:
+            for container in item['containers']:
+                pod_name = item['metadata']['name']
+                result[pod_namespace][pod_name] = container['usage']
+    return result
+
+def get_pod_requests(namespace: Optional[str] = None) -> Dict[str, Dict[str, Dict[str, str]]]:
+    """Retrieve pod resource requests from Kubernetes API."""
+    pods_data = run_command("kubectl get pods --all-namespaces -o json")
+    if not pods_data:
+        print("Failed to retrieve pod information. Please check your cluster connection and permissions.")
+        return {}
+    pods = json.loads(pods_data)
+    requests = defaultdict(dict)
+    for pod in pods['items']:
+        pod_namespace = pod['metadata']['namespace']
+        if namespace is None or pod_namespace == namespace:
+            for container in pod['spec']['containers']:
+                pod_name = pod['metadata']['name']
+                requests[pod_namespace][pod_name] = container.get('resources', {}).get('requests', {})
+    return requests
+
+def parse_resource_value(value: str) -> float:
+    """Convert Kubernetes resource string to float."""
+    if value.endswith('n'):
+        return int(value[:-1]) / 1e9
+    elif value.endswith('m'):
+        return int(value[:-1]) / 1e3
+    elif value.endswith('Ki'):
+        return int(value[:-2]) * 1024
+    elif value.endswith('Mi'):
+        return int(value[:-2]) * 1024 * 1024
+    elif value.endswith('Gi'):
+        return int(value[:-2]) * 1024 * 1024 * 1024
+    else:
+        return float(value)
+
+def format_cpu(value: float) -> str:
+    """Format CPU value for readability."""
+    return f"{value:.2f}" if value >= 1 else f"{value*1000:.2f}m"
+
+def format_memory(value: float) -> str:
+    """Format memory value for readability."""
+    units = ['B', 'KB', 'MB', 'GB', 'TB']
+    for unit in units:
+        if value < 1024:
+            return f"{value:.2f}{unit}"
+        value /= 1024
+    return f"{value:.2f}PB"
+
+def analyze_resources(metrics: Dict[str, Dict[str, Dict[str, str]]],
+                      requests: Dict[str, Dict[str, Dict[str, str]]],
+                      resources_to_show: List[str]) -> Dict[str, Dict[str, List[str]]]:
+    """Analyze resource usage and requests."""
+    report = defaultdict(lambda: defaultdict(list))
+    for namespace, pods in metrics.items():
+        for pod, usage in pods.items():
+            request = requests.get(namespace, {}).get(pod, {})
+            try:
+                if 'cpu' in resources_to_show:
+                    cpu_usage = parse_resource_value(usage['cpu'])
+                    cpu_request = parse_resource_value(request.get('cpu', '0'))
+                    if cpu_usage < cpu_request * 0.5:
+                        report[namespace][pod].append(f"CPU underutilized: using {format_cpu(cpu_usage)}, requested {format_cpu(cpu_request)}")
+                    elif cpu_usage > cpu_request * 1.5:
+                        report[namespace][pod].append(f"CPU overutilized: using {format_cpu(cpu_usage)}, requested {format_cpu(cpu_request)}")
+
+                if 'memory' in resources_to_show:
+                    memory_usage = parse_resource_value(usage['memory'])
+                    memory_request = parse_resource_value(request.get('memory', '0'))
+                    if memory_usage < memory_request * 0.5:
+                        report[namespace][pod].append(f"Memory underutilized: using {format_memory(memory_usage)}, requested {format_memory(memory_request)}")
+                    elif memory_usage > memory_request * 1.5:
+                        report[namespace][pod].append(f"Memory overutilized: using {format_memory(memory_usage)}, requested {format_memory(memory_request)}")
+            except ValueError as e:
+                report[namespace][pod].append(f"Error analyzing resources: {str(e)}")
+    return report
+
+def main():
+    parser = argparse.ArgumentParser(description=description, epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--resources", type=str, default="cpu,memory", help="Comma-separated list of resources to show (cpu, memory)")
+    parser.add_argument("--namespace", type=str, help="Filter results to a specific namespace")
+    args = parser.parse_args()
+
+    resources_to_show = [r.strip() for r in args.resources.lower().split(',')]
+    valid_resources = {'cpu', 'memory'}
+    invalid_resources = set(resources_to_show) - valid_resources
+    if invalid_resources:
+        print(f"Invalid resource(s) specified: {', '.join(invalid_resources)}")
+        print(f"Valid resources are: {', '.join(valid_resources)}")
+        return
+
+    metrics = get_pod_metrics(args.namespace)
+    requests = get_pod_requests(args.namespace)
+
+    if not metrics or not requests:
+        print("Unable to generate report due to missing data.")
+        return
+
+    report = analyze_resources(metrics, requests, resources_to_show)
+
+    print("Resource Usage Report:")
+    print("=====================")
+    for namespace, pods in report.items():
+        print(f"\nNamespace: {namespace}")
+        print("--------------------")
+        for pod, issues in pods.items():
+            if issues:
+                print(f"Pod: {pod}")
+                for issue in issues:
+                    print(f"  - {issue}")
+
+if __name__ == "__main__":
+    main()

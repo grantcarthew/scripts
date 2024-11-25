@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [-h]
+
+Calculates the amount of free CPU compared to the requested resource for all nodes.
+
+This script does not show actual free CPU, only what is available in relation to the requested resources.
+
+Dependencies:
+  kubectl            Kubernetes command-line tool
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Dependency check
+dependencies=(kubectl)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+log_title "Kubernetes Nodes CPU Report"
+
+log_header "Retrieve Node Information"
+
+# Get a list of all nodes
+nodes=$(${SCRIPT_DIR}/kubectl get nodes -o custom-columns=NAME:.metadata.name --no-headers)
+
+log_header "Processing Nodes"
+
+# Loop over each node
+for node in ${nodes}; do
+    # Get allocatable CPU for the node
+    alloc_cpu=$(${SCRIPT_DIR}/kubectl get node "${node}" -o jsonpath='{.status.allocatable.cpu}')
+
+    # Convert allocatable CPU to milli-cores
+    if [[ "${alloc_cpu}" == *"m"* ]]; then
+        alloc_cpu_milli="${alloc_cpu//m/}"
+    else
+        alloc_cpu_milli=$((alloc_cpu * 1000))
+    fi
+
+    # Get total CPU requests for pods on the node
+    requests_cpu=$(${SCRIPT_DIR}/kubectl get pods --all-namespaces --field-selector spec.nodeName="${node}" -o jsonpath='{range .items[*]}{.spec.containers[*].resources.requests.cpu}{"\n"}{end}' | grep -Eo '[0-9]+m' | sed 's/m//' | awk '{s+=$1} END {print s}')
+
+    if [[ -z "${requests_cpu}" ]]; then
+        requests_cpu=0
+    fi
+
+    # Calculate available CPU in milli-cores
+    available_cpu=$((alloc_cpu_milli - requests_cpu))
+
+    # Convert available CPU back to cores if needed
+    if [[ "${available_cpu}" -ge 1000 ]]; then
+        available_cpu_cores=$(echo "scale=2; ${available_cpu} / 1000" | bc)
+        log_message "${node}: ${available_cpu_cores} cores available"
+    else
+        log_message "${node}: ${available_cpu}m available"
+    fi
+done
