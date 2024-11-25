@@ -1,6 +1,3 @@
-.vscode
-backup-dotfiles
-me
-nj
-p
-pdf
+/.vscode
+/lib/private/*
+!/lib/private/README.md

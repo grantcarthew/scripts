@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+
+function print_usage() {
+    cat <<EOF
+Usage: $(basename "$0") [length]
+
+Generate a random alphanumeric code with specific constraints.
+
+Description:
+  - Alphanumeric only, no symbols
+  - Does not include I, L, 1, O, 0
+  - Always starts with a letter
+  - Only uses upper-case letters: ABCDEFGHJKMNPQRSTUVWXYZ
+  - Only uses these numbers: 23456789
+  - Probability of numbers to letters is even
+
+Optional arguments:
+  length             The length of the code (default: 4)
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    print_usage
+    exit 1
+fi
+
+# Set default length if not provided
+length="${1:-4}"
+
+# Define character sets
+letters="ABCDEFGHJKMNPQRSTUVWXYZ"
+numbers="23456789"
+
+# Extend numbers to match the length of letters for even distribution
+extended_numbers=""
+while [[ ${#extended_numbers} -lt ${#letters} ]]; do
+    extended_numbers="${extended_numbers}${numbers:$((RANDOM % ${#numbers})):1}"
+done
+
+# Combine characters for selection
+all_chars="${letters}${extended_numbers}"
+
+# Generate the code
+code=""
+for ((i = 0; i < ${length}; i++)); do
+    if [[ $i -eq 0 ]]; then
+        # Ensure the first character is a letter
+        char="${letters:$((RANDOM % ${#letters})):1}"
+    else
+        char="${all_chars:$((RANDOM % ${#all_chars})):1}"
+    fi
+    code="${code}${char}"
+done
+
+log_newline
+printf "%s" "${code}"
+log_newline

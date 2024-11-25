@@ -1,0 +1,10 @@
+# ShellCheck Configuration
+# See the Derective link below for supported configuration options
+# https://www.shellcheck.net/wiki/Directive
+#
+# To disable a test, us this syntax:
+# disable=SC1234
+
+# Support for external scripts or modules that are "sourced"
+external-sources=true
+source-path=bash_modules
