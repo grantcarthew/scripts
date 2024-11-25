@@ -20,10 +20,10 @@ epilog = '''
 Example
 ----------------------------------------------------------
 Run a report:
-$ k8s_resource_report
+$ new-kuberesourcereport
 
 Only show CPU in output:
-$ k8s_resource_report --resources cpu
+$ new-kuberesourcereport --resources cpu
 '''
 
 def run_command(command: str) -> Optional[str]:
