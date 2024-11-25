@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/../../bash_modules/git.sh"
+source "${SCRIPT_DIR}/../../bash_modules/utils.sh"
+source "${SCRIPT_DIR}/../../bash_modules/user_input.sh"
+
+print_usage() {
+  cat <<EOF
+Usage: update-repos
+
+Clones and pulls the main/master branch
+of all the Organization GitHub repositories
+
+Ensure you authenticate to GitHub prior to using
+this script. Use the following command:
+gh auth login
+
+Optional arguments:
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ $# -gt 0 || "$1" == "-h" || "$1" == "--help" ]]; then
+  print_usage
+  exit
+fi
+
+config_path="${HOME}/.config/bin_config"
+if [[ ! -f ${config_path} ]]; then
+  echo "The ${config_path} file is missing."
+  echo "Please run 'set-config' to create it."
+  exit
+fi
+
+repo_root=$(jq -r ".github_repo_path" "${HOME}/.config/bin_config" || echo "")
+repo_org="orgname"
+
+log_title "Update Repositories"
+
+declare -a repo_names
+declare -a repo_names_lower
+
+repo_names=("$(gh repo list "${repo_org}" --no-archived --limit 9999 --json name --jq 'sort_by(.name | ascii_downcase) | .[].name')")
+
+function remove_archived() {
+  # Define the root directory
+  local local_repo_names="${1}"
+  local root_directory="${2}"
+  local found=false
+
+  log_header "Review Archived or Deleted Repositories"
+
+  # Get the list of directories in the root_directory
+  local -a directories
+  while IFS= read -r -d $'\0'; do
+    directories+=("${REPLY}")
+  done < <(find "${root_directory}" -mindepth 1 -maxdepth 1 -type d -print0)
+
+  # Iterate over the directories
+  for directory in "${directories[@]}"; do
+    # Get the directory name only
+    directory_name="$(basename "${directory}")"
+
+
+    # Check if the directory_name exists in the local_repo_names string
+    if [[ ! " ${local_repo_names} " =~ .*"${directory_name}".* ]]; then
+      # If not, print the directory
+      log_warning "Archived Repository: ${directory_name}"
+      log_warning "Full Path: ${directory}"
+      found=true
+      if ask_yes_no_question "Do you wish to delete this directory?"; then
+        rm -rf "${directory}"
+        log_warning "Deleted Directory: ${directory}"
+        log_line
+      fi
+    fi
+  done
+
+  if [[ "${found}" == "false" ]]; then
+    log_message "No archived repositories found"
+  fi
+}
+
+# shellcheck disable=SC2068
+for repo_name in ${repo_names[@]}; do
+  # repo JSON structure is:
+  # {"name": "<repo name>", "isArchived": false}
+  repo_name_lower=$(to_lower "${repo_name}")
+  repo_names_lower+=("${repo_name_lower}")
+  repo_source="${repo_org}/${repo_name}"
+  repo_path=$(join_paths "${repo_root}" "${repo_name_lower}")
+  log_header "${repo_name}"
+  log_message "Source Repo: ${repo_source}"
+  log_message "Target Path: ${repo_path}"
+
+  if [[ -d "${repo_path}" ]]; then
+    log_message "Pulling: ${repo_name}"
+    cd "${repo_path}" || exit
+    git_checkout_pull_status
+  else
+    log_message "Cloning: ${repo_name}"
+    cd "${repo_root}" || exit
+    gh repo clone "${repo_source}" "${repo_name_lower}"
+  fi
+done
+
+remove_archived "${repo_names_lower[*]}" "${repo_root}"
