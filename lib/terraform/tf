@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<EOF
+
+Usage: tf [-h]
+
+Terraform Format
+
+Runs a the following across the Terraform configuration files:
+- terraform fmt -recursively
+- terraform validate
+- tflint --recursive
+
+Optional arguments:
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ "${#}" -gt 0 ]]; then
+    usage
+    exit 0
+fi
+
+echo "Terraform Format, Validate, and Lint"
+echo "-------------------------------------------------------------------------------"
+echo "Git Check"
+echo "-------------------------------------------------------------------------------"
+git diff-index --check --cached main
+
+echo "-------------------------------------------------------------------------------"
+echo "Formatting"
+echo "-------------------------------------------------------------------------------"
+terraform fmt -recursive
+
+echo "-------------------------------------------------------------------------------"
+echo "Validating"
+echo "-------------------------------------------------------------------------------"
+terraform validate
+
+echo "-------------------------------------------------------------------------------"
+echo "Linting"
+echo "-------------------------------------------------------------------------------"
+cmd="tflint"
+if ! command -v "${cmd}" >/dev/null; then
+  echo "WARNING: Missing dependency - '${cmd}'"
+  echo "Please install '${cmd}' for a full analysis"
+  echo "https://github.com/terraform-linters/tflint"
+  exit 0
+fi
+
+tflint --recursive
+echo "-------------------------------------------------------------------------------"

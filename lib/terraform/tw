@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<EOF
+
+Usage: tw [-h]
+
+Terraform Watch
+
+Watches all files and runs a fmt and validate on changes
+
+Optional arguments:
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ "${#}" -gt 0 ]]; then
+    usage
+    exit 0
+fi
+
+rg -l '.' | entr -c bash -c "echo \"-- \$(date +%T) --\" && terraform fmt -recursive && terraform validate"
