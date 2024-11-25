@@ -30,7 +30,7 @@ Open a terminal and run the following commands making changes where you see fit:
 
 ```shell
 cd "${HOME}"
-git clone git@github.com:grantcarthew/bash-bin.git bin
+git clone git@github.com:grantcarthew/scripts.git bin
 cd bin
 ```
 
