@@ -1,18 +1,20 @@
-# bin
+# Scripts
 
 My scripts for all kinds of automation and workflows.
 
 ## Dependencies
 
+Most of these scripts have been written to run on Linux.
+
 The following dependencies are used throughout this repository.
 
 You may not need them all if you are only interested in a few scripts.
 
-- [jq](https://github.com/jqlang/jq)
-- [entr](https://github.com/eradman/entr)
-- [fd](https://github.com/sharkdp/fd)
-- [gh](https://cli.github.com/)
-- [ripgrep](https://github.com/BurntSushi/ripgrep)
+- [entr](https://github.com/eradman/entr): Run arbitrary commands when files change
+- [fd](https://github.com/sharkdp/fd): A simple, fast and user-friendly alternative to 'find'
+- [gh](https://cli.github.com/): GitHub CLI brings GitHub to your terminal
+- [jq](https://github.com/jqlang/jq): Command-line JSON processor
+- [ripgrep](https://github.com/BurntSushi/ripgrep): Regex directory search while respecting your gitignore
 
 ## Installation
 
