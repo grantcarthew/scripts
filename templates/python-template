@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+from datetime import datetime
+from pathlib import Path
+from python_modules import terminal
+from rich import print as rprint
+import argparse
+
+description = """
+Script Title or Name here
+
+Add a good description here.
+
+Any extra info to help? Add lots.
+"""
+epilog = """
+
+Example
+----------------------------------------------------------
+This is an example of your new fancy script:
+$ fancy-script -a 1 -b 2
+
+And another example:
+$ fancy-script -c 3 -d 4
+
+"""
+
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=description,
+    epilog=epilog)
+parser.add_argument('--aaa', '-a', type=Path, help='This is a example argument')
+parser.add_argument('--bbb', '-b', type=datetime.fromisoformat, help='This is the b example argument', default=None)
+parser.add_argument('--ccc', '-c', type=datetime.fromisoformat, help='This is the c example argument', default=None)
+parser.add_argument('--choice', '-f', choices=['foo', 'bar'], default='foo', help='This is a choice example argument')
+args = parser.parse_args()
+
+terminal.print_title('Script Title or Name')
+
+# Define functions
+
+# Call functions or use a __main__ function
+
+rprint('Done!')
