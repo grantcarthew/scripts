@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+reset
+log_title "System Upgrade"
+
+log_header "Flatpak"
+flatpak upgrade --assumeyes
+
+log_header "Brew"
+brew upgrade
+
+log_header "Deno"
+deno upgrade
+
+log_header "Pacman"
+sudo pacman --sync --refresh --sysupgrade
+
+log_header "Yay"
+yay --sync --refresh --sysupgrade
+
+log_line
+log_success "Done!"

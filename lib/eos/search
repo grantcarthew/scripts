@@ -1,0 +1,26 @@
+#!/usr/bin/bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+keyword="${1}"
+
+reset
+log_title "Pacman & Yay Package Search"
+log_message "Search: '${keyword}'"
+
+log_header "Update"
+sudo pacman --sync --refresh
+
+log_header "pacman Search"
+sudo pacman --sync --search "${keyword}"
+
+log_header "yay Search"
+yay --sync --search "${keyword}"
+
+log_line
+log_success "Done!"
