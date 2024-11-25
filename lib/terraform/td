@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<EOF
+
+Usage: td [-h]
+
+Terraform Destroy
+
+Runs a terraform destroy
+
+Optional arguments:
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ "${#}" -gt 0 ]]; then
+    usage
+    exit 0
+fi
+
+terraform destroy

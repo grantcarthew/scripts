@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<EOF
+
+Usage: ta [aa] [-h]
+
+Terraform Apply
+
+Runs a terraform apply with optional auto approve
+
+Optional arguments:
+  aa                     Auto approve the apply
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ "${#}" -gt 1 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+if [[ "${1}" == "aa" ]];then
+  terraform apply -auto-approve
+else
+  terraform apply
+fi
