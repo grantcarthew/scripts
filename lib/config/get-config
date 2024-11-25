@@ -1,0 +1,32 @@
+#!/usr/bin/python3
+
+import json
+import argparse
+from python_modules import config
+from rich import print as rprint
+
+description = """
+Gets the user configuration JSON content.
+File source: ~/.config/bin_config
+
+"""
+epilog = """
+
+Example
+-------------------------------------------------
+Prompt for configuration values if missing:
+$ get-config
+
+"""
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=description,
+    epilog=epilog)
+args = parser.parse_args()
+
+try:
+    config_json = config.load_config()
+    print(json.dumps(config_json, indent=2, default=str))
+
+except Exception as ex:
+    rprint(ex)
