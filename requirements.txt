@@ -1,0 +1,11 @@
+PyGithub
+argparse
+boto3
+botocore
+mock
+numpy
+pandas
+plotly
+requests
+rich
+awswrangler
