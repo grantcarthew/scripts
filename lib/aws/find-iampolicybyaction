@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/utils.sh"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <action-filter>
+
+Queries the IAM Customer Managed Policies filtering for
+policies that include the "filter" value in the Actions.
+
+WARNING: This may take some time to run.
+
+Returns the results in a JSON array.
+
+Dependencies:
+  aws                The AWS Command Line Interface
+  jq                 The JSON Query command-line tool
+
+Required arguments:
+  action-filter      Action filter string
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+filter=$(to_lower "$1")
+
+# List policy ARNs
+log_title "Find IAM Policies by Action"
+log_header "Getting Customer Managed Policies"
+policy_arns=$(aws iam list-policies --scope Local --output json | jq -r '.Policies[].Arn')
+# shellcheck disable=SC2206
+policy_arns_array=(${policy_arns})
+total_policies=${#policy_arns_array[@]}
+current_policy=0
+
+jq_action_query='
+  any(
+    .Statement[];
+    if (.Action | type) == "array" then
+      any(.Action[] | ascii_downcase; contains("'"${filter}"'"))
+    else
+      (.Action | ascii_downcase | contains("'"${filter}"'"))
+    end
+  )
+'
+
+declare -a policies
+
+log_header "Processing Policies"
+log_percent 0 "${total_policies}"
+
+# Iterate through policy ARNs
+for arn in ${policy_arns}; do
+  current_policy=$((current_policy+1))
+
+  policy_metadata=$(aws iam get-policy --policy-arn "${arn}" | jq '.Policy')
+  version=$(echo "${policy_metadata}" | jq -r '.DefaultVersionId')
+  policy_document=$(aws iam get-policy-version --policy-arn "${arn}" --version-id "${version}" | jq -r '.PolicyVersion.Document')
+  if echo "${policy_document}" | jq -e "${jq_action_query}" >/dev/null; then
+    result=$(jq --argjson Document "${policy_document}" '. += {Document: $Document}' <<<"${policy_metadata}")
+    policies+=("${result}")
+  fi
+
+  log_percent "${current_policy}" "${total_policies}"
+done
+
+# Clear line after completion
+log_clearline
+log_message "Done"
+
+log_header "Output Results"
+echo "${policies[@]}" | jq -s
+

@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail # set -e hides errors, don't use it
+
+# Get the directory of the script file
+SCRIPT_DIR="$(
+  cd "${BASH_SOURCE[0]%/*}" || exit 1
+  pwd
+)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+
+# Module import
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [name-filter] [-h]
+
+Gets the list of SQS queues with the following attributes:
+- Name
+- URL
+- QueueArn
+- ApproximateNumberOfMessages
+- VisibilityTimeout
+
+Dependencies:
+  aws                The aws command-line tool
+  jq                 The JSON query cli tool
+
+Optional arguments:
+  name-filter        The sqs queue name to filter by
+  -h, --help         Show this help message and exit
+EOF
+}
+
+# Function to check the script dependencies
+function dependency_check() {
+  dependencies=(aws curl jq)
+  for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+      log_error "ERROR: Missing dependency - '${cmd}'"
+      exit 1
+    fi
+  done
+}
+
+# Function to check AWS authentication
+function check_aws_authentication() {
+  if ! aws sts get-caller-identity &>/dev/null; then
+    log_message "Not authenticated into AWS. Please configure your AWS credentials."
+    exit 1
+  fi
+}
+
+# Function to list all SQS queues with the number of messages
+function list_sqs_queues() {
+  queues="$(aws sqs list-queues --query "QueueUrls[]" --output text)"
+  if [[ "${queues}" == "None" ]]; then
+    log_message "No SQS Queues exist in this AWS Account"
+    return
+  fi
+
+  local filter="${1}"
+  local first=true
+
+  echo "["
+  for queue_url in ${queues}; do
+    if [[ -n "${filter}" && "${queue_url}" != *"${filter}"* ]]; then
+      continue
+    fi
+    queue_attributes_json="$(aws sqs get-queue-attributes --queue-url "${queue_url}" --query "Attributes" --attribute-names QueueArn ApproximateNumberOfMessages VisibilityTimeout)"
+    queue_name_json="{\"Name\": \"$(basename "${queue_url}")\"}"
+    queue_url_json="{\"URL\": \"${queue_url}\"}"
+    queue_json="$(jq -s 'add' <<<"${queue_name_json} ${queue_url_json} ${queue_attributes_json}")"
+
+    if [[ "${first}" == true ]]; then
+      first=false
+    else
+      echo ","
+    fi
+    jq '.' <<<"${queue_json}"
+
+  done
+  echo "]"
+}
+
+# Main script execution
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+dependency_check
+check_aws_authentication
+
+export name_filter="${1}"
+list_sqs_queues "${name_filter}"

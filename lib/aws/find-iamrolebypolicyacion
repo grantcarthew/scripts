@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/utils.sh"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <action-filter>
+
+Queries the IAM Customer Managed Policies filtering for policies that include the "filter" value in the Actions.
+
+Then queries for roles, groups, and users that are using the discovered policy.
+
+WARNING: This may take some time to run.
+
+Returns the results in a JSON array.
+
+Dependencies:
+  aws                AWS CLI for IAM operations
+  jq                 JSON processor
+
+Required arguments:
+  action-filter      Action filter string
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Dependency check
+dependencies=(aws jq)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+export filter="$(to_lower "${1}")"
+
+log_title "Find IAM Roles by Policy Action"
+log_header "Input Values"
+log_message "$(
+  cat <<EOF
+  action-filter: '${filter}'
+EOF
+)"
+
+log_header "Validate Inputs"
+is_not_empty "${filter}" || exit 1
+
+log_message "This is a two-step process:"
+log_message "- Get policies by action"
+log_message "- Get roles by policy"
+
+# List policy ARNs
+policy_arns="$(find-iampolicybyaction "${filter}" | jq -r '.[].Arn')"
+
+# shellcheck disable=SC2206
+policy_arns_array=(${policy_arns})
+total_policies=${#policy_arns_array[@]}
+current_policy=0
+
+declare -a policies
+
+log_header "Getting Roles by Policy"
+log_percent "${current_policy}" "${total_policies}"
+
+declare result="["
+
+# Iterate through policy ARNs
+for arn in ${policy_arns}; do
+  current_policy=$((current_policy+1))
+
+  result=$(aws iam list-entities-for-policy --policy-arn "${arn}")
+  policies+=("${result}")
+
+  log_percent "${current_policy}" "${total_policies}"
+done
+
+# Clear line after completion
+log_clearline
+
+log_header "Output Results"
+echo "${policies[@]}" | jq -s

@@ -1,0 +1,430 @@
+#!/usr/bin/env bash
+
+# AWS Account Script
+#
+# This script authenticates into the different AWS Accounts
+# using the AWS Single Sign-On process
+#
+# Supports: Bash v3.2.57
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+
+if [[ -z "${BASH_SOURCE[0]}" ]];then
+  __AWSLOGIN_ORIGINAL_PATH=$(dirname "$(which "$0")")
+else
+  __AWSLOGIN_ORIGINAL_PATH="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+fi
+
+source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/colours.sh"
+source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/terminal.sh"
+source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/user_input.sh"
+source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/utils.sh"
+source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/desktop.sh"
+
+# Script sourcing check and message
+# -----------------------------------------------------------------------------
+if ! (return 0 2>/dev/null); then
+  echo
+  log_line "-"
+  echo "${BOLD}${YELLOW}The '$(basename "${0}")' script is required to be sourced.${NORMAL}"
+  log_line "-"
+  echo
+  echo "That means you need to run the script with a"
+  echo "${CYAN}dot${NORMAL} punctuation mark and a ${CYAN}space${NORMAL} before the"
+  echo "script name."
+  echo
+  echo "Example: ${BOLD}${GREEN}. $(basename "${0}") dev${NORMAL}"
+  echo
+  echo "Learn more:"
+  echo "${BOLD}${BLUE}https://linuxhint.com/bash_source_example/${NORMAL}"
+  echo
+  log_line "-"
+  exit 1
+fi
+
+if [[ "${1}" == "whoami" || "${1}" == "who" ]]; then
+  aws configure list
+  aws sts get-caller-identity | jq '.'
+  return
+fi
+
+# Define constants and variables
+# -----------------------------------------------------------------------------
+__AWSLOGIN_OS_NAME="$(uname)"
+__AWSLOGIN_TEMP_FILE=$(mktemp)
+__AWSLOGIN_AWS_PROFILES_PATH="${HOME}/.aws/config"
+__SSO_CACHE_PATH="${HOME}/.aws/sso/cache/"
+declare -a __AWSLOGIN_AWS_PROFILES=()
+while IFS= read -r line; do
+  __AWSLOGIN_AWS_PROFILES+=("$line")
+done < <(aws configure list-profiles)
+unset '__AWSLOGIN_AWS_PROFILES[0]' # Removing the 'default' profile which is used for login only
+__AWSLOGIN_PROFILE_INPUT="${1}"
+declare __AWSLOGIN_STS_USER_ID
+declare __AWSLOGIN_STS_ACCOUNT_ID
+declare __AWSLOGIN_STS_ROLE
+declare __AWSLOGIN_SSO_CACHE
+declare __AWSLOGIN_ACCESS_TOKEN
+declare __AWSLOGIN_ACCESS_KEYS
+declare __AWSLOGIN_ACCESS_KEY_ID
+declare __AWSLOGIN_SECRET_ACCESS_KEY
+declare __AWSLOGIN_SESSION_TOKEN
+export AWS_PROFILE="default"
+export AWS_DEFAULT_PROFILE="default"
+unset AWS_ACCESS_KEY_ID
+unset AWS_SECRET_ACCESS_KEY
+unset AWS_SESSION_TOKEN
+__AWSLOGIN_PROFILE="default"
+
+# Define functions
+# -----------------------------------------------------------------------------
+function awslogin::print_usage() {
+  echo 'Usage: . awslogin [-h | --help] [-l | --list] [profile-name]'
+  echo
+  echo 'Logs into BIN AWS Accounts using SSO'
+  echo 'Uses the configured AWS Profiles from ~/.aws/config'
+  echo
+  echo 'A successful authentication access token is cached'
+  echo 'for the account session timeout in ~/.aws/sso/cache'
+  echo
+  echo 'To get current logged in details:'
+  echo '$ . awslogin whoami'
+  echo
+  echo 'To logout from AWS, type the following command:'
+  echo '$ . awslogin logout'
+  echo
+  echo 'Optional arguments:'
+  echo '  profile-name           AWS Profile name or part there of'
+  echo '  -l, --list             List the available AWS Profiles'
+  echo '  -h, --help             Show this help message and exit'
+  return
+}
+
+function awslogin::log_profile_list() {
+  log_message "AWS Profile List"
+  log_line "-"
+  log_message "${__AWSLOGIN_AWS_PROFILES[@]}"
+  log_line "-"
+}
+
+function awslogin::log_profiles_message() {
+  echo
+  log_error "AWS Profile Error"
+  echo
+  log_error "Profile Name: ${NORMAL}${__AWSLOGIN_PROFILE}"
+  echo
+  log_error "RequiRED profile values are missing!"
+  log_error "See the 'AWS Profile Details' table above"
+  echo
+  log_line "-"
+  echo "${BOLD}${YELLOW}AWS Profiles Update Needed${NORMAL}"
+  log_line "-"
+  echo
+  echo "It looks like your AWS Profiles need updating."
+  echo "They are located here: ${CYAN}${__AWSLOGIN_AWS_PROFILES_PATH}${NORMAL}"
+  echo
+  echo "Inspect the profiles file with the following command:"
+  echo
+  echo "${BOLD}${GREEN}$ cat ${__AWSLOGIN_AWS_PROFILES_PATH}${NORMAL}"
+  echo
+  echo "There is a script to easily update your profiles."
+  echo "Simply run the following command:"
+  echo
+  echo "${BOLD}${GREEN}$ install-configs${NORMAL}"
+  echo
+  log_line "-"
+  return
+}
+
+function awslogin::export_keys() {
+  # The following variables have global scope
+  __AWSLOGIN_STS_USER_ID=$(echo "${__AWSLOGIN_CALLER_ID}" | jq -r '.UserId')
+  __AWSLOGIN_STS_ACCOUNT_ID=$(echo "${__AWSLOGIN_CALLER_ID}" | jq -r '.Account')
+  __AWSLOGIN_STS_ROLE=$(echo "${__AWSLOGIN_CALLER_ID}" | jq -r '.Arn')
+
+  __AWSLOGIN_SSO_CACHE=$(grep -rl 'startUrl' "${__SSO_CACHE_PATH}" | xargs cat)
+  __AWSLOGIN_ACCESS_TOKEN=$(echo "${__AWSLOGIN_SSO_CACHE}" | jq -r '.accessToken')
+  __AWSLOGIN_ACCESS_KEYS=$(aws sso get-role-credentials --account-id "${__AWSLOGIN_AWS_PROFILE_SSO_ACCOUNT_ID}" --role-name "${__AWSLOGIN_AWS_PROFILE_SSO_ROLE_NAME}" --access-token "${__AWSLOGIN_ACCESS_TOKEN}")
+
+  __AWSLOGIN_ACCESS_KEY_ID=$(echo "${__AWSLOGIN_ACCESS_KEYS}" | jq -r '.roleCredentials.accessKeyId')
+  __AWSLOGIN_SECRET_ACCESS_KEY=$(echo "${__AWSLOGIN_ACCESS_KEYS}" | jq -r '.roleCredentials.secretAccessKey')
+  __AWSLOGIN_SESSION_TOKEN=$(echo "${__AWSLOGIN_ACCESS_KEYS}" | jq -r '.roleCredentials.sessionToken')
+
+  export AWS_ACCOUNT_ID="${__AWSLOGIN_STS_ACCOUNT_ID}"
+  export AWS_ACCESS_KEY_ID="${__AWSLOGIN_ACCESS_KEY_ID}"
+  export AWS_SECRET_ACCESS_KEY="${__AWSLOGIN_SECRET_ACCESS_KEY}"
+  export AWS_SESSION_TOKEN="${__AWSLOGIN_SESSION_TOKEN}"
+}
+
+function awslogin::login_success_message() {
+  local sts_user_id="${1}"
+  local sts_account_id="$2"
+  local sts_role="$3"
+  local __AWSLOGIN_EXPIRES_AT_DATETIME="$4"
+
+  log_message "${GREEN}Login Successful!"
+  log_line "-"
+  log_message "   ${CYAN}User ID:${NORMAL} ${sts_user_id}"
+  log_message "${CYAN}Account ID:${NORMAL} ${sts_account_id}"
+  log_message "      ${CYAN}Role:${NORMAL} ${sts_role}"
+  log_message "   ${CYAN}Expires:${NORMAL} ${__AWSLOGIN_EXPIRES_AT_DATETIME}"
+  log_line "-"
+}
+
+function awslogin::login_error_message() {
+  echo
+  log_error "Something went wrong logging into AWS"
+  log_error "See the error message above"
+  echo
+}
+
+function awslogin::get_expires_at_from_string() {
+  # Parse "expiresAt" and get epoch time
+  local datetime="${1}"
+  if [[ -z "${datetime}" ]]; then
+    echo "0"
+    return 0
+  fi
+  if [[ "${__AWSLOGIN_OS_NAME}" == "Linux" ]]; then
+    date -d "${datetime}" +%s
+  elif [[ "${__AWSLOGIN_OS_NAME}" == "Darwin" ]]; then # MacOS
+    datetime="${datetime%Z}" # Remove the 'Z' character
+    /bin/date -j -u -f "%Y-%m-%dT%H:%M:%S" "${datetime}" +%s
+  else
+    echo "Unsupported OS ${__AWSLOGIN_OS_NAME}"
+    return 1
+  fi
+}
+
+function awslogin::get_datetime_from_epoch() {
+  # Get datetime from epoch
+  local epoch="${1}"
+  if [[ "${__AWSLOGIN_OS_NAME}" == "Linux" ]]; then
+    date --date="@${epoch}"
+  elif [[ "${__AWSLOGIN_OS_NAME}" == "Darwin" ]]; then # MacOS
+    /bin/date -r "${epoch}"
+  else
+    echo "Unsupported OS ${__AWSLOGIN_OS_NAME}"
+    return
+  fi
+}
+
+function awslogin::logout() {
+  (aws sso logout >/dev/null 2>&1)
+  rm -r "${__SSO_CACHE_PATH}"* 2> /dev/null
+  log_message "You have logged out of AWS"
+  return
+}
+
+# Script argument parsing
+# -----------------------------------------------------------------------------
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  awslogin::print_usage
+  return
+fi
+
+if [[ "${1}" == "-l" || "${1}" == "--list" ]]; then
+  echo
+  awslogin::log_profile_list
+  return
+fi
+
+# Main script logic
+# -----------------------------------------------------------------------------
+log_title "BIN AWS Account Login"
+
+# Profile logic
+# -----------------------------------------------------------------------------
+# Main logic for matching profiles
+
+if [[ "${__AWSLOGIN_PROFILE_INPUT}" == "logout" || "${__AWSLOGIN_PROFILE_INPUT}" == "logoff" ]]; then
+  awslogin::logout
+  return
+fi
+
+declare -a __AWSLOGIN_matching_profiles=()
+for item in "${__AWSLOGIN_AWS_PROFILES[@]}"; do
+  if [[ "$(to_upper "${item}")" == *"$(to_upper "${__AWSLOGIN_PROFILE_INPUT}")"* ]]; then
+      __AWSLOGIN_matching_profiles+=("${item}")
+  fi
+done
+
+# Check if there are multiple matches
+if [[ "${#__AWSLOGIN_matching_profiles[@]}" -eq 1 ]]; then
+  __AWSLOGIN_PROFILE="${__AWSLOGIN_matching_profiles[0]}"
+else
+  if [[ "${#__AWSLOGIN_matching_profiles[@]}" -lt 1 ]]; then
+    log_warning "No profiles match query '${__AWSLOGIN_PROFILE_INPUT}' - Using full profile list"
+    __AWSLOGIN_matching_profiles=("${__AWSLOGIN_AWS_PROFILES[@]}")
+  fi
+  log_message "${CYAN}Multiple profiles found. Please select one${NORMAL}:"
+  __AWSLOGIN_PROFILE=$(numbered_choice_menu __AWSLOGIN_matching_profiles)
+fi
+
+if [[ -z "${__AWSLOGIN_PROFILE}" || "${__AWSLOGIN_PROFILE}" == "default" ]]; then
+  log_error "Invalid AWS Profile Name."
+  log_error "No keys have been set. AWS is unusable."
+  awslogin::log_profile_list
+  return
+fi
+
+export AWS_PROFILE="${__AWSLOGIN_PROFILE}"
+export AWS_DEFAULT_PROFILE="${__AWSLOGIN_PROFILE}"
+__AWSLOGIN_PROFILE_TITLE="${NORMAL}${__AWSLOGIN_PROFILE}"
+if [[ "${__AWSLOGIN_PROFILE}" == "prod"* || "${__AWSLOGIN_PROFILE}" == *"production"* || "${__AWSLOGIN_PROFILE}" == *"prd"* ]]; then
+  __AWSLOGIN_PROFILE_TITLE="${BGRED}${BOLD}${WHITE} ${__AWSLOGIN_PROFILE} "
+fi
+
+
+# Profile details
+# -----------------------------------------------------------------------------
+__AWSLOGIN_AWS_PROFILE_SSO_START_URL=$(aws configure get sso_start_url --profile "${__AWSLOGIN_PROFILE}")
+__AWSLOGIN_AWS_PROFILE_SSO_REGION=$(aws configure get sso_region --profile "${__AWSLOGIN_PROFILE}")
+__AWSLOGIN_AWS_PROFILE_SSO_ACCOUNT_ID=$(aws configure get sso_account_id --profile "${__AWSLOGIN_PROFILE}")
+__AWSLOGIN_AWS_PROFILE_SSO_ROLE_NAME=$(aws configure get sso_role_name --profile "${__AWSLOGIN_PROFILE}")
+
+log_header "${BOLD}${CYAN}AWS Profile Details"
+log_message "${CYAN}         Name:${NORMAL} ${__AWSLOGIN_PROFILE_TITLE}"
+log_message "${CYAN}   Account ID:${NORMAL} ${__AWSLOGIN_AWS_PROFILE_SSO_ACCOUNT_ID}"
+log_message "${CYAN}   SSO Region:${NORMAL} ${__AWSLOGIN_AWS_PROFILE_SSO_REGION}"
+log_message "${CYAN}SSO Role Name:${NORMAL} ${__AWSLOGIN_AWS_PROFILE_SSO_ROLE_NAME}"
+log_message "${CYAN}SSO Start URL:${NORMAL} ${__AWSLOGIN_AWS_PROFILE_SSO_START_URL}"
+log_line "-"
+
+if [[ -z "${__AWSLOGIN_AWS_PROFILE_SSO_ACCOUNT_ID}" || -z "${__AWSLOGIN_AWS_PROFILE_SSO_REGION}" || -z "${__AWSLOGIN_AWS_PROFILE_SSO_ROLE_NAME}" || -z "${__AWSLOGIN_AWS_PROFILE_SSO_START_URL}" ]]; then
+  awslogin::log_profiles_message
+  return
+fi
+
+# Cached SSO processing
+# -----------------------------------------------------------------------------
+mkdir -p "${__SSO_CACHE_PATH}"
+__AWSLOGIN_SSO_CACHE=$(grep -rl 'startUrl' "${__SSO_CACHE_PATH}" | xargs cat)
+__AWSLOGIN_EXPIRES_AT=$(awslogin::get_expires_at_from_string "$(echo "${__AWSLOGIN_SSO_CACHE}" | jq -r '.expiresAt')")
+__AWSLOGIN_EXPIRES_AT_DATETIME=$(awslogin::get_datetime_from_epoch "${__AWSLOGIN_EXPIRES_AT}")
+__AWSLOGIN_NOW=$(date +%s)
+
+# Login logic
+# -----------------------------------------------------------------------------
+# Detecting EC2 Instances for interactive login
+if timeout 0.3 curl -s http://169.254.169.254/latest/meta-data/instance-id >/dev/null 2>&1; then
+  if aws sso login --profile default --no-browser; then
+    awslogin::export_keys
+    awslogin::login_success_message "${__AWSLOGIN_STS_USER_ID}" "${__AWSLOGIN_STS_ACCOUNT_ID}" "${__AWSLOGIN_STS_ROLE}" "${__AWSLOGIN_EXPIRES_AT_DATETIME}"
+    return
+  fi
+  awslogin::login_error_message
+  return
+fi
+
+# Creating a named pipe to pass the timeout value to the console output
+__AWSLOGIN_FIFO_TIMEOUT_VALUE_PATH="$(mktemp -u)" || return
+mkfifo -m0600 "${__AWSLOGIN_FIFO_TIMEOUT_VALUE_PATH}" || return
+exec 4<>"${__AWSLOGIN_FIFO_TIMEOUT_VALUE_PATH}"
+rm "${__AWSLOGIN_FIFO_TIMEOUT_VALUE_PATH}"
+
+if [[ "${__AWSLOGIN_NOW}" -gt "${__AWSLOGIN_EXPIRES_AT}" ]]; then
+  function awslogin::subshell_killer() {
+    local -i timeoutValue=180
+    while [[ -n $(ps -p "${1}" -efo pid=) && "${timeoutValue}" -gt 0 ]]; do
+      sleep 1
+      ((timeoutValue--))
+      echo "${timeoutValue}" >&4
+    done
+    kill "${1}" >/dev/null 2>&1
+  }
+
+  # Creating a named pipe to pass the aws sso login pid to the parent shell
+  __AWSLOGIN_FIFO_LOGIN_PID_PATH="$(mktemp -u)" || return
+  mkfifo -m0600 "${__AWSLOGIN_FIFO_LOGIN_PID_PATH}" || return
+  exec 3<>"${__AWSLOGIN_FIFO_LOGIN_PID_PATH}"
+  rm "${__AWSLOGIN_FIFO_LOGIN_PID_PATH}"
+
+  # The following commands are run in a subshell to hide console output
+  (
+    aws sso login --profile default --no-browser >"${__AWSLOGIN_TEMP_FILE}" &
+    echo $! >&3
+    disown -h $!
+    # The above command is sending the aws sso login pid to the named pipe
+  )
+  # Reading the aws sso login pid from the named pipe
+  read -ru 3 __AWSLOGIN_SSO_LOGIN_PID
+  (awslogin::subshell_killer "${__AWSLOGIN_SSO_LOGIN_PID}" >/dev/null 2>&1 &)
+
+  while [[ $(tail -n 1 "${__AWSLOGIN_TEMP_FILE}") != https* ]]; do
+    sleep 1
+  done
+
+  __AWSLOGIN_LOGIN_URL=$(tail -n 1 "${__AWSLOGIN_TEMP_FILE}")
+  if command -v "firefox" && [[ -d "${HOME}/bin/firefox-profiles" ]]; then
+    firefox --profile "${HOME}/bin/firefox-profiles/${__AWSLOGIN_PROFILE/-*}" "${__AWSLOGIN_LOGIN_URL}" &
+    disown -h $!
+  else
+    log_message "Improve the login process by creating Firefox profiles!"
+    # shellcheck disable=SC2016
+    log_message 'firefox --createprofile "$profile_name ${HOME}/bin/firefox-profiles/$profile_name"'
+    open_url "${__AWSLOGIN_LOGIN_URL}"
+  fi
+
+  log_header "AWS Command Output for Reference"
+  cat "${__AWSLOGIN_TEMP_FILE}"
+  log_line
+
+  log_message "Waiting for browser approval"
+  while [[ $(tail -n 1 "${__AWSLOGIN_TEMP_FILE}") != Successfully* ]]; do
+    if [[ -z $(ps -p "${__AWSLOGIN_SSO_LOGIN_PID}" -efo pid=) ]]; then
+      echo
+      log_message "Log file: ${__AWSLOGIN_TEMP_FILE}"
+      log_error "Authentication failed ¯\\_(ツ)_/¯"
+      echo
+      return
+    fi
+
+    # This read will block the look until data is ready in the pipe
+    # Data is supplied from the awslogin::subshell_killer function
+    read -ru 4 __AWSLOGIN_timeout_remaining
+    if [[ "${__AWSLOGIN_timeout_remaining}" -lt 1 ]]; then
+      log_message "${YELLOW}Failed to get browser authorization ¯\\_(ツ)_/¯${NORMAL}"
+      return
+    fi
+    printf "${YELLOW}Authentication Timeout:${NORMAL} %s \r" "${__AWSLOGIN_timeout_remaining}"
+  done
+  echo "${GREEN}(⌐■_■)${NORMAL}${CLEARLINE}"
+fi
+
+# Post login logic
+# -----------------------------------------------------------------------------
+if ! __AWSLOGIN_CALLER_ID=$(aws sts get-caller-identity --profile "${__AWSLOGIN_PROFILE}"); then
+  awslogin::login_error_message
+  awslogin::logout
+  # shellcheck source=./awslogin
+  source "$(basename "${0}")" "${__AWSLOGIN_PROFILE_INPUT}"
+  return
+fi
+
+awslogin::export_keys
+
+awslogin::login_success_message "${__AWSLOGIN_STS_USER_ID}" "${__AWSLOGIN_STS_ACCOUNT_ID}" "${__AWSLOGIN_STS_ROLE}" "${__AWSLOGIN_EXPIRES_AT_DATETIME}"
+
+if command -v kubectx >/dev/null; then
+  log_message "${CYAN}Kubernetes Cluster Context${NORMAL}"
+  kubectx "${__AWSLOGIN_PROFILE%%-*}"
+  log_line
+fi
+
+AWS_REGION="${__AWSLOGIN_AWS_PROFILE_SSO_REGION}"
+export AWS_REGION
+AWS_DEFAULT_REGION="${__AWSLOGIN_AWS_PROFILE_SSO_REGION}"
+export AWS_DEFAULT_REGION
+CLUSTER_NAME="$(aws eks list-clusters | jq -r '.clusters[0]')"
+export CLUSTER_NAME
+
+log_message "${CYAN}Environment Variables${NORMAL}"
+log_message "        AWS_PROFILE: ${AWS_PROFILE}"
+log_message "         AWS_REGION: ${AWS_REGION}"
+log_message " AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}"
+log_message "     AWS_ACCOUNT_ID: ${AWS_ACCOUNT_ID}"
+log_message "       CLUSTER_NAME: ${CLUSTER_NAME}"
+log_line

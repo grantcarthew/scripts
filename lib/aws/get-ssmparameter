@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [filter] [-i] [-h]
+
+Queries the AWS Systems Manager Parameter Store for the currently authenticated AWS Account returning JSON.
+
+By default, only the parameter details will be returned. Use the "-i" or "--include-values" option for parameter values.
+
+If no filter is supplied, all available items will be returned.
+
+Dependencies:
+  aws                AWS CLI for accessing AWS services
+  jq                 Command-line JSON processor
+
+Optional arguments:
+  filter             Name query string to limit returned results
+  -i, --include-values   Return the parameter values (WARNING: slow)
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 2 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Dependency check
+dependencies=(aws jq)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+# Check AWS authentication
+if ! aws sts get-caller-identity >/dev/null 2>&1; then
+    log_error "Please authenticate to an AWS Account"
+    exit 1
+fi
+
+# Parse arguments
+filter=""
+include_values="false"
+for arg in "$@"; do
+    if [[ "$arg" == "-i" || "$arg" == "--include-values" ]]; then
+        include_values="true"
+    elif [[ -n "$arg" ]] && [[ "$arg" != "-i" ]] && [[ "$arg" != "--include-values" ]]; then
+        filter="$arg"
+    fi
+done
+
+log_title "AWS SSM Parameter Query"
+log_header "Input Values"
+log_message "$(
+  cat <<EOF
+  filter: '${filter}'
+  include_values: '${include_values}'
+EOF
+)"
+
+log_header "Validate Inputs"
+if [[ -n "${filter}" ]]; then
+    log_message "Filter provided: ${filter}"
+fi
+
+# Function to fetch parameters
+function fetch_parameters() {
+    local filter="${1}"
+    if [[ -n "${filter}" ]]; then
+        aws ssm describe-parameters | jq -c ".Parameters[] | select(.Name | contains(\"${filter}\"))"
+    else
+        aws ssm describe-parameters | jq -c ".Parameters[]"
+    fi
+}
+
+# Fetch parameters
+readarray -t parameters < <(fetch_parameters "${filter}")
+
+if [[ "${include_values}" == "true" ]]; then
+    log_header "Fetching Parameter Values"
+    declare -a merged_objects
+    for param_detail in "${parameters[@]}"; do
+        param_name=$(echo "${param_detail}" | jq -r '.Name')
+        param_value=$(aws ssm get-parameter --name "${param_name}" --with-decryption | jq -r ".Parameter")
+        merged_object=$(jq -s '.[0] * .[1]' <(echo "${param_detail}") <(echo "${param_value}"))
+        merged_objects+=("${merged_object}")
+    done
+    parameters=("${merged_objects[@]}")
+fi
+
+log_header "Output Parameters"
+echo "${parameters[@]}" | jq -s

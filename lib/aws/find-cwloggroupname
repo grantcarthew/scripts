@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail # set -e hides errors, don't use it
+
+function print_usage() {
+    cat <<EOF
+Usage: $(basename "$0") <log-group-filter>
+
+Short description:
+  This script returns the AWS CloudWatch log groups based on the provided filter.
+
+Dependencies:
+  aws                The AWS CLI tool must be installed and configured
+
+Required arguments:
+  log-group-filter   The filter to search for in the log group names
+  -h, --help         Show this help message and exit
+EOF
+}
+
+# Check for help option or insufficient arguments
+if [[ $# -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    print_usage
+    exit 1
+fi
+
+# Validate AWS CLI is installed
+if ! command -v aws >/dev/null; then
+    echo "ERROR: aws CLI is not installed"
+    exit 1
+fi
+
+# Get the log-group-filter argument
+log_group_filter="${1}"
+
+# Perform the AWS CLI command with the provided filter
+aws logs describe-log-groups \
+    --query "logGroups[?contains(logGroupName, '${log_group_filter}')].logGroupName" \
+    --output text

@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0")
+
+Exports messages from SQS queues containing 'dlq', 'dead', 'error', or 'fail' in their names.
+
+Dependencies:
+  aws                The AWS Command Line Interface
+  jq                 The JSON Query command-line tool
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+function contains_target() {
+  local -r string="${1,,}"  # Convert string to lowercase
+  local -r targets=("dlq" "dead" "error" "fail")
+  for target in "${targets[@]}"; do
+    if [[ "${string}" == *"${target}"* ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+function export_messages() {
+  local -r aws_account_name="${1}"
+  local -r queue_url="${2}"
+  local -r output_file="${aws_account_name}-${queue_url##*/}.json"
+  local messages_received=0
+
+  # Get the approximate number of messages in the queue
+  local message_count
+  message_count=$(aws sqs get-queue-attributes --queue-url "${queue_url}" --attribute-names ApproximateNumberOfMessages --query 'Attributes.ApproximateNumberOfMessages' --output text)
+
+  # Check if there are messages in the queue before attempting to export
+  if [[ "${message_count}" -gt 0 ]]; then
+    # Empty the file
+    : > "${output_file}"
+    log_message "Total messages to export: '${message_count}'"
+    while [[ ${messages_received} -lt ${message_count} ]]; do
+      # Fetch one message
+      message=$(aws sqs receive-message --queue-url "${queue_url}" --visibility-timeout 30 --max-number-of-messages 1 --query 'Messages[*].{ID: MessageId, Body: Body}' --output json)
+
+      # Check if a message was received
+      if [[ -n "${message}" ]]; then
+        [[ "${message}" == "null" ]] && continue
+        # Decode and append to file
+        echo "${message}" | jq -r '.[] | walk(if type=="string" and test("^\\{.*\\}$") then fromjson else . end)' >> "${output_file}"
+        ((messages_received++))
+        log_percent "${messages_received}" "${message_count}"
+      else
+        log_message "No more messages. Total messages received: ${messages_received}"
+        break
+      fi
+    done
+    log_newline
+    clean_json="$(jq -s '.' "${output_file}")"
+    echo "${clean_json}" > "${output_file}"
+  else
+    log_message "No messages. Skipping export."
+  fi
+}
+
+# Dependency check
+dependencies=(aws jq)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null 2>&1; then
+    log_error "ERROR: Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+log_title "Export SQS Messages"
+
+log_header "Getting AWS Account Alias"
+aws_account_alias=$(aws iam list-account-aliases --query "AccountAliases[0]" --output text)
+aws_account_name="${aws_account_alias/*-}"
+log_message "$(
+  cat <<EOF
+  Alias: '${aws_account_alias}'
+   Name: '${aws_account_name}'
+EOF
+)"
+
+log_header "List and Process Queues"
+queues=$(aws sqs list-queues --query 'QueueUrls' --output text)
+
+for queue_url in ${queues}; do
+  if contains_target "$(basename "${queue_url}")"; then
+    log_message "Processing queue: ${queue_url##*/}"
+    export_messages "${aws_account_name}" "${queue_url}"
+    log_line
+  fi
+done
+
+log_message "All relevant queues have been processed."
