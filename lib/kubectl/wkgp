@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 0 ]]; then
+    echo "[w]atch [k]ubectl [g]et [p]od"
+    echo "watch kubectl get pod"
+    exit 1
+fi
+
+watch kubectl get pod
+kubectl get pod

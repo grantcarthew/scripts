@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    echo "[k]ubectl [r]ollout [r]estart [d]eployment"
+    echo "kubectl rollout restart deployment/<deployment-name>"
+    exit 1
+fi
+
+kubectl rollout restart "deployment/${1}" && \
+  watch kubectl get pods && \
+  kubectl get pods

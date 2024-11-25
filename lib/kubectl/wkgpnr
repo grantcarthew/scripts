@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 0 ]]; then
+    echo "[w]atch [k]ubectl [g]et [p]od [n]ot [r]unning"
+    echo "watch kubectl get pod --all-namespaces --field-selector=status.phase!=Running"
+    exit 1
+fi
+
+watch kubectl get pod --all-namespaces --field-selector=status.phase!=Running
+kubectl get pod --all-namespaces
