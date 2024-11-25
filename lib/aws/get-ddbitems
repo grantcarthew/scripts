@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <table-name> [case-sensitive-key] [filter] [-h]
+
+Query a DynamoDB table and return results in JSON format.
+
+If you wish to filter the returned items, provide both the [key] and
+the [filter] optional arguments.
+
+Required arguments:
+  table-name         The name of the DynamoDB table to query
+
+Optional arguments:
+  case-sensitive-key The case sensitive primary or sort key name
+  filter             The prefix of the primary key to filter by
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -lt 1 || $# -gt 3 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+table_name="${1}"
+key="${2}"
+filter="${3:-}"
+
+dependencies=(aws jq)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    echo "ERROR: Missing dependency - '${cmd}'" >&2
+    exit 1
+  fi
+done
+
+# Function to query DynamoDB
+function query_dynamodb() {
+  local table_name="${1}"
+  local key="${2}"
+  local filter="${3}"
+
+  if [[ -z "${key}" || -z "${filter}" ]]; then
+    aws dynamodb scan \
+      --table-name "${table_name}" \
+      --output json
+  else
+    aws dynamodb scan \
+      --table-name "${table_name}" \
+      --filter-expression "contains(${key}, :filter_content)" \
+      --expression-attribute-values "{\":filter_content\": {\"S\": \"${filter}\"}}" \
+      --output json
+  fi
+}
+
+# Query DynamoDB and output results
+query_dynamodb "${table_name}" "${key}" "${filter}" | jq '.'

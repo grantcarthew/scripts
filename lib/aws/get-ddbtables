@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail # set -e hides errors, don't use it
+
+# Get the directory of the script file
+SCRIPT_DIR="$(
+  cd "${BASH_SOURCE[0]%/*}" || exit 1
+  pwd
+)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+
+# Module import
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+# Function to print usage information
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [name-filter] [-h]
+
+Gets the list of DynamoDB tables with the following attributes:
+- Name
+- TableArn
+- ItemCount
+- TableSizeBytes
+
+Dependencies:
+  aws                The aws command-line tool
+  jq                 The JSON query cli tool
+
+Optional arguments:
+  name-filter        The table name to filter by
+  -h, --help         Show this help message and exit
+EOF
+}
+
+# Function to check the script dependencies
+function dependency_check() {
+  dependencies=(aws jq)
+  for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+      echo "ERROR: Missing dependency - '${cmd}'"
+      exit 1
+    fi
+  done
+}
+
+# Function to check AWS authentication
+function check_aws_authentication() {
+  if ! aws sts get-caller-identity &>/dev/null; then
+    echo "Not authenticated into AWS. Please configure your AWS credentials."
+    exit 1
+  fi
+}
+
+# Function to list DynamoDB tables with details
+function list_dynamodb_tables() {
+  tables="$(aws dynamodb list-tables --query "TableNames[]" --output text)"
+  if [[ "${tables}" == "None" ]]; then
+    echo "No DynamoDB Tables exist in this AWS Account"
+    return
+  fi
+
+  local filter="${1}"
+  local first=true
+
+  echo "["
+  for table_name in ${tables}; do
+    if [[ -n "${filter}" && "${table_name}" != *"${filter}"* ]]; then
+      continue
+    fi
+
+    table_details="$(aws dynamodb describe-table --table-name "${table_name}" --query "Table.{Name:TableName, TableArn:TableArn, ItemCount:ItemCount, TableSizeBytes:TableSizeBytes}" --output json)"
+
+    if [[ "${first}" == true ]]; then
+      first=false
+    else
+      echo ","
+    fi
+    jq '.' <<<"${table_details}"
+  done
+  echo "]"
+}
+
+# Main script execution
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+dependency_check
+check_aws_authentication
+
+export name_filter="${1}"
+
+list_dynamodb_tables "${name_filter}"

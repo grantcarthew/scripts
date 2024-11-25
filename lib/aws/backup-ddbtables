@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(
+  cd "${BASH_SOURCE[0]%/*}" || exit 1
+  pwd
+)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [-h]
+
+Creates a backup of every DynamoDB table
+
+Dependencies:
+  aws                The aws command line tool
+
+Optional arguments:
+  optional_arg       The arg for the other thing
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 0 ]]; then
+  print_usage
+  exit 1
+fi
+
+# Dependency check - edit this list adding commands
+dependencies=(aws)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "ERROR: Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+log_title "Backup DynamoDB Tables"
+
+# Function to create a backup for a given table
+create_backup() {
+  local table_name="${1}"
+  local backup_name
+  backup_name="${table_name}-$(date +%Y%m%d%H%M%S)"
+
+  log_message "Table: ${table_name}"
+  aws dynamodb create-backup --table-name "${table_name}" --backup-name "${backup_name}"
+}
+
+# Get all DynamoDB table names
+log_header "Getting all DynamoDB tables"
+tables=$(aws dynamodb list-tables | jq -r '.TableNames[]')
+
+log_header "Backing up tables"
+# Loop through each table and create a backup
+while IFS= read -r table; do
+  create_backup "${table}"
+done <<<"${tables}"
+
+log_line
+log_message "Backup process completed for all tables."
