@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import os
+import json
+import argparse
+import rich
+from rich import print as rprint
+from python_modules import config
+from python_modules.definitions import BIN_CONFIG_PATH
+
+description = """
+Sets the user configuration JSON content.
+File source: ~/.config/bin_config
+
+Prints the JSON once finished.
+
+"""
+epilog = """
+
+Example
+-------------------------------------------------
+Prompt for configuration values:
+$ set-config
+
+"""
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=description,
+    epilog=epilog)
+args = parser.parse_args()
+
+try:
+    if os.path.exists(BIN_CONFIG_PATH):
+        with open(BIN_CONFIG_PATH, "r") as file:
+            content = file.read()
+            rprint('[green]Existing config file content:[/]')
+            rprint(content)
+        os.remove(BIN_CONFIG_PATH)
+        rprint(f"[yellow]{BIN_CONFIG_PATH} was deleted.[/]")
+except FileNotFoundError:
+    rprint(f"[red]Error: When working with {BIN_CONFIG_PATH}'[/]")
+
+try:
+    config_json = config.load_config()
+    print(json.dumps(config_json, indent=2, default=str))
+
+except Exception as ex:
+    rprint(ex)
