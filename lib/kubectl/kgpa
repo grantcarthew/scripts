@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 0 ]]; then
+    echo "[k]ubectl [g]et [p]od [a]ll namespaces"
+    echo "kubectl get pod --all-namespaces"
+    exit 1
+fi
+
+kubectl get pod --all-namespaces

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    echo "[k]ubectl [d]escribe [p]od"
+    echo "kubectl describe pod"
+    exit 1
+fi
+
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/_bash_functions"
+describe_k8s_resource pod "${1}"

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    echo "[k]ubectl [g]et [s]ervice[acc]ount [a]ll namespaces"
+    echo "kubectl get serviceaccount --all-namespaces"
+    exit 1
+fi
+
+kubectl get serviceaccount --all-namespaces
