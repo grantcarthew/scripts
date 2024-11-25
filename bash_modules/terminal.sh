@@ -27,17 +27,17 @@ function log_line() {
 }
 
 function log_title() {
-  printf "\n${BOLD}${GREEN}%s${NORMAL}\n" "$@" >&2
+  printf "\n ${BOLD}${GREEN}%s${NORMAL}\n" "$@" >&2
   log_line "="
 }
 
 function log_header() {
-  printf "\n${GREEN}${GREEN}%s${NORMAL}\n" "$@" >&2
+  printf "\n ${GREEN}${GREEN}%s${NORMAL}\n" "$@" >&2
   log_line "-"
 }
 
 function log_subheader() {
-  printf "\n${GREEN}${GREEN}%s${NORMAL}\n" "$@" >&2
+  printf "\n ${GREEN}${GREEN}%s${NORMAL}\n" "$@" >&2
   local title="$*"
   local length=${#title}
   log_line "-" "${length}"
