@@ -1,6 +1,6 @@
 # bin
 
-My home binary files and scripts for Bash and Linux
+My scripts for all kinds of automation and workflows.
 
 ## Dependencies
 
@@ -40,7 +40,7 @@ Add the **bin** directory to your PATH environment variable:
 echo 'export PATH="${PATH}:${HOME}/bin"' >> "${HOME}/.bashrc"
 ```
 
-### Task 4 - Optional Scripts
+### Task 4 - Libraries
 
 Review the directories in the **lib** directory and add any you want to your bashrc.
 
