@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail # set -e hides errors, don't use it
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/../../bash_modules/utils.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [filter] [-h]
+
+Queries the GitHub repositories for the latest tag
+
+If no filter, all active repository tags are reported
+
+Optional arguments:
+  filter                 Filter by repo name
+  -h, --help             Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+  echo "ERROR: GITHUB_TOKEN environment variable is missing"
+  exit 1
+fi
+
+# Dependency check
+dependencies=(gh jq)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+repo_org="myorgname"
+filter=$(to_lower "$1")
+
+log_title "Get Repository Tag"
+
+function get_repos() {
+  gh repo list "${repo_org}" --no-archived -L 9999 --json name | jq -r ".[] | select(.name | ascii_downcase | contains (\"${filter}\")) | .name" | sort
+}
+
+function get_latest_tag() {
+  local repo=$1
+  gh api "repos/${repo_org}/${repo}/tags" | jq -r '.[] | .name' | sort --reverse | head -1
+}
+
+log_header "Fetching Repositories"
+repos=($(get_repos))
+
+log_header "Processing Repositories"
+for repo in "${repos[@]}"; do
+  tag=$(get_latest_tag "$repo")
+  log_message "${repo}: ${tag}"
+done
+
+log_line

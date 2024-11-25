@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail # set -e hides errors, don't use it
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [-h]
+
+Queries for the last month of GitHub Workflow and Action runs saving the
+results into two files:
+
+- github_workflow_runs.csv
+- github_workflow_runs_errors.csv
+
+Dependencies:
+  gh                 The GitHub CLI tool
+  jq                 The JSON Query tool
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+  echo "ERROR: GITHUB_TOKEN environment variable is missing"
+  exit 1
+fi
+
+# Dependency check
+dependencies=(gh jq)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+export org="orgname"
+export outputcsv="github_workflow_runs.csv"
+export outputerrorscsv="github_workflow_runs_errors.csv"
+
+log_title "Workflow Run Report"
+
+function get_billable_time() {
+  local run_id=$1
+  local total_ms=0
+  local billable_data
+  billable_data=$(gh api -X GET "/repos/${org}/${repo}/actions/runs/${run_id}/timing" | jq '.billable')
+
+  for platform in UBUNTU MACOS WINDOWS; do
+    platform_ms=$(jq -r --arg platform "$platform" '.[$platform].total_ms' <<<"$billable_data")
+    total_ms=$((total_ms + platform_ms))
+  done
+  echo $total_ms
+}
+
+function get_workflow_runs() {
+  local repo=$1
+  gh api -X GET "/repos/${org}/${repo}/actions/runs" --paginate | jq -r '.workflow_runs[] | "\(.created_at)\t\(.updated_at)\t\(.name)\t\(.id)\t\(.html_url)"'
+}
+
+log_header "Getting repo list"
+repos=$(gh repo list "${org}" --no-archived --limit 1000 --json name -q '.[].name' | sort)
+
+log_header "Initializing output files"
+echo "repo,name,runtime_min_sec,billable_min_sec,url" >"${outputcsv}"
+echo "repo,name,run_id,url,start,end" >"${outputerrorscsv}"
+
+log_header "Processing Repositories"
+for repo in $repos; do
+  log_message "Repo: ${repo}"
+  get_workflow_runs "$repo" | while IFS=$'\t' read -r start end name run_id url; do
+    log_message "  Id: $run_id"
+    if ! [[ $run_id =~ ^[0-9]+$ ]]; then
+      log_message "Invalid run ID: $run_id"
+      echo "${repo},\"${name}\",${run_id},${url},${start},${end}" >>"${outputerrorscsv}"
+      continue
+    fi
+    # Calculate run-time in seconds
+    start_time=$(date -d "$start" +%s)
+    end_time=$(date -d "$end" +%s)
+    runtime=$((end_time - start_time))
+    minutes=$((runtime / 60))
+    seconds=$((runtime % 60))
+
+    # Calculate billable time
+    billable_ms=$(get_billable_time "$run_id")
+    billable_seconds=$((billable_ms / 1000))
+    billable_minutes=$((billable_seconds / 60))
+    billable_seconds=$((billable_seconds % 60))
+
+    # Output in csv format
+    printf "%s,\"%s\",%02d:%02d,%02d:%02d,%s\n" "$repo" "$name" "$minutes" "$seconds" "$billable_minutes" "$billable_seconds" "$url" >>"${outputcsv}"
+  done
+done
