@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail # set -e hides errors, don't use it
+export PATH="${PATH}:${PWD}"
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  # shellcheck disable=SC2312
+  cat <<EOF
+Usage: invoke-commandsubdirectories <dir_filter> [command] [force]
+
+This script will run the "command" from inside every directory the
+dir_filter argument finds.
+
+Dependencies:
+  fd                 The fast alternative to find
+
+Required arguments:
+  dir_filter         A regular expression to filter the subdirectories
+
+Optional arguments:
+  command            The command to run on each subdirectory
+  force              Required option to actually run the command
+  -h, --help         Show this help message and exit
+
+Example:
+To list the directories that would have the command run:
+$ invoke-commandsubdirectories some-dir-prefix
+
+To get the git status on directories (dry run only):
+$ invoke-commandsubdirectories some-dir-prefix "git status"
+
+To get the git status/pull/push on directories (dry run only):
+$ invoke-commandsubdirectories some-dir-prefix "git status && git pull && git push"
+
+To get the git status/pull/push on directories:
+$ invoke-commandsubdirectories some-dir-prefix "git status && git pull && git push" true
+EOF
+}
+
+if [[ $# -lt 1 || $# -gt 3 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+for cmd in rg eval; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "ERROR: Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+export dir_filter="${1}"
+export command="${2}"
+export force="${3:-false}"
+
+log_title "Invoke Command on Subdirectories"
+log_header "Input Values"
+# shellcheck disable=SC2312
+log_message "$(
+  cat <<EOF
+             PWD: '${PWD}'
+      dir_filter: '${dir_filter}'
+         command: '${command}'
+           force: '${force}'
+EOF
+)"
+
+log_header "Looping Through Directories"
+fd -t d "${dir_filter}" "${PWD}" | while IFS= read -r dir; do
+  log_header "${dir}"
+  pushd "$dir" >/dev/null || exit
+  if [[ "${force}" == true ]]; then
+    eval "${command}"
+  else
+    log_message "DRYRUN: '${command}'"
+  fi
+  popd >/dev/null || exit
+done
+
+log_line
+log_success "Done"
