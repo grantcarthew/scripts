@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+title="sudo [s]ystemctl [s]tart [d]ocker"
+if [[ $# -gt 0 ]]; then
+    cat <<EOT
+      Title: ${title}
+      Usage: ssd [-h]
+Description: Starts the Docker daemon and shows status
+   Commands:
+     - sudo systemctl start docker
+     - sudo systemctl status docker --no-pager
+EOT
+    exit 1
+fi
+
+echo "${title}"
+sudo systemctl start docker
+sudo systemctl status docker --no-pager

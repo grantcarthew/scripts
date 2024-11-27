@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 
-usage() {
-    echo 'Usage: dcl'
-    echo
-    echo 'Displays the list of Docker containers including both running and stopped containers'
-    echo
-    echo 'Optional arguments:'
-    echo '  -h, --help             Show this help message and exit'
-}
-
+title="sudo [d]ocker [c]ontainer [l]ist"
 if [[ $# -gt 0 ]]; then
-    usage
+    cat <<EOT
+      Title: ${title}
+      Usage: dcl [-h]
+Description: Displays the list of Docker containers including both running and stopped containers
+   Commands:
+     - sudo docker container list --all
+EOT
     exit 1
 fi
 
+echo "${title}"
 docker container list --all

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2016
+title='sudo [d]ocker [s]top "$(docker ps -q)"'
+if [[ $# -gt 0 ]]; then
+    cat <<EOT
+      Title: ${title}
+      Usage: ds [-h]
+Description: Stops all running containers
+   Commands:
+     - docker stop \$(docker ps -q)
+EOT
+    exit 1
+fi
+
+echo "${title}"
+
+# shellcheck disable=2046
+if [[ "$(docker ps -q)" ]]; then
+  docker stop "$(docker ps -q)";
+  exit 0;
+fi
+
+echo "No containers running"
