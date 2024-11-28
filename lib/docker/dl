@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+# shellcheck disable=SC2016
+title="[d]ocker [l]ist <multiple-resources>"
+if [[ $# -gt 0 ]]; then
+    cat <<EOT
+      Title: ${title}
+      Usage: ds [-h]
+Description: Stops all running containers
+   Commands:
+     - docker container list --all
+     - docker image list --all
+     - docker volume list
+     - docker network list
+EOT
+    exit 1
+fi
+
+log_title "${title}"
+
+log_header "Containers"
+docker container list --all
+
+log_header "Images"
+docker image list --all
+
+log_header "Volumes"
+docker volume list
+
+log_header "Networks"
+docker network list
+
+log_done
