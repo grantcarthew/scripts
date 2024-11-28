@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+
+# Source modules depending on the script location.
+# ----------------------------------------------------------------
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [-h]
+
+Gets the bash-template.
+
+Optional arguments:
+  optional_arg       The arg for the other thing
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 0 ]]; then
+  print_usage
+  exit 1
+fi
+
+cat "${SCRIPT_DIR}/templates/bash-template"
