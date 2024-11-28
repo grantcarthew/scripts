@@ -73,11 +73,11 @@ function log_error() {
 }
 
 function log_success() {
-    printf "${GREEN}✔ %b${NORMAL}\n" "${@}" >&2
+    printf " ${GREEN}✔ %b${NORMAL}\n" "${@}" >&2
 }
 
 function log_failure() {
-    printf "${RED}✖ %b${NORMAL}\n" "${@}" >&2
+    printf " ${RED}✖ %b${NORMAL}\n" "${@}" >&2
 }
 
 function log_percent() {
@@ -101,4 +101,9 @@ function log_sameline() {
 function log_clearline() {
   # shellcheck disable=SC2059
   printf "\r${ERASE_LINE}" >&2
+}
+
+function log_done() {
+  log_line
+  log_success "Done"
 }
