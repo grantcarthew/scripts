@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [project-filter] [-h]
+
+Sets the active and quota GCP project
+
+Dependencies:
+  fzf                The fuzzy finder tool
+  gcloud             The GCP command-line tool
+
+Optional arguments:
+  project-filter     A project name or part there of
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Dependency check - edit this list adding commands
+dependencies=(fzf gcloud)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+export project_filter="${1}"
+
+set_project() {
+    local filter="${1}"
+    local project_id
+    project_id=$(gcloud projects list --format="value(projectId)" | fzf --query="${filter}" --select-1)
+    gcloud auth application-default set-quota-project "$project_id"
+    gcloud config set project "$project_id"
+}
+
+log_title "Set GCP Project"
+log_message "$(
+  cat <<EOF
+   project filter: '${project_filter}'
+EOF
+)"
+
+log_header "Commands"
+# shellcheck disable=SC2016
+log_message 'gcloud auth application-default set-quota-project "$project_id"'
+# shellcheck disable=SC2016
+log_message 'gcloud config set project "$project_id"'
+
+set_project "${project_filter}"
+
+log_message "Report: ${SCRIPT_DIR}"
