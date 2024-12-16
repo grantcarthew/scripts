@@ -49,6 +49,17 @@ if ! command -v "${cmd}" >/dev/null; then
   echo "https://github.com/terraform-linters/tflint"
   exit 0
 fi
-
 tflint --recursive
+
+echo "-------------------------------------------------------------------------------"
+echo "Security"
+echo "-------------------------------------------------------------------------------"
+cmd="trivy"
+if ! command -v "${cmd}" >/dev/null; then
+  echo "WARNING: Missing dependency - '${cmd}'"
+  echo "Please install '${cmd}' for a full analysis"
+  echo "https://trivy.dev/latest/"
+  exit 0
+fi
+trivy config .
 echo "-------------------------------------------------------------------------------"
