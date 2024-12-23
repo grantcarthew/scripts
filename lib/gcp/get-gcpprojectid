@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0")
+
+Lists all GCP project IDs.
+
+Dependencies:
+  gcloud             Google Cloud SDK command-line tool
+EOF
+}
+
+if [[ $# -ne 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Dependency check
+dependencies=(gcloud)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+log_title "GCP Project IDs"
+log_header "Listing GCP Project IDs"
+
+# List GCP project IDs
+gcloud projects list --format="value(projectId)" | while read -r projectId; do
+  ! [[ -t 1 ]] && log_message "${projectId}"
+  echo "${projectId}"
+done
