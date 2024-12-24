@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [filter]
+
+Lists GCP project IDs and their IAM policies with an optional filter.
+
+Dependencies:
+  get-gcpprojectid    Command to retrieve GCP project IDs
+  gcloud              Google Cloud SDK command-line tool
+
+Optional arguments:
+  filter              Filter string to match in the output
+  -h, --help          Show this help message and exit
+EOF
+}
+
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+# Dependency check
+dependencies=(get-gcpprojectid gcloud)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+log_title "GCP Project IAM Policies"
+
+# Get project IDs
+project_ids=$(get-gcpprojectid) || exit 1
+
+log_header "Listing IAM Policies"
+
+# Optional filter argument
+filter="${1}"
+
+# Loop through each project ID
+for project_id in ${project_ids}; do
+    log_header "Project ID: ${project_id}"
+    if [[ -z "${filter}" ]]; then
+        gcloud projects get-iam-policy "${project_id}" \
+            --flatten="bindings[].members" \
+            --format="table(bindings.role, bindings.members)"
+    else
+        gcloud projects get-iam-policy "${project_id}" \
+            --flatten="bindings[].members" \
+            --format="table(bindings.role, bindings.members)" \
+            | grep -i "${filter}"
+    fi
+done

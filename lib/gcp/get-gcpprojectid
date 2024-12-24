@@ -34,10 +34,9 @@ for cmd in "${dependencies[@]}"; do
 done
 
 log_title "GCP Project IDs"
-log_header "Listing GCP Project IDs"
 
 # List GCP project IDs
-gcloud projects list --format="value(projectId)" | while read -r projectId; do
-  ! [[ -t 1 ]] && log_message "${projectId}"
-  echo "${projectId}"
+gcloud projects list --format="value(projectId)" | while read -r project_id; do
+  ! [[ -t 1 ]] && log_message "${project_id}"
+  echo "${project_id}"
 done
