@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the script file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [filter]
+
+Gets a list of all public IP addresses over all Projects. Optionally filters the output.
+
+Dependencies:
+  gcloud             The GCP command line tool
+
+Optional arguments:
+  filter             Filter the output for lines containing this string
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Dependency check - edit this list adding commands
+dependencies=(gcloud)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+log_title "GCP IP Addresses"
+
+# Function to handle pagination for gcloud commands
+function paginate_gcloud() {
+    local command="$1"
+    local project="$2"
+    local filter="$3"
+    local page_token=""
+    local output=""
+
+    while true; do
+        local result
+        if [[ -n "${page_token}" ]]; then
+            result=$(${command} --project "${project}" --page-token "${page_token}")
+        else
+            result=$(${command} --project "${project}")
+        fi
+
+        if [[ -n "${filter}" ]]; then
+            result=$(echo "${result}" | grep -i "${filter}")
+        fi
+
+        output+="${result}\n"
+
+        # Check if there's a next page
+        page_token=$(echo "${result}" | grep -oP '(?<=pageToken: )[^ ]+')
+        if [[ -z "${page_token}" ]]; then
+            break
+        fi
+    done
+
+    echo -e "${output}"
+}
+
+project_ids=$(get-gcpprojectid) || exit 1
+
+for project in ${project_ids}
+do
+    # shellcheck disable=SC2076
+    if [[ $(gcloud services list --project "${project}" --format="table(NAME)" | sed '1d') =~ "compute.googleapis.com" ]]; then
+       log_header "${project}"
+       paginate_gcloud "gcloud compute addresses list" "${project}" "${1}"
+       paginate_gcloud "gcloud compute addresses list --global" "${project}" "${1}"
+    fi
+done
