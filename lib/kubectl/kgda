@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    echo "[k]ubectl [g]et [d]eployment [a]ll namespaces"
+    echo "kubectl get deployment --all-namespaces [filter]"
+    exit 1
+fi
+
+
+if [[ -z "${1}" ]]; then
+    kubectl get deployment --all-namespaces
+else
+    deployments="$(kubectl get deployment --all-namespaces)"
+    echo "${deployments}" | head -n 1
+    echo "${deployments}" | rg "${1}"
+fi
