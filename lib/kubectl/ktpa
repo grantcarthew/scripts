@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    echo "[k]ubectl [t]op [p]od [a]ll namespaces"
+    echo "kubectl top pod --all-namespaces [filter]"
+    exit 1
+fi
+
+if [[ -z "${1}" ]]; then
+    kubectl top pod --all-namespaces
+else
+    deployments="$(kubectl top pod --all-namespaces)"
+    echo "${deployments}" | head -n 1
+    echo "${deployments}" | rg "${1}"
+fi
