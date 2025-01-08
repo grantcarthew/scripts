@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [-h]
+
+Launches Python for simple math on the terminal.
+
+Dependencies:
+  Python             The Python interpreter
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 0 ]]; then
+  print_usage
+  exit 1
+fi
+
+if command -v python3 >/dev/null; then
+    python3
+    exit 0
+fi
+
+if command -v python >/dev/null; then
+    python
+    exit 0
+fi
+
+echo "ERROR: Python is not installed"
+exit 1
