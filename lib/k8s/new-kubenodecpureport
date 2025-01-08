@@ -6,7 +6,7 @@ set -o pipefail
 # Get the directory of the script file
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 export PATH="${PATH}:${SCRIPT_DIR}"
-source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 function print_usage() {
   cat <<EOF
@@ -43,14 +43,14 @@ log_title "Kubernetes Nodes CPU Report"
 log_header "Retrieve Node Information"
 
 # Get a list of all nodes
-nodes=$(${SCRIPT_DIR}/kubectl get nodes -o custom-columns=NAME:.metadata.name --no-headers)
+nodes=$(kubectl get nodes -o custom-columns=NAME:.metadata.name --no-headers)
 
 log_header "Processing Nodes"
 
 # Loop over each node
 for node in ${nodes}; do
     # Get allocatable CPU for the node
-    alloc_cpu=$(${SCRIPT_DIR}/kubectl get node "${node}" -o jsonpath='{.status.allocatable.cpu}')
+    alloc_cpu=$(kubectl get node "${node}" -o jsonpath='{.status.allocatable.cpu}')
 
     # Convert allocatable CPU to milli-cores
     if [[ "${alloc_cpu}" == *"m"* ]]; then
@@ -60,7 +60,7 @@ for node in ${nodes}; do
     fi
 
     # Get total CPU requests for pods on the node
-    requests_cpu=$(${SCRIPT_DIR}/kubectl get pods --all-namespaces --field-selector spec.nodeName="${node}" -o jsonpath='{range .items[*]}{.spec.containers[*].resources.requests.cpu}{"\n"}{end}' | grep -Eo '[0-9]+m' | sed 's/m//' | awk '{s+=$1} END {print s}')
+    requests_cpu=$(kubectl get pods --all-namespaces --field-selector spec.nodeName="${node}" -o jsonpath='{range .items[*]}{.spec.containers[*].resources.requests.cpu}{"\n"}{end}' | grep -Eo '[0-9]+m' | sed 's/m//' | awk '{s+=$1} END {print s}')
 
     if [[ -z "${requests_cpu}" ]]; then
         requests_cpu=0
