@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+
+# Get the directory of the file
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+
+function print_usage() {
+    cat <<EOF
+Usage: $(basename "$0") <file-name>
+
+Show the contents of an executable file or script in a PATH directory.
+
+Required arguments:
+  file-name         The name of the file to show
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    print_usage
+    exit 1
+fi
+
+file_path="$(command -v "${1}")"
+
+log_title "Show File Contents: ${file_path}"
+
+if [[ -z "${file_path}" ]]; then
+    log_error "File not found: ${1}"
+    exit 1
+fi
+
+cat "${file_path}"
+
+log_newline
+log_line
