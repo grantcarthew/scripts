@@ -7,6 +7,10 @@ function open_url() {
     cmdOut=$(cmd.exe /c start "${url}" 2>&1)
     return
   fi
+  if command -v firefox >/dev/null; then
+    firefox "${url}"
+    return
+  fi
   if command -v xdg-open >/dev/null; then
     xdg-open "${url}"
     return
