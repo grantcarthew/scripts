@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    echo "[k]ubectl [l]ogs [d]eployment"
+    echo "kubectl logs -f deployment/[deployment-name]"
+    exit 1
+fi
+
+kubectl logs -f deployment/"${1}"
