@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    echo "[k]ubectl [d]describe [s]tatefulset"
+    echo "kubectl describe stagefulset [stagefulset-name]"
+    exit 1
+fi
+
+if [[ -z "${1}" ]]; then
+    kubectl describe stagefulset
+else
+    kubectl describe stagefulset "${1}"
+fi
