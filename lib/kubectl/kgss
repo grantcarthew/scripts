@@ -2,12 +2,12 @@
 
 if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
     echo "[k]ubectl [g]et [s]tatefulset"
-    echo "kubectl get stagefulset [stagefulset-name]"
+    echo "kubectl get statefulset [statefulset-name]"
     exit 1
 fi
 
 if [[ -z "${1}" ]]; then
-    kubectl get stagefulset
+    kubectl get statefulset
 else
-    kubectl get stagefulset "${1}"
+    kubectl get statefulset "${1}"
 fi

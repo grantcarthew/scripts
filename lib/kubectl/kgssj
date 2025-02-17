@@ -2,12 +2,12 @@
 
 if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
     echo "[k]ubectl [g]et [s]tatefulset output [j]son"
-    echo "kubectl get stagefulset [stagefulset-name] --output json"
+    echo "kubectl get statefulset [statefulset-name] --output json"
     exit 1
 fi
 
 if [[ -z "${1}" ]]; then
-    kubectl get stagefulset --output json
+    kubectl get statefulset --output json
 else
-    kubectl get stagefulset "${1}" --output json
+    kubectl get statefulset "${1}" --output json
 fi
