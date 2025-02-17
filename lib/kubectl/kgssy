@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    echo "[k]ubectl [g]et [s]tatefulset output [y]aml"
+    echo "kubectl get stagefulset [stagefulset-name] --output yaml"
+    exit 1
+fi
+
+if [[ -z "${1}" ]]; then
+    kubectl get stagefulset --output yaml
+else
+    kubectl get stagefulset "${1}" --output yaml
+fi
