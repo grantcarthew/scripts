@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+    echo "[k]ubectl [g]et [s]ecret [a]ll namespaces"
+    echo "kubectl get secret --all-namespaces"
+    exit 1
+fi
+
+kubectl get secret --all-namespaces
