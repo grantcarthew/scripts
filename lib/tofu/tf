@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<EOF
+
+Usage: tf [-h]
+
+OpenTofu Format
+
+Runs a the following across the OpenTofu configuration files:
+- tofu fmt -recursively
+- tofu validate
+- tflint --recursive
+
+Optional arguments:
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ "${#}" -gt 0 ]]; then
+    usage
+    exit 0
+fi
+
+echo "OpenTofu Format, Validate, and Lint"
+echo "-------------------------------------------------------------------------------"
+echo "Git Check"
+echo "-------------------------------------------------------------------------------"
+git diff-index --check --cached main
+
+echo "-------------------------------------------------------------------------------"
+echo "Formatting"
+echo "-------------------------------------------------------------------------------"
+tofu fmt -recursive
+
+echo "-------------------------------------------------------------------------------"
+echo "Validating"
+echo "-------------------------------------------------------------------------------"
+tofu validate
+
+echo "-------------------------------------------------------------------------------"
+echo "Linting"
+echo "-------------------------------------------------------------------------------"
+cmd="tflint"
+if ! command -v "${cmd}" >/dev/null; then
+  echo "WARNING: Missing dependency - '${cmd}'"
+  echo "Please install '${cmd}' for a full analysis"
+  echo "https://github.com/tofu-linters/tflint"
+  exit 0
+fi
+tflint --recursive
+
+echo "-------------------------------------------------------------------------------"
+echo "Security"
+echo "-------------------------------------------------------------------------------"
+cmd="trivy"
+if ! command -v "${cmd}" >/dev/null; then
+  echo "WARNING: Missing dependency - '${cmd}'"
+  echo "Please install '${cmd}' for a full analysis"
+  echo "https://trivy.dev/latest/"
+  exit 0
+fi
+trivy config .
+echo "-------------------------------------------------------------------------------"
