@@ -26,8 +26,8 @@ fi
 namespace=$(kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null)
 log_title "Get Kubernetes Tags: '${namespace}'"
 
-log_header "Deployment Images"
+log_heading "Deployment Images"
 kubectl get deployment -o custom-columns=image:.spec.template.spec.containers[*].image --no-headers | sort
 
-log_header "StatefulSet Images"
+log_heading "StatefulSet Images"
 kubectl get statefulsets -o custom-columns=image:.spec.template.spec.containers[*].image --no-headers | sort

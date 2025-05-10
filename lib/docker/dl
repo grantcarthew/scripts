@@ -26,16 +26,16 @@ fi
 
 log_title "${title}"
 
-log_header "Containers"
+log_heading "Containers"
 docker container list --all
 
-log_header "Images"
+log_heading "Images"
 docker image list --all
 
-log_header "Volumes"
+log_heading "Volumes"
 docker volume list
 
-log_header "Networks"
+log_heading "Networks"
 docker network list
 
 log_done

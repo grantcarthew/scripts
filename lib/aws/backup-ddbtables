@@ -53,10 +53,10 @@ create_backup() {
 }
 
 # Get all DynamoDB table names
-log_header "Getting all DynamoDB tables"
+log_heading "Getting all DynamoDB tables"
 tables=$(aws dynamodb list-tables | jq -r '.TableNames[]')
 
-log_header "Backing up tables"
+log_heading "Backing up tables"
 # Loop through each table and create a backup
 while IFS= read -r table; do
   create_backup "${table}"

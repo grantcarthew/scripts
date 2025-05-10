@@ -285,7 +285,7 @@ __AWSLOGIN_AWS_PROFILE_SSO_REGION=$(aws configure get sso_region --profile "${__
 __AWSLOGIN_AWS_PROFILE_SSO_ACCOUNT_ID=$(aws configure get sso_account_id --profile "${__AWSLOGIN_PROFILE}")
 __AWSLOGIN_AWS_PROFILE_SSO_ROLE_NAME=$(aws configure get sso_role_name --profile "${__AWSLOGIN_PROFILE}")
 
-log_header "${BOLD}${CYAN}AWS Profile Details"
+log_heading "${BOLD}${CYAN}AWS Profile Details"
 log_message "${CYAN}         Name:${NORMAL} ${__AWSLOGIN_PROFILE_TITLE}"
 log_message "${CYAN}   Account ID:${NORMAL} ${__AWSLOGIN_AWS_PROFILE_SSO_ACCOUNT_ID}"
 log_message "${CYAN}   SSO Region:${NORMAL} ${__AWSLOGIN_AWS_PROFILE_SSO_REGION}"
@@ -368,7 +368,7 @@ if [[ "${__AWSLOGIN_NOW}" -gt "${__AWSLOGIN_EXPIRES_AT}" ]]; then
     open_url "${__AWSLOGIN_LOGIN_URL}"
   fi
 
-  log_header "AWS Command Output for Reference"
+  log_heading "AWS Command Output for Reference"
   cat "${__AWSLOGIN_TEMP_FILE}"
   log_line
 

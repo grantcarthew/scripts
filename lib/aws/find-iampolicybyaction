@@ -41,7 +41,7 @@ filter=$(to_lower "$1")
 
 # List policy ARNs
 log_title "Find IAM Policies by Action"
-log_header "Getting Customer Managed Policies"
+log_heading "Getting Customer Managed Policies"
 policy_arns=$(aws iam list-policies --scope Local --output json | jq -r '.Policies[].Arn')
 # shellcheck disable=SC2206
 policy_arns_array=(${policy_arns})
@@ -61,7 +61,7 @@ jq_action_query='
 
 declare -a policies
 
-log_header "Processing Policies"
+log_heading "Processing Policies"
 log_percent 0 "${total_policies}"
 
 # Iterate through policy ARNs
@@ -83,6 +83,6 @@ done
 log_clearline
 log_message "Done"
 
-log_header "Output Results"
+log_heading "Output Results"
 echo "${policies[@]}" | jq -s
 

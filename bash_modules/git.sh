@@ -66,7 +66,7 @@ function github_list_repos_by_branch () {
     fi
 
     # Get total number of repositories
-    log_header "Getting Repo List by Branch: ${1}"
+    log_heading "Getting Repo List by Branch: ${1}"
     local total_repos
     local count=0
 

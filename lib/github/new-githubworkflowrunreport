@@ -70,14 +70,14 @@ function get_workflow_runs() {
   gh api -X GET "/repos/${org}/${repo}/actions/runs" --paginate | jq -r '.workflow_runs[] | "\(.created_at)\t\(.updated_at)\t\(.name)\t\(.id)\t\(.html_url)"'
 }
 
-log_header "Getting repo list"
+log_heading "Getting repo list"
 repos=$(gh repo list "${org}" --no-archived --limit 1000 --json name -q '.[].name' | sort)
 
-log_header "Initializing output files"
+log_heading "Initializing output files"
 echo "repo,name,runtime_min_sec,billable_min_sec,url" >"${outputcsv}"
 echo "repo,name,run_id,url,start,end" >"${outputerrorscsv}"
 
-log_header "Processing Repositories"
+log_heading "Processing Repositories"
 for repo in $repos; do
   log_message "Repo: ${repo}"
   get_workflow_runs "$repo" | while IFS=$'\t' read -r start end name run_id url; do

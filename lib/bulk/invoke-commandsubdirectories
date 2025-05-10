@@ -59,7 +59,7 @@ export command="${2}"
 export force="${3:-false}"
 
 log_title "Invoke Command on Subdirectories"
-log_header "Input Values"
+log_heading "Input Values"
 # shellcheck disable=SC2312
 log_message "$(
   cat <<EOF
@@ -70,9 +70,9 @@ log_message "$(
 EOF
 )"
 
-log_header "Looping Through Directories"
+log_heading "Looping Through Directories"
 fd -t d "${dir_filter}" "${PWD}" | while IFS= read -r dir; do
-  log_header "${dir}"
+  log_heading "${dir}"
   pushd "$dir" >/dev/null || exit
   if [[ "${force}" == true ]]; then
     eval "${command}"

@@ -43,14 +43,14 @@ log_title "GCP Project IAM Policies"
 # Get project IDs
 project_ids=$(get-gcpprojectid) || exit 1
 
-log_header "Listing IAM Policies"
+log_heading "Listing IAM Policies"
 
 # Optional filter argument
 filter="${1}"
 
 # Loop through each project ID
 for project_id in ${project_ids}; do
-    log_header "Project ID: ${project_id}"
+    log_heading "Project ID: ${project_id}"
     if [[ -z "${filter}" ]]; then
         gcloud projects get-iam-policy "${project_id}" \
             --flatten="bindings[].members" \

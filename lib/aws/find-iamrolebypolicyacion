@@ -50,14 +50,14 @@ done
 export filter="$(to_lower "${1}")"
 
 log_title "Find IAM Roles by Policy Action"
-log_header "Input Values"
+log_heading "Input Values"
 log_message "$(
   cat <<EOF
   action-filter: '${filter}'
 EOF
 )"
 
-log_header "Validate Inputs"
+log_heading "Validate Inputs"
 is_not_empty "${filter}" || exit 1
 
 log_message "This is a two-step process:"
@@ -74,7 +74,7 @@ current_policy=0
 
 declare -a policies
 
-log_header "Getting Roles by Policy"
+log_heading "Getting Roles by Policy"
 log_percent "${current_policy}" "${total_policies}"
 
 declare result="["
@@ -92,5 +92,5 @@ done
 # Clear line after completion
 log_clearline
 
-log_header "Output Results"
+log_heading "Output Results"
 echo "${policies[@]}" | jq -s

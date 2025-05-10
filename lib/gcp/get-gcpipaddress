@@ -77,7 +77,7 @@ for project in ${project_ids}
 do
     # shellcheck disable=SC2076
     if [[ $(gcloud services list --project "${project}" --format="table(NAME)" | sed '1d') =~ "compute.googleapis.com" ]]; then
-       log_header "${project}"
+       log_heading "${project}"
        paginate_gcloud "gcloud compute addresses list" "${project}" "${1}"
        paginate_gcloud "gcloud compute addresses list --global" "${project}" "${1}"
     fi
