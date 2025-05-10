@@ -61,7 +61,7 @@ for arg in "$@"; do
 done
 
 log_title "AWS SSM Parameter Query"
-log_header "Input Values"
+log_heading "Input Values"
 log_message "$(
   cat <<EOF
   filter: '${filter}'
@@ -69,7 +69,7 @@ log_message "$(
 EOF
 )"
 
-log_header "Validate Inputs"
+log_heading "Validate Inputs"
 if [[ -n "${filter}" ]]; then
     log_message "Filter provided: ${filter}"
 fi
@@ -88,7 +88,7 @@ function fetch_parameters() {
 readarray -t parameters < <(fetch_parameters "${filter}")
 
 if [[ "${include_values}" == "true" ]]; then
-    log_header "Fetching Parameter Values"
+    log_heading "Fetching Parameter Values"
     declare -a merged_objects
     for param_detail in "${parameters[@]}"; do
         param_name=$(echo "${param_detail}" | jq -r '.Name')
@@ -99,5 +99,5 @@ if [[ "${include_values}" == "true" ]]; then
     parameters=("${merged_objects[@]}")
 fi
 
-log_header "Output Parameters"
+log_heading "Output Parameters"
 echo "${parameters[@]}" | jq -s

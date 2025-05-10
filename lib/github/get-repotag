@@ -56,10 +56,10 @@ function get_latest_tag() {
   gh api "repos/${repo_org}/${repo}/tags" | jq -r '.[] | .name' | sort --reverse | head -1
 }
 
-log_header "Fetching Repositories"
+log_heading "Fetching Repositories"
 repos=($(get_repos))
 
-log_header "Processing Repositories"
+log_heading "Processing Repositories"
 for repo in "${repos[@]}"; do
   tag=$(get_latest_tag "$repo")
   log_message "${repo}: ${tag}"

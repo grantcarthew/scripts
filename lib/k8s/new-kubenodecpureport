@@ -40,12 +40,12 @@ done
 
 log_title "Kubernetes Nodes CPU Report"
 
-log_header "Retrieve Node Information"
+log_heading "Retrieve Node Information"
 
 # Get a list of all nodes
 nodes=$(kubectl get nodes -o custom-columns=NAME:.metadata.name --no-headers)
 
-log_header "Processing Nodes"
+log_heading "Processing Nodes"
 
 # Loop over each node
 for node in ${nodes}; do

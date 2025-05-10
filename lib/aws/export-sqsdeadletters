@@ -89,7 +89,7 @@ done
 
 log_title "Export SQS Messages"
 
-log_header "Getting AWS Account Alias"
+log_heading "Getting AWS Account Alias"
 aws_account_alias=$(aws iam list-account-aliases --query "AccountAliases[0]" --output text)
 aws_account_name="${aws_account_alias/*-}"
 log_message "$(
@@ -99,7 +99,7 @@ log_message "$(
 EOF
 )"
 
-log_header "List and Process Queues"
+log_heading "List and Process Queues"
 queues=$(aws sqs list-queues --query 'QueueUrls' --output text)
 
 for queue_url in ${queues}; do

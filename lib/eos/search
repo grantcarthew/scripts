@@ -13,13 +13,13 @@ reset
 log_title "Pacman & Yay Package Search"
 log_message "Search: '${keyword}'"
 
-log_header "Update"
+log_heading "Update"
 sudo pacman --sync --refresh
 
-log_header "pacman Search"
+log_heading "pacman Search"
 sudo pacman --sync --search "${keyword}"
 
-log_header "yay Search"
+log_heading "yay Search"
 yay --sync --search "${keyword}"
 
 log_line

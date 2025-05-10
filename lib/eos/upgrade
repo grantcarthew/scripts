@@ -11,19 +11,19 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 reset
 log_title "System Upgrade"
 
-log_header "Flatpak"
+log_heading "Flatpak"
 flatpak upgrade --assumeyes
 
-log_header "Brew"
+log_heading "Brew"
 brew upgrade
 
-log_header "Deno"
+log_heading "Deno"
 deno upgrade
 
-log_header "Pacman"
+log_heading "Pacman"
 sudo pacman --sync --refresh --sysupgrade
 
-log_header "Yay"
+log_heading "Yay"
 yay --sync --refresh --sysupgrade
 
 log_line

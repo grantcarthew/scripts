@@ -55,7 +55,7 @@ function remove_archived() {
   local root_directory="${2}"
   local found=false
 
-  log_header "Review Archived or Deleted Repositories"
+  log_heading "Review Archived or Deleted Repositories"
 
   # Get the list of directories in the root_directory
   local -a directories
@@ -96,7 +96,7 @@ for repo_name in ${repo_names[@]}; do
   repo_names_lower+=("${repo_name_lower}")
   repo_source="${repo_org}/${repo_name}"
   repo_path=$(join_paths "${repo_root}" "${repo_name_lower}")
-  log_header "${repo_name}"
+  log_heading "${repo_name}"
   log_message "Source Repo: ${repo_source}"
   log_message "Target Path: ${repo_path}"
 

@@ -55,7 +55,7 @@ log_message "$(
 EOF
 )"
 
-log_header "Commands"
+log_heading "Commands"
 # shellcheck disable=SC2016
 log_message 'gcloud auth application-default set-quota-project "$project_id"'
 # shellcheck disable=SC2016

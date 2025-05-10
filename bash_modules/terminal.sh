@@ -31,12 +31,12 @@ function log_title() {
   log_line "="
 }
 
-function log_header() {
+function log_heading() {
   printf "\n ${GREEN}${GREEN}%s${NORMAL}\n" "$@" >&2
   log_line "-"
 }
 
-function log_subheader() {
+function log_subheading() {
   printf "\n ${GREEN}${GREEN}%s${NORMAL}\n" "$@" >&2
   local title="$*"
   local length=${#title}

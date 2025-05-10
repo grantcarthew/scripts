@@ -15,7 +15,7 @@ assert_bin_dir() {
 }
 
 install_assert() {
-    log_header "assert.sh"
+    log_heading "assert.sh"
     log_message "Source: https://github.com/lehmannro/assert.sh"
     local target="${bin_dir}/assert.sh"
 
