@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<EOF
+
+Usage: ta [aa] [-h]
+
+OpenTofu Apply
+
+Runs a tofu apply with optional auto approve
+
+Optional arguments:
+  aa                     Auto approve the apply
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ "${#}" -gt 1 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+if [[ "${1}" == "aa" ]];then
+  tofu apply -auto-approve
+else
+  tofu apply
+fi

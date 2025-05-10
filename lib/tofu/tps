@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<EOF
+
+Usage: tps [-h]
+
+OpenTofu Plan as a Summary
+
+Runs a tofu plan but only displays the "# " lines
+
+Optional arguments:
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ "${#}" -gt 0 ]]; then
+    usage
+    exit 0
+fi
+
+tofu plan | rg '# |Plan:' | rg -v '\.data\.|# \('

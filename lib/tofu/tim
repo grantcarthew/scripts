@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<EOF
+
+Usage: tim <resource> <id> [-h]
+
+OpenTofu Import
+
+Runs a tofu import
+
+Required arguments:
+  resource               Source resource id
+  id                     Source name or id
+
+Optional arguments:
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ "${#}" -ne 2 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+tofu import "${1}" "${2}"

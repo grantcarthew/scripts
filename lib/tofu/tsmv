@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+usage() {
+    cat <<EOF
+
+Usage: tsmv <source> <dest> [-h]
+
+OpenTofu State MV
+
+Runs a OpenTofu State Move
+
+Required arguments:
+  source                 Source resource name
+  dest                   Destination resource name
+
+Optional arguments:
+  -h, --help             Show this help message and exit
+
+EOF
+}
+
+if [[ "${#}" -ne 2 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+tofu state mv "${1}" "${2}"
