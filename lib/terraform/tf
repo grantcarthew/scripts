@@ -11,6 +11,7 @@ Runs a the following across the Terraform configuration files:
 - terraform fmt -recursively
 - terraform validate
 - tflint --recursive
+- trivy config
 
 Optional arguments:
   -h, --help             Show this help message and exit
