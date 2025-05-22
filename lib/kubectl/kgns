@@ -6,5 +6,4 @@ if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
     exit 1
 fi
 
-source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/_bash_functions"
-get_k8s_resource namespace "${1}"
+kubectl get namespace "${1}"
