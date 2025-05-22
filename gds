@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 0 ]]; then
+    echo "[g]it [d]iff [s]taged"
+    echo "git diff --staged"
+    exit 1
+fi
+
+git diff --staged
