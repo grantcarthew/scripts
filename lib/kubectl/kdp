@@ -7,4 +7,4 @@ if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
 fi
 
 source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/_bash_functions"
-describe_k8s_resource pod "${1}"
+kubectl describe pod "${1}"
