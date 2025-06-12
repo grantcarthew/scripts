@@ -2,9 +2,8 @@
 
 # Environment setup
 set -o pipefail
-
-# Get the directory of the script file
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+readonly SCRIPT_DIR
 export PATH="${PATH}:${SCRIPT_DIR}"
 
 # Source modules depending on the script location.
@@ -49,19 +48,22 @@ for cmd in "${dependencies[@]}"; do
     fi
 done
 
-export required_arg1="${1}"
-export required_token="${2}"
-export optional_arg="${3}"
-export calculated_arg="${required_arg1//https:/}"
+readonly required_arg1="${1}"
+readonly required_token="${2}"
+readonly optional_arg="${3}"
+readonly derived_arg="${required_arg1//https:/}"
+calculated_arg="$(realpath "$required_arg1}")"
+readonly calculated_arg
 
 log_title "Your Script Title"
 log_heading "Input Values"
 log_message "$(
   cat <<EOF
    required_arg1: '${required_arg1}'
-  calculated_arg: '${calculated_arg}'
   required_token: '${#required_token}' characters in length
     optional_arg: '${optional_arg}'
+     derived_arg: '${derived_arg}'
+  calculated_arg: '${calculated_arg}'
 EOF
 )"
 
