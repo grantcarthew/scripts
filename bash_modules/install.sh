@@ -2,8 +2,6 @@
 
 # Environment setup
 set -o pipefail
-
-# Get the directory of the script file
 BASH_MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${BASH_MODULES_DIR}/terminal.sh"
 source "${BASH_MODULES_DIR}/utils.sh"

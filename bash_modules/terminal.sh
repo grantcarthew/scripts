@@ -7,7 +7,7 @@
 # Meaning, if you have a script that is required to return a value,
 # you can still use the log functions to log messages without affecting the output of the script.
 
-# Get the directory of the script file
+# Environment setup
 BASH_MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 
 # Import colours if not already done
