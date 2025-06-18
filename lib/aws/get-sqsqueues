@@ -2,8 +2,6 @@
 
 # Environment setup
 set -o pipefail # set -e hides errors, don't use it
-
-# Get the directory of the script file
 SCRIPT_DIR="$(
   cd "${BASH_SOURCE[0]%/*}" || exit 1
   pwd

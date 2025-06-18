@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Get the directory of the script file
+# Environment setup
 BASH_MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 
 # Import colours if not already done
