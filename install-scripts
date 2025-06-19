@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [-h]
+
+Installs scripts from GitHub repository to ${HOME}/bin/scripts and updates PATH.
+
+Dependencies:
+  git                Required to clone the repository
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+echo "Installing grantcarthew/scripts"
+echo "License: Mozilla Public License Version 2.0"
+
+echo "Checking Dependencies"
+if ! command -v git >/dev/null; then
+  echo "ERROR: Missing dependency - 'git'" >&2
+  exit 1
+fi
+
+echo "Checking Target Directory"
+readonly target_dir="${HOME}/bin/scripts"
+if [[ -d "${target_dir}" ]]; then
+  echo "Directory '${target_dir}' already exists, skipping creation"
+else
+  mkdir -p "${target_dir}" || { echo "ERROR: Failed to create '${target_dir}'" >&2; exit 1; }
+fi
+
+echo "Cloning Repository"
+if [[ -d "${target_dir}/.git" ]]; then
+  echo "Repository already cloned in '${target_dir}', skipping clone"
+else
+  git clone git@github.com:grantcarthew/scripts.git "${target_dir}" || { echo "ERROR: Failed to clone repository" >&2; exit 1; }
+  echo "Cloned repository to '${target_dir}'"
+fi
+
+echo "Updating PATH in .bashrc"
+bashrc_file="${HOME}/.bashrc"
+#shellcheck disable=SC2016
+path_entry='export PATH="${PATH}:${HOME}/bin/scripts"'
+if grep -Fx "${path_entry}" "${bashrc_file}" >/dev/null; then
+  echo "PATH entry already exists in '${bashrc_file}'"
+else
+  echo "${path_entry}" >> "${bashrc_file}" || { echo "ERROR: Failed to update '${bashrc_file}'" >&2; exit 1; }
+  echo "Added PATH entry to '${bashrc_file}'"
+fi
+
+echo "Installation complete."
+echo "Either run 'source ${bashrc_file}' to update your current session"
+echo "or restart your terminal."
