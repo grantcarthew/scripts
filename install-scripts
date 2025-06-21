@@ -2,8 +2,6 @@
 
 # Environment setup
 set -o pipefail
-SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-export PATH="${PATH}:${SCRIPT_DIR}"
 
 function print_usage() {
   cat <<EOF
@@ -24,6 +22,7 @@ if [[ $# -gt 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
   exit 1
 fi
 
+echo
 echo "Installing grantcarthew/scripts"
 echo "License: Mozilla Public License Version 2.0"
 
@@ -44,6 +43,10 @@ fi
 echo "Cloning Repository"
 if [[ -d "${target_dir}/.git" ]]; then
   echo "Repository already cloned in '${target_dir}', skipping clone"
+  echo "Pulling updates"
+  cd "${target_dir}" || { echo "ERROR: Failed to change directory to '${target_dir}'" >&2; exit 1; }
+  git pull || { echo "ERROR: Failed to update repository" >&2; exit 1; }
+  cd - || { echo "ERROR: Failed to change directory back to original location" >&2; exit 1; }
 else
   git clone git@github.com:grantcarthew/scripts.git "${target_dir}" || { echo "ERROR: Failed to clone repository" >&2; exit 1; }
   echo "Cloned repository to '${target_dir}'"

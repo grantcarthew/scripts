@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/../../bash_modules/git.sh"
 source "${SCRIPT_DIR}/../../bash_modules/utils.sh"
-source "${SCRIPT_DIR}/../../bash_modules/user_input.sh"
+source "${SCRIPT_DIR}/../../bash_modules/user-input.sh"
 
 print_usage() {
   cat <<EOF

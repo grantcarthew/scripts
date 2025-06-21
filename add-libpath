@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+export PATH="${PATH}:${SCRIPT_DIR}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [lib_name]
+
+Adds a library directory to PATH in .bashrc if not already present.
+
+Dependencies:
+  fzf                For interactive directory selection
+  lsd                For directory listing in preview
+
+Required arguments:
+  lib_name           Name or part of library directory name (optional)
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+log_title "Add Library Path"
+
+lib_dir="${SCRIPT_DIR}/lib"
+lib_name="${1}"
+
+log_heading "Validate Library Directory"
+if [[ ! -d "${lib_dir}" ]]; then
+  log_error "ERROR: Library directory '${lib_dir}' does not exist"
+  exit 1
+fi
+
+# Dependency check
+dependencies=(fzf lsd)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "ERROR: Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+log_heading "Select Library Directory"
+mapfile -t lib_dirs < <(find "${lib_dir}" -maxdepth 1 -type d -not -path "${lib_dir}" -exec basename {} \;)
+
+if [[ ${#lib_dirs[@]} -eq 0 ]]; then
+  log_error "ERROR: No library directories found in '${lib_dir}'"
+  exit 1
+fi
+
+selected_dir=""
+if [[ -n "${lib_name}" ]]; then
+  mapfile -t matches < <(find "${lib_dir}" -maxdepth 1 -type d -name "*${lib_name}*" -not -path "${lib_dir}" -exec basename {} \;)
+  if [[ ${#matches[@]} -eq 1 ]]; then
+    selected_dir="${lib_dir}/${matches[0]}"
+  elif [[ ${#matches[@]} -gt 1 ]]; then
+    selected_dir_name=$(printf "%s\n" "${matches[@]}" | fzf --prompt="Select library directory: " --query="${lib_name}" --preview "lsd --oneline --group-directories-first '${lib_dir}/{}'")
+    if [[ -z "${selected_dir_name}" ]]; then
+      log_error "ERROR: No directory selected"
+      exit 1
+    fi
+    selected_dir="${lib_dir}/${selected_dir_name}"
+  else
+    log_warning "No exact match for '${lib_name}', using fzf to select"
+    selected_dir_name=$(printf "%s\n" "${lib_dirs[@]}" | fzf --prompt="Select library directory: " --query="${lib_name}" --preview "lsd --oneline --group-directories-first '${lib_dir}/{}'")
+    if [[ -z "${selected_dir_name}" ]]; then
+      log_error "ERROR: No directory selected"
+      exit 1
+    fi
+    selected_dir="${lib_dir}/${selected_dir_name}"
+  fi
+else
+  selected_dir_name=$(printf "%s\n" "${lib_dirs[@]}" | fzf --prompt="Select library directory: " --preview "lsd --oneline --group-directories-first '${lib_dir}/{}'")
+  if [[ -z "${selected_dir_name}" ]]; then
+    log_error "ERROR: No directory selected"
+    exit 1
+  fi
+  selected_dir="${lib_dir}/${selected_dir_name}"
+fi
+
+log_heading "Check .bashrc"
+bashrc="${HOME}/.bashrc"
+if grep -Fx "export PATH=\"\${PATH}:${selected_dir}\"" "${bashrc}" >/dev/null; then
+  log_success "Path '${selected_dir}' already in .bashrc"
+  exit 0
+fi
+
+log_heading "Update .bashrc"
+echo "export PATH=\"\${PATH}:${selected_dir}\"" >> "${bashrc}"
+log_success "Added '${selected_dir}' to PATH in .bashrc"
