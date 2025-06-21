@@ -19,7 +19,7 @@ fi
 
 source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/colours.sh"
 source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/terminal.sh"
-source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/user_input.sh"
+source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/user-input.sh"
 source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/utils.sh"
 source "${__AWSLOGIN_ORIGINAL_PATH}/../../bash_modules/desktop.sh"
 
