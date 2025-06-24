@@ -1,23 +1,15 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
-
-Usage: tp [-h]
-
-Terraform Plan
-
-Runs a terraform plan
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
 if [[ "${#}" -gt 0 ]]; then
-    usage
-    exit 0
+  echo "[t]erraform [p]lan"
+  echo "terraform plan"
+  exit 1
 fi
 
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "terraform plan"
 terraform plan
+log_line

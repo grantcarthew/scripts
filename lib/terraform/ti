@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
-
-Usage: ti [-h]
-
-Terraform Initialisation
-
-Runs a terraform init with upgrade then a plan
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -gt 0 ]]; then
-    usage
-    exit 0
+if [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  echo "[t]erraform [i]nit [bucket-name]"
+  echo "terraform init -upgrade [-backend-config=\"bucket=<bucket-name>\"]"
+  exit 1
 fi
 
-terraform init -upgrade
-terraform plan
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "terraform init"
+log_message "Removing .terraform directory and .terraform.lock.hcl file"
+rm .terraform -rf && rm .terraform.lock.hcl -f
+log_message " Bucket Name: '${1}'"
+
+if [[ -z "${1}" ]]; then
+  terraform init -upgrade
+else
+  terraform init -upgrade -backend-config="bucket=${1}"
+fi
+log_line
