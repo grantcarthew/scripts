@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+if [[ $# -gt 0 ]]; then
+    echo "[g]it [s]status"
+    echo "git status"
+    exit 1
+fi
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "git status"
+git status
+log_line

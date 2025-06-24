@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[g]it [c]ommit"
-    echo "git commit [arguments]"
-    exit 1
-fi
-
-git commit "$@"
