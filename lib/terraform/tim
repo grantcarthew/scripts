@@ -1,27 +1,13 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-Usage: tim <resource> <id> [-h]
+log_title "[t]erraform [i]mport <resource> <id>"
 
-Terraform Import
+[[ "${#}" -ne 2 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-Runs a terraform import
-
-Required arguments:
-  resource               Source resource id
-  id                     Source name or id
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -ne 2 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
-    usage
-    exit 0
-fi
-
+log_subheading "command: terraform import ${1} ${2}"
 terraform import "${1}" "${2}"
+log_line

@@ -1,23 +1,18 @@
 #!/usr/bin/env bash
 
-if [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-  echo "[t]erraform [p]lan [tfplan-file]"
-  echo "terraform plan [-out=<tfplan-file>]"
-  exit 1
-fi
-
 set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-log_title "terraform plan with tfplan file"
-log_message "Removing .terraform directory and .terraform.lock.hcl file"
+log_title "[t]erraform [p]lan [o]ut [tfplan-file]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 # shellcheck disable=SC2034
 code="$("${SCRIPT_DIR}/../../new-code")"
 default_tfplan_file="$(basename "${PWD}")-${code}.tfplan"
 tfplan_file="${1:-$default_tfplan_file}"
-log_message " tfplan_file: '${tfplan_file}'"
 
+log_subheading "command: terraform plan -out=${tfplan_file}"
 terraform plan -out="${tfplan_file}"
 log_line

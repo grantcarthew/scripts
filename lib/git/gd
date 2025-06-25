@@ -1,21 +1,18 @@
 #!/usr/bin/env bash
 
-if [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[g]it [d]iff [file-path]"
-    echo "git diff \${1}"
-    exit 1
-fi
-
 set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
+log_title "[g]it [d]iff [file-path]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
 if [[ "${#}" -gt 0 ]]; then
-    log_title "git diff ${1}"
+    log_subheading "command: git diff ${1}"
     git diff "${1}"
 else
-    log_title "git diff"
+    log_subheading "command: git diff"
     git diff
 fi
-
 log_line

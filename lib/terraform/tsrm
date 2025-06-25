@@ -1,26 +1,13 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-Usage: tsrm <resource-id> [-h]
+log_title "[t]erraform [s]tate [r]e[m]ove <resource-id>"
 
-Terraform State RM
+[[ "${#}" -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-Runs a Terraform State Remove
-
-Required arguments:
-  resource-id            Resource to remove
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -ne 1 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
-    usage
-    exit 0
-fi
-
+log_subheading "command: terraform state rm ${1}"
 terraform state rm "${1}"
+log_line
