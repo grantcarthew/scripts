@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[t]erraform [l]int"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_message "Running terraform formatting and linting tools"
+
+log_heading "Formatting"
+log_subheading "terraform fmt -recursive"
+terraform fmt -recursive
+
+log_heading "Validating"
+log_subheading "terraform validate"
+terraform validate
+
+log_heading "Linting"
+log_subheading "tflint --recursive"
+if ! command -v tflint >/dev/null; then
+  log_warning "Missing dependency - tflint"
+  log_message "Please install 'tflint' for a full analysis"
+  log_message "https://github.com/terraform-linters/tflint"
+else
+  tflint --recursive
+fi
+
+log_heading "Security scanning with trivy"
+log_subheading "trivy config ."
+if ! command -v trivy >/dev/null; then
+  log_warning "Missing dependency - trivy"
+  log_message "Please install 'trivy' for a full analysis"
+  log_message "https://trivy.dev/latest/"
+else
+  trivy config .
+fi
+log_line

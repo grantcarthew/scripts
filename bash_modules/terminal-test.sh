@@ -33,15 +33,15 @@ function test_function() {
   local func_name="$1"
   local description="$2"
   shift 2
-  
+
   log_heading "Testing: ${func_name}"
   log_message "Description: ${description}"
   log_message "Output:"
   log_newline
-  
+
   # Execute the function with all remaining parameters
   "$@"
-  
+
   log_newline
   log_message "Press Enter to continue..."
   read -r
@@ -54,7 +54,7 @@ log_newline
 read -r
 
 # Test line drawing functions
-test_function "log_line" "Draws a line with specified character and length" \
+test_function "log_line" "Draws a line with specified character and length (30)" \
   log_line
 
 test_function "log_line (custom)" "Draws a line with custom character and length" \
@@ -117,6 +117,12 @@ export -f log_percent
 test_function "log_percent" "Shows a percentage progress indicator" \
   bash -c 'for i in {1..10}; do log_percent $i 10; sleep 0.5; done; log_newline'
 
+test_function "log_percent (invalid input)" "Shows error message for non-numeric input" \
+  log_percent "abc" 10
+
+test_function "log_percent (zero divisor)" "Shows error message for division by zero" \
+  log_percent 5 0
+
 # Test progress bar
 export -f log_progressbar
 test_function "log_progressbar" "Shows a progress bar indicator" \
@@ -128,40 +134,17 @@ export -f log_success
 test_function "log_spinner" "Shows a spinner while a process runs" \
   bash -c 'sleep 5 & log_spinner $! "Processing data"; log_success "Process complete"'
 
+# Test wait function
+test_function "log_wait" "Shows a spinner while waiting for specified seconds" \
+  log_wait "Waiting for process to complete" 5
+
+# Test press any key function
+test_function "log_pressanykey" "Pauses execution until user presses a key" \
+  log_pressanykey "Press any key to proceed to the next test..."
+
 # Test final "done" message
 test_function "log_done" "Shows a completion message with success mark" \
   log_done
-
-# Test GitLab CI detection
-log_heading "Testing: is_gitlab_ci"
-log_message "This function checks if the script is running in GitLab CI."
-unset CI_JOB_TOKEN
-log_message "Should be negative: $(is_gitlab_ci && echo "In GitLab CI" || echo "Not in GitLab CI")"
-CI_JOB_TOKEN="faketoken"
-log_message "Should be positive: $(is_gitlab_ci && echo "In GitLab CI" || echo "Not in GitLab CI")"
-log_newline
-
-# Error handling tests (optional)
-if [[ "${INCLUDE_ERRORS}" == "true" ]]; then
-  log_title "ERROR HANDLING TESTS"
-  log_message "The following tests demonstrate error handling in the functions."
-  log_newline
-  
-  test_function "log_percent (invalid input)" "Shows error message for non-numeric input" \
-    log_percent "abc" 10
-  
-  test_function "log_percent (zero divisor)" "Shows error message for division by zero" \
-    log_percent 5 0
-    
-  # Simulate missing jq if possible
-  if command -v jq >/dev/null 2>&1; then
-    log_message "Cannot test log_json error handling because jq is installed."
-    log_message "To test this, you would need to run the script on a system without jq."
-  else
-    test_function "log_json (missing dependency)" "Shows error message for missing jq" \
-      log_json '{"test":"value"}'
-  fi
-fi
 
 log_title "TEST COMPLETE"
 log_message "All terminal.sh functions have been demonstrated."

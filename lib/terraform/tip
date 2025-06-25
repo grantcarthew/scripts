@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
 
-if [[ "${#}" -gt 0 ]]; then
-  echo "[t]erraform [i]nit & terraform [p]lan"
-  echo "terraform init -upgrade && terraform plan"
-  exit 1
-fi
-
 set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-log_title "terraform init & plan"
-log_heading "terraform init -upgrade"
+log_title "[t]erraform [i]nit & [p]lan"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_subheading "command: terraform init -upgrade"
 terraform init -upgrade
-log_heading "terraform plan"
+log_subheading "command: terraform plan"
 terraform plan
 log_line

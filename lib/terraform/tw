@@ -1,23 +1,17 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-Usage: tw [-h]
+log_title "[t]erraform [w]atch"
+log_message "This command will run 'terraform fmt -recursive' and 'terraform validate'"
+log_message "on every file change in the current directory."
 
-Terraform Watch
+[[ "${#}" -gt 0 ]] && exit 1
 
-Watches all files and runs a fmt and validate on changes
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -gt 0 ]]; then
-    usage
-    exit 0
-fi
+log_subheading "command: rg -l '.' | entr -c bash -c \"echo \\\"-- \$(date +%T) --\\\" && terraform fmt -recursive && terraform validate\""
+log_pressanykey
 
 rg -l '.' | entr -c bash -c "echo \"-- \$(date +%T) --\" && terraform fmt -recursive && terraform validate"
+log_line

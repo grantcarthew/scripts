@@ -1,23 +1,13 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-Usage: tsl [-h]
+log_title "[t]erraform [s]tate [l]ist"
 
-Terraform State List
+[[ "${#}" -gt 0 ]] && exit 1
 
-Runs a Terraform State List
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -gt 0 ]]; then
-    usage
-    exit 0
-fi
-
+log_subheading "command: terraform state list"
 terraform state list
+log_line

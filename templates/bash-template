@@ -109,4 +109,6 @@ log_failure "This is a failure message with a cross icon"
 # log_percent         - Displays a percentage completion counter
 # log_progressbar     - Shows a visual progress bar with percentage
 # log_spinner         - Displays an animated spinner while a process is running
+# log_wait            - Waits for a specified duration, showing a spinner
+# log_pressanykey     - Prompts the user to press any key to continue
 # log_done            - Prints a completion message with a green checkmark

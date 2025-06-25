@@ -1,23 +1,13 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-Usage: tps [-h]
+log_title "[t]erraform [p]lan [s]ummary"
 
-Terraform Plan as a Summary
+[[ "${#}" -gt 0 ]] && exit 1
 
-Runs a terraform plan but only displays the "# " lines
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -gt 0 ]]; then
-    usage
-    exit 0
-fi
-
+log_subheading "command: terraform plan | rg '# |Plan:' | rg -v '\.data\.|# \('"
 terraform plan | rg '# |Plan:' | rg -v '\.data\.|# \('
+log_line

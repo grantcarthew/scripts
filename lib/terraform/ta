@@ -1,28 +1,20 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-Usage: ta [aa] [-h]
+log_title "[t]erraform [a]pply [aa]"
 
-Terraform Apply
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-Runs a terraform apply with optional auto approve
-
-Optional arguments:
-  aa                     Auto approve the apply
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -gt 1 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
-    usage
-    exit 0
-fi
-
-if [[ "${1}" == "aa" ]];then
+if [[ "${1}" == "aa" ]]; then
+  log_subheading "command: terraform apply -auto-approve"
   terraform apply -auto-approve
-else
-  terraform apply
+  log_line
+  exit 0
 fi
+
+log_subheading "command: terraform apply"
+terraform apply
+log_line
