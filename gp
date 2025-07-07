@@ -130,6 +130,12 @@ Respond only once to this message with "I am an expert in {{subject}}, let's get
 EOT
 )"
 
-send_to_clipboard "${raw_content}"
-log_success "File contents copied to clipboard!"
+# If we are outputting to a terminal, copy to clipboard.
+if [[ -t 1 ]]; then
+  send_to_clipboard "${raw_content}"
+  log_success "File contents copied to clipboard!"
+else
+  echo -n "${raw_content}"
+  log_success "File contents written to stdout!"
+fi
 log_done
