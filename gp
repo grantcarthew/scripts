@@ -73,7 +73,7 @@ if [[ "$file_list" == *"API rate limit exceeded"* ]]; then
   exit 1
 fi
 
-readarray -t files < <(echo "${file_list}" | jq -r '.[] | select(.type == "file") | .name') || exit 1
+readarray -t files < <(echo "${file_list}" | jq -r '.[] | select(.type == "file" and .name != "README.md") | .name') || exit 1
 
 if [[ -n "$1" ]]; then
   log_message "Filtering for: ${1}"
