@@ -38,7 +38,7 @@ fi
 log_title "Grant Carthew's GitHub Prompts"
 log_heading "Dependency Check"
 
-dependencies=(curl jq rg pbcopy fzf)
+dependencies=(curl jq rg fzf)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
