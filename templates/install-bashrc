@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly source_url="https://raw.githubusercontent.com/grantcarthew/notes/main/bashrc"
+readonly source_url="https://raw.githubusercontent.com/grantcarthew/scripts/main/templates/bashrc"
 readonly dest_file="${HOME}/.bashrc"
 readonly temp_file="/tmp/.bashrc.new"
 readonly backup_file="/tmp/.bashrc.bak"
