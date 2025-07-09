@@ -1,3 +1,4 @@
 /.vscode
 /lib/private/*
 !/lib/private/README.md
+AGENTS.md
