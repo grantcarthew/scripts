@@ -10,13 +10,18 @@ Use the following on a new installation of Linux to replace everything in the ~/
 bash <(curl -s "https://raw.githubusercontent.com/grantcarthew/scripts/main/templates/install-bashrc")
 ```
 
-## AI Command Helper
+## Bashrc AI Helpers
 
-The following example can be added to the ~/.bashrc file to use the Gemini CLI as a command helper.
+The following examples can be added to the ~/.bashrc file to use the Gemini CLI as an AI terminal helper.
 
-After adding it you can type any command question into the terminal and press CTRL+L.
+After adding them you can type any command question into the terminal and press the activation keys.
+
+
+### AI Command Helper
 
 Gemini CLI will return a valid Bash command.
+
+Activation Key: CTRL+H
 
 ```bash
 read -r -d '' __prompt <<'EOF'
@@ -39,12 +44,16 @@ if [[ -n "${READLINE_LINE}" ]]; then
     READLINE_POINT="${#READLINE_LINE}"
 fi
 }
-bind -x '"\C-l": __ai_bash'
+bind -x '"\C-h": __ai_bash'
 ```
 
 _Note: You can edit the script above to use any terminal AI client that supports prompt arguments._
 
-## AI English Helper
+### AI English Helper
+
+Gemini CLI will return the correct spelling, synonyms, and antonyms.
+
+Activation Key: CTRL+D
 
 ```bash
 read -r -d '' __define_prompt <<'EOF'
