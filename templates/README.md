@@ -16,7 +16,6 @@ The following examples can be added to the ~/.bashrc file to use the Gemini CLI 
 
 After adding them you can type any command question into the terminal and press the activation keys.
 
-
 ### AI Command Helper
 
 Gemini CLI will return a valid Bash command.
