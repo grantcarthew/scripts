@@ -30,6 +30,12 @@ if [[ $# -lt 2 || $# -gt 3 || "${1}" == "-h" || "${1}" == "--help" ]]; then
   exit 1
 fi
 
+function cleanup() {
+  log_warning "\nScript interrupted. Exiting."
+  exit 1
+}
+trap cleanup SIGINT
+
 log_title "Your Script Title"
 log_heading "Dependency Check"
 
