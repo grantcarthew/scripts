@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[g]it [push] origin current-branch"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+branch_name="$(git branch --show-current 2>/dev/null)"
+if [[ -z "${branch_name}" ]]; then
+  log_error "Failed to determine current branch"
+  exit 1
+fi
+
+log_message "❯ git push origin ${branch_name}"
+git push origin "${branch_name}"
