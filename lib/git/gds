@@ -8,9 +8,10 @@ log_title "[g]it [d]iff --[s]taged [path]"
 
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-log_message "❯ git diff --staged"
 if [[ -z "${1}" ]]; then
+  log_message "❯ git diff --staged"
   git diff --staged
 else
+  log_message "❯ git diff --staged ${1}"
   git diff --staged "${1}"
 fi

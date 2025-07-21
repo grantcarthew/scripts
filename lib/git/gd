@@ -8,9 +8,10 @@ log_title "[g]it [d]iff [file-path]"
 
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-log_message "❯ git diff"
 if [[ -z "${1}" ]]; then
+  log_message "❯ git diff"
   git diff
 else
+  log_message "❯ git diff ${1}"
   git diff "${1}"
 fi
