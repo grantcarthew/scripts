@@ -4,9 +4,9 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-log_title "[g]it [c]ommit [arguments]"
+log_title "[g]it [c]ommit --message [message]"
 
 [[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-log_message "❯ git commit ${*}"
-git commit "$@"
+log_message "❯ git commit --message '${1}'"
+git commit --message "'$1'"
