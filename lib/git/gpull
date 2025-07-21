@@ -4,7 +4,7 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-log_title "[g]it [p]ull [o]rigin [branch-name|current]"
+log_title "[g]it [pull] origin [branch-name|current-branch]"
 
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
