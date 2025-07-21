@@ -8,5 +8,5 @@ log_title "[g]it [c]ommit [arguments]"
 
 [[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-log_message "❯ git commit " "${@}"
+log_message "❯ git commit ${*}"
 git commit "$@"
