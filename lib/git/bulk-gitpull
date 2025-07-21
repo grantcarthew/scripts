@@ -18,7 +18,6 @@ if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
 fi
 
 log_title "Git Pull All Repos in Child Directories"
-log_heading "Dependency Check"
 
 dependencies=(git)
 for cmd in "${dependencies[@]}"; do
@@ -27,7 +26,6 @@ for cmd in "${dependencies[@]}"; do
     exit 1
   fi
 done
-log_success "Command-line dependencies installed"
 
 log_heading "Processing Child Directories"
 

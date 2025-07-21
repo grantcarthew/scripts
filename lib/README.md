@@ -56,11 +56,13 @@ log_title "[g]it [s]tatus [path]"
 
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-log_message "❯ git status"
 if [[ -z "${1}" ]]; then
+  log_message "❯ git status"
   git status
 else
+  log_message "❯ git status ${1}"
   git status "${1}"
 fi
+
 
 ```
