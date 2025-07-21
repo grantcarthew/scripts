@@ -21,8 +21,7 @@ Design approach:
 - Use the bash_modules
 - Always display the help title
 - Exit if the arguments are invalid or help
-- Log the command with log_subheading "command: ???"
-- Use log_line at the end
+- Log the command with log_message "❯ {{command}}"
 
 Following are the current patterns used for creating short scripts.
 
@@ -35,13 +34,13 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-log_title "[g]it [s]tatus"
+log_title "[g]it [f]etch --all --prune"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
-log_subheading "command: git status"
-git status
-log_line
+log_message "❯ git fetch --all --prune"
+git fetch --all --prune
+
 ```
 
 With arguments:
@@ -53,16 +52,15 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-log_title "[g]it [d]iff [file-path]"
+log_title "[g]it [s]tatus [path]"
 
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-if [[ "${#}" -gt 0 ]]; then
-    log_subheading "command: git diff ${1}"
-    git diff "${1}"
+log_message "❯ git status"
+if [[ -z "${1}" ]]; then
+  git status
 else
-    log_subheading "command: git diff"
-    git diff
+  git status "${1}"
 fi
-log_line
+
 ```

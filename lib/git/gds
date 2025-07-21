@@ -4,15 +4,13 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-log_title "git diff --staged"
+log_title "[g]it [d]iff --[s]taged [path]"
 
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-if [[ "${#}" -gt 0 ]]; then
-    log_subheading "command: git diff --staged ${1}"
-    git diff --staged "${1}"
+log_message "❯ git diff --staged"
+if [[ -z "${1}" ]]; then
+  git diff --staged
 else
-    log_subheading "command: git diff --staged"
-    git diff --staged
+  git diff --staged "${1}"
 fi
-log_line

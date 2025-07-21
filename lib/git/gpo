@@ -18,6 +18,5 @@ else
   fi
 fi
 
-log_subheading "command: git pull origin ${branch_name}"
+log_message "❯ git pull origin ${branch_name}"
 git pull origin "${branch_name}"
-log_line
