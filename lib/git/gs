@@ -8,10 +8,9 @@ log_title "[g]it [s]tatus [path]"
 
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-log_subheading "command: git status"
+log_message "❯ git status"
 if [[ -z "${1}" ]]; then
   git status
 else
   git status "${1}"
 fi
-log_line

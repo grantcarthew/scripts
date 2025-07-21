@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
 
-if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[g]it [c]ommit"
-    echo "git commit [arguments]"
-    exit 1
-fi
-
 set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-log_title "git commit" "$@"
+log_title "[g]it [c]ommit [arguments]"
+
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+log_message "❯ git commit " "${@}"
 git commit "$@"
-log_line
