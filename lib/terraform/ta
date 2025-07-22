@@ -9,12 +9,10 @@ log_title "[t]erraform [a]pply [aa]"
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ "${1}" == "aa" ]]; then
-  log_subheading "command: terraform apply -auto-approve"
+  log_message "❯ terraform apply -auto-approve"
   terraform apply -auto-approve
-  log_line
   exit 0
 fi
 
-log_subheading "command: terraform apply"
+log_message "❯ terraform apply"
 terraform apply
-log_line

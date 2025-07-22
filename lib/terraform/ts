@@ -8,6 +8,5 @@ log_title "[t]erraform [s]how"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
-log_subheading "command: terraform show"
+log_message "❯ terraform show"
 terraform show
-log_line

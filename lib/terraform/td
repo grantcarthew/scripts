@@ -8,6 +8,5 @@ log_title "[t]erraform [d]estroy"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
-log_subheading "command: terraform destroy"
+log_message "❯ terraform destroy"
 terraform destroy
-log_line
