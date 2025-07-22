@@ -8,8 +8,7 @@ log_title "[t]erraform [i]nit & [p]lan"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
-log_subheading "command: terraform init -upgrade"
+log_message "❯ terraform init -upgrade"
 terraform init -upgrade
-log_subheading "command: terraform plan"
+log_message "❯ terraform plan"
 terraform plan
-log_line

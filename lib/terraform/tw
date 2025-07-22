@@ -10,8 +10,7 @@ log_message "on every file change in the current directory."
 
 [[ "${#}" -gt 0 ]] && exit 1
 
-log_subheading "command: rg -l '.' | entr -c bash -c \"echo \\\"-- \$(date +%T) --\\\" && terraform fmt -recursive && terraform validate\""
+log_message "❯ rg -l '.' | entr -c bash -c \"echo \\\"-- \$(date +%T) --\\\" && terraform fmt -recursive && terraform validate\""
 log_pressanykey
 
 rg -l '.' | entr -c bash -c "echo \"-- \$(date +%T) --\" && terraform fmt -recursive && terraform validate"
-log_line

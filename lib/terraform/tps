@@ -8,6 +8,5 @@ log_title "[t]erraform [p]lan [s]ummary"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
-log_subheading "command: terraform plan | rg '# |Plan:' | rg -v '\.data\.|# \('"
+log_message "❯ terraform plan | rg '# |Plan:' | rg -v '\.data\.|# \('"
 terraform plan | rg '# |Plan:' | rg -v '\.data\.|# \('
-log_line

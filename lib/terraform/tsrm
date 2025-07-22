@@ -8,6 +8,5 @@ log_title "[t]erraform [s]tate [r]e[m]ove <resource-id>"
 
 [[ "${#}" -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-log_subheading "command: terraform state rm ${1}"
+log_message "❯ terraform state rm ${1}"
 terraform state rm "${1}"
-log_line

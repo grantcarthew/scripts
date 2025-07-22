@@ -11,15 +11,15 @@ log_title "[t]erraform [l]int"
 log_message "Running terraform formatting and linting tools"
 
 log_heading "Formatting"
-log_subheading "terraform fmt -recursive"
+log_message "❯ terraform fmt -recursive"
 terraform fmt -recursive
 
 log_heading "Validating"
-log_subheading "terraform validate"
+log_message "❯ terraform validate"
 terraform validate
 
 log_heading "Linting"
-log_subheading "tflint --recursive"
+log_message "❯ tflint --recursive"
 if ! command -v tflint >/dev/null; then
   log_warning "Missing dependency - tflint"
   log_message "Please install 'tflint' for a full analysis"
@@ -29,7 +29,7 @@ else
 fi
 
 log_heading "Security scanning with trivy"
-log_subheading "trivy config ."
+log_message "❯ trivy config ."
 if ! command -v trivy >/dev/null; then
   log_warning "Missing dependency - trivy"
   log_message "Please install 'trivy' for a full analysis"
@@ -37,4 +37,3 @@ if ! command -v trivy >/dev/null; then
 else
   trivy config .
 fi
-log_line
