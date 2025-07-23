@@ -104,8 +104,8 @@ IFS= read -r -n 1 key
 if [[ ${#key} -eq 0 ]]; then
   log_message "❯ git commit -m '${commit_message}'"
   git commit -m "${commit_message}"
-else
-  log_newline
-  log_warning "Commit aborted"
   exit 0
 fi
+
+log_newline
+log_warning "Commit aborted"
