@@ -98,13 +98,12 @@ echo "${commit_message}"
 log_newline
 log_line
 
-log_message "Press Enter to commit with this message, or any other key to abort."
+log_message "Press Enter to commit."
 IFS= read -r -n 1 key
 
 if [[ ${#key} -eq 0 ]]; then
   log_message "❯ git commit -m '${commit_message}'"
   git commit -m "${commit_message}"
-  log_success "Commit completed successfully"
 else
   log_newline
   log_warning "Commit aborted"
