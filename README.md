@@ -66,5 +66,5 @@ Review the directories in the **lib** directory and add any you want to your bas
 This example is for the terraform scripts:
 
 ```shell
-echo 'export PATH="${PATH}:${HOME}/bin/lib/terraform"' >> "${HOME}/.bashrc"
+echo 'export PATH="${PATH}:${HOME}/bin/scripts/lib/terraform"' >> "${HOME}/.bashrc"
 ```
