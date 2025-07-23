@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+
+# -----------------------------------------------------------------------------
+# Environment setup - Leave this block intact
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/../../bash_modules/user-input.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0")
+
+Generate a commit message using AI for the currently staged changes.
+
+Dependencies:
+  git                Git version control
+  aichat             AI chat tool
+
+This script will:
+1. Check if there are staged git changes
+2. Generate a commit message using AI
+3. Allow you to confirm and use the generated message
+EOF
+}
+
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# -----------------------------------------------------------------------------
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "[g]it [c]ommit [m]essage generator"
+
+dependencies=(git aichat)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "ERROR: Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+  log_error "ERROR: Not inside a git repository"
+  exit 1
+fi
+
+staged_changes="$(git diff --staged)"
+if [[ $? -ne 0 || -z "${staged_changes}" ]]; then
+  log_error "ERROR: No staged changes found. Use 'git add' to stage changes first."
+  exit 1
+fi
+
+log_message "Generating commit message..."
+
+prompt="$(cat <<EOF
+You are an expert Git Commit Message Generator.
+
+Rules for generating commit messages:
+1. Follow the Conventional Commits specification (type(scope): description)
+2. Be concise but descriptive (50-70 characters for the first line)
+3. Use present tense imperative mood (e.g., "add" not "added")
+4. Include relevant scope if clear from the changes
+5. Start with lowercase letter
+6. Do not end with a period
+7. For complex changes, provide a brief body paragraph after a blank line
+8. Body is optional - only include if it adds meaningful context
+
+Common types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test
+
+Here are the staged changes:
+
+DIFF_START
+${staged_changes}
+DIFF_END
+
+Provide only the commit message without any other text, explanation, or formatting.
+EOF
+)"
+
+commit_message=$(aichat "${prompt}")
+
+log_newline
+echo "${commit_message}"
+log_newline
+log_line
+
+log_message "Press Enter to commit with this message, or any other key to abort."
+read -r -n 1 key
+
+if [[ -z "${key}" ]]; then
+  log_message "❯ git commit -m '${commit_message}'"
+  git commit -m "${commit_message}"
+  log_success "Commit completed successfully"
+else
+  log_newline
+  log_warning "Commit aborted"
+  exit 0
+fi
