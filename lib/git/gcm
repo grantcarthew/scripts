@@ -91,31 +91,34 @@ Provide only the commit message without any other text, explanation, or formatti
 EOF
 )"
 
-commit_message=$(aichat "${prompt}")
+if ! commit_message=$(aichat "${prompt}"); then
+  log_error "ERROR: AI chat command failed"
+  exit 1
+fi
+
+if [[ -z "${commit_message}" ]]; then
+  log_error "ERROR: Generated commit message is empty"
+  exit 1
+fi
 
 log_newline
 echo "${commit_message}"
 log_newline
 log_line
 
-log_message "Press Enter to commit."
-IFS= read -r -n 1 key
-
-if [[ ${#key} -gt 0 ]]; then
-  log_newline
+if ! press_enter_to_continue "Press Enter to commit, any other key to abort."; then
   log_warning "Commit aborted"
   exit 1
 fi
 
 log_message "❯ git commit -m '${commit_message}'"
-git commit -m "${commit_message}"
+if ! git commit -m "${commit_message}"; then
+  log_error "ERROR: Git commit failed"
+  exit 1
+fi
 
 log_line
-log_message "Press Enter to push."
-IFS= read -r -n 1 key
-
-if [[ ${#key} -gt 0 ]]; then
-  log_newline
+if ! press_enter_to_continue "Press Enter to push, any other key to abort."; then
   log_warning "Push aborted"
   exit 1
 fi
