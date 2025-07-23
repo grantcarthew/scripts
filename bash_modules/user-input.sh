@@ -79,3 +79,35 @@ function numbered_choice_menu() {
     fi
   done
 }
+
+# Function: press_enter_to_continue
+#
+# Purpose: Prompts the user to press Enter to continue or any other key to abort.
+# This function displays a prompt message and waits for user input.
+# If the user presses Enter, the function returns 0 (success).
+# If the user presses any other key, the function returns 1 (failure).
+#
+# Parameters:
+#   $1 - The prompt message to display (default: "Press Enter to continue, any other key to abort.")
+#
+# Usage:
+#   if press_enter_to_continue "Press Enter to commit, any other key to abort."; then
+#     echo "User pressed Enter, continuing..."
+#   else
+#     echo "User aborted"
+#   fi
+#
+# Supports: Bash 3.2.57
+# shellcheck disable=SC2120
+function press_enter_to_continue() {
+  local prompt_message="${1:-Press Enter to continue, any other key to abort.}"
+
+  echo -n "${prompt_message} " >&2
+  IFS= read -r -n 1 key
+  echo "" >&2  # Add a newline after input
+
+  if [[ ${#key} -gt 0 ]]; then
+    return 1
+  fi
+  return 0
+}
