@@ -110,6 +110,7 @@ fi
 log_message "❯ git commit -m '${commit_message}'"
 git commit -m "${commit_message}"
 
+log_line
 log_message "Press Enter to push."
 IFS= read -r -n 1 key
 
