@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # -----------------------------------------------------------------------------
-# Environment setup - Leave this block intact
+# Environment setup
 # -----------------------------------------------------------------------------
 set -o pipefail
 [[ ${DEBUG-} ]] && set -o xtrace
@@ -64,6 +64,9 @@ if [[ $? -ne 0 || -z "${staged_changes}" ]]; then
   exit 1
 fi
 
+# -----------------------------------------------------------------------------
+# Commit Message Generation
+# -----------------------------------------------------------------------------
 log_message "Generating commit message..."
 
 prompt="$(cat <<EOF
