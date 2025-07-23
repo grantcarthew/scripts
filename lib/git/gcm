@@ -101,11 +101,23 @@ log_line
 log_message "Press Enter to commit."
 IFS= read -r -n 1 key
 
-if [[ ${#key} -eq 0 ]]; then
-  log_message "❯ git commit -m '${commit_message}'"
-  git commit -m "${commit_message}"
-  exit 0
+if [[ ${#key} -gt 0 ]]; then
+  log_newline
+  log_warning "Commit aborted"
+  exit 1
 fi
 
-log_newline
-log_warning "Commit aborted"
+log_message "❯ git commit -m '${commit_message}'"
+git commit -m "${commit_message}"
+
+log_message "Press Enter to push."
+IFS= read -r -n 1 key
+
+if [[ ${#key} -gt 0 ]]; then
+  log_newline
+  log_warning "Push aborted"
+  exit 1
+fi
+
+log_message "❯ gpush"
+gpush
