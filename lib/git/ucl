@@ -109,7 +109,7 @@ fi
 log_message "Generating updated changelog..."
 
 # Generate prompt using heredoc
-prompt=$(cat <<EOF
+prompt="$(cat <<EOF
 $(cat "${SCRIPT_DIR}/ucl-prompt.md")
 
 ## Information
@@ -130,7 +130,7 @@ $(cat "${changelog_path}")
 ${branch_diff}
 \`\`\`
 EOF
-)
+)"
 
 if ! updated_changelog=$(aichat "${prompt}"); then
   log_error "ERROR: AI chat command failed"
