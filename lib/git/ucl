@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/../../bash_modules/user-input.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0")
+
+Update CHANGELOG.md using AI based on current branch changes.
+
+Dependencies:
+  git                Git version control
+  aichat             AI chat tool
+
+This script will:
+1. Determine the default branch (main or master)
+2. Get the current branch name
+3. Generate a diff between default and current branch
+4. Read or create a CHANGELOG.md file
+5. Use AI to update the changelog based on the diff
+EOF
+}
+
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "[u]pdate [c]hange [l]og"
+
+dependencies=(git aichat)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "ERROR: Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+  log_error "ERROR: Not inside a git repository"
+  exit 1
+fi
+
+# Get branch information
+# -----------------------------------------------------------------------------
+if git show-ref --quiet refs/heads/main; then
+  default_branch="main"
+elif git show-ref --quiet refs/heads/master; then
+  default_branch="master"
+else
+  log_error "ERROR: Could not determine default branch (neither main nor master found)"
+  exit 1
+fi
+log_message "Default branch: ${default_branch}"
+
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+if [[ $? -ne 0 ]]; then
+  log_error "ERROR: Failed to determine current branch"
+  exit 1
+fi
+log_message "Current branch: ${current_branch}"
+
+if [[ "${current_branch}" == "${default_branch}" ]]; then
+  log_error "ERROR: Current branch is the default branch. Please switch to a feature branch."
+  exit 1
+fi
+
+# Generate diff between default and current branch
+# -----------------------------------------------------------------------------
+log_message "Generating diff between ${default_branch} and ${current_branch}..."
+branch_diff=$(git diff "${default_branch}...${current_branch}")
+if [[ $? -ne 0 ]]; then
+  log_error "ERROR: Failed to generate diff between branches"
+  exit 1
+fi
+
+if [[ -z "${branch_diff}" ]]; then
+  log_warning "No differences found between ${default_branch} and ${current_branch}"
+  exit 0
+fi
+
+# Handle CHANGELOG.md
+# -----------------------------------------------------------------------------
+changelog_path="${PWD}/CHANGELOG.md"
+current_changelog=""
+
+if [[ -f "${changelog_path}" ]]; then
+  log_message "Reading existing CHANGELOG.md..."
+  current_changelog=$(cat "${changelog_path}")
+  if [[ $? -ne 0 || -z "${current_changelog}" ]]; then
+    log_warning "CHANGELOG.md exists but could not be read or is empty"
+    current_changelog=""
+  fi
+else
+  log_message "No CHANGELOG.md found. Will create a new one."
+fi
+
+# Update Changelog using AI
+# -----------------------------------------------------------------------------
+log_message "Generating updated changelog..."
+
+prompt="$(cat <<EOF
+You are an expert CHANGELOG.md generator following the Keep a Changelog standard (keepachangelog.com).
+
+Your task is to update an existing CHANGELOG.md file based on the git diff provided. If no CHANGELOG.md exists yet, create a new one from scratch.
+
+Keep a Changelog Guidelines:
+1. Do not have an "Unreleased" section at the top for upcoming changes
+2. Each version should have a release date in format YYYY-MM-DD
+3. Group changes into categories:
+   - Added: for new features
+   - Changed: for changes in existing functionality
+   - Deprecated: for soon-to-be removed features
+   - Removed: for now removed features
+   - Fixed: for any bug fixes
+   - Security: in case of vulnerabilities
+
+When creating a new changelog from scratch, use this format:
+
+CHANGELOG_EXAMPLE_START
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+- Initial project setup
+CHANGELOG_EXAMPLE_END
+
+Current CHANGELOG.md content:
+CHANGELOG_START
+${current_changelog}
+CHANGELOG_END
+
+Git diff between branches:
+DIFF_START
+${branch_diff}
+DIFF_END
+
+Provide the complete updated CHANGELOG.md content, preserving all existing entries and adding relevant new entries to the top based on the diff. If this is a new CHANGELOG.md, create it following the Keep a Changelog standard.
+EOF
+)"
+
+if ! updated_changelog=$(aichat "${prompt}"); then
+  log_error "ERROR: AI chat command failed"
+  exit 1
+fi
+
+if [[ -z "${updated_changelog}" ]]; then
+  log_error "ERROR: Generated changelog is empty"
+  exit 1
+fi
+
+# Display and save the updated changelog
+log_newline
+echo "${updated_changelog}"
+log_newline
+log_line
+
+if ! press_enter_to_continue "Press Enter to save the updated CHANGELOG.md, any other key to abort."; then
+  log_warning "Update aborted"
+  exit 1
+fi
+
+log_message "Saving updated CHANGELOG.md..."
+if ! echo "${updated_changelog}" > "${changelog_path}"; then
+  log_error "ERROR: Failed to save CHANGELOG.md"
+  exit 1
+fi
+
+log_success "CHANGELOG.md has been successfully updated!"
+log_line
