@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[g]it [p]ull [m]ain or master"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+current_branch="$(git branch --show-current 2>/dev/null)"
+if [[ -z "${current_branch}" ]]; then
+  log_error "Failed to determine current branch"
+  exit 1
+fi
+
+if git show-ref --verify --quiet refs/heads/main; then
+  main_or_master="main"
+elif git show-ref --verify --quiet refs/heads/master; then
+  main_or_master="master"
+else
+  log_error "Neither main nor master branch found in this repository"
+  exit 1
+fi
+
+if [[ "${current_branch}" == "${main_or_master}" ]]; then
+  log_message "❯ git pull origin ${main_or_master}"
+  git pull origin "${main_or_master}"
+  exit 0
+fi
+
+log_message "❯ git checkout ${main_or_master}"
+git checkout "${main_or_master}"
+log_newline
+log_message "❯ git pull origin ${main_or_master}"
+git pull origin "${main_or_master}"
+log_newline
+log_message "❯ git checkout ${current_branch}"
+git checkout "${current_branch}"
