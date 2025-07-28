@@ -29,10 +29,7 @@ This script will:
 EOF
 }
 
-if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
-  print_usage
-  exit 0
-fi
+[[ "${#}" -gt 0 ]] && print_usage && exit 0
 
 function ctrlc_trap() {
   log_newline
