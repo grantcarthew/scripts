@@ -132,11 +132,6 @@ ${branch_diff}
 EOF
 )
 
-# For debugging the prompt
-# echo -e "$prompt"
-# exit 0
-
-
 if ! updated_changelog=$(aichat "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
