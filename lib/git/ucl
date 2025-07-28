@@ -96,68 +96,46 @@ fi
 # Handle CHANGELOG.md
 # -----------------------------------------------------------------------------
 changelog_path="${PWD}/CHANGELOG.md"
-current_changelog=""
-
-if [[ -f "${changelog_path}" ]]; then
-  log_message "Reading existing CHANGELOG.md..."
-  current_changelog=$(cat "${changelog_path}")
-  if [[ $? -ne 0 || -z "${current_changelog}" ]]; then
-    log_warning "CHANGELOG.md exists but could not be read or is empty"
-    current_changelog=""
+if [[ ! -f "${changelog_path}" ]]; then
+  log_message "Creating new CHANGELOG.md..."
+  if ! touch "${changelog_path}"; then
+    log_error "ERROR: Failed to create CHANGELOG.md"
+    exit 1
   fi
-else
-  log_message "No CHANGELOG.md found. Will create a new one."
 fi
 
 # Update Changelog using AI
 # -----------------------------------------------------------------------------
 log_message "Generating updated changelog..."
 
-prompt="$(cat <<EOF
-You are an expert CHANGELOG.md generator following the Keep a Changelog standard (keepachangelog.com).
+# Generate prompt using heredoc
+prompt=$(cat <<EOF
+$(cat "${SCRIPT_DIR}/ucl-prompt.md")
 
-Your task is to update an existing CHANGELOG.md file based on the git diff provided. If no CHANGELOG.md exists yet, create a new one from scratch.
+## Information
 
-Keep a Changelog Guidelines:
-1. Do not have an "Unreleased" section at the top for upcoming changes
-2. Each version should have a release date in format YYYY-MM-DD
-3. Group changes into categories:
-   - Added: for new features
-   - Changed: for changes in existing functionality
-   - Deprecated: for soon-to-be removed features
-   - Removed: for now removed features
-   - Fixed: for any bug fixes
-   - Security: in case of vulnerabilities
+Current date: $(date +%Y-%m-%d)
 
-When creating a new changelog from scratch, use this format:
+### Existing CHANGELOG.md
 
-CHANGELOG_EXAMPLE_START
-# Changelog
+Note: If the change log is empty, you will need to start a new one.
 
-All notable changes to this project will be documented in this file.
+\`\`\`md
+$(cat "${changelog_path}")
+\`\`\`
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### Git Diff
 
-## [Unreleased]
-
-### Added
-- Initial project setup
-CHANGELOG_EXAMPLE_END
-
-Current CHANGELOG.md content:
-CHANGELOG_START
-${current_changelog}
-CHANGELOG_END
-
-Git diff between branches:
-DIFF_START
+\`\`\`txt
 ${branch_diff}
-DIFF_END
-
-Provide the complete updated CHANGELOG.md content, preserving all existing entries and adding relevant new entries to the top based on the diff. If this is a new CHANGELOG.md, create it following the Keep a Changelog standard.
+\`\`\`
 EOF
-)"
+)
+
+# For debugging the prompt
+# echo -e "$prompt"
+# exit 0
+
 
 if ! updated_changelog=$(aichat "${prompt}"); then
   log_error "ERROR: AI chat command failed"
