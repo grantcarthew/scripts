@@ -103,6 +103,7 @@ if [[ ! -f "${changelog_path}" ]]; then
     exit 1
   fi
 fi
+current_changelog=$(cat "${changelog_path}" 2>/dev/null)
 
 # Update Changelog using AI
 # -----------------------------------------------------------------------------
@@ -121,7 +122,7 @@ Current date: $(date +%Y-%m-%d)
 Note: If the change log is empty, you will need to start a new one.
 
 \`\`\`md
-$(cat "${changelog_path}")
+${current_changelog}
 \`\`\`
 
 ### Git Diff
@@ -142,11 +143,18 @@ if [[ -z "${updated_changelog}" ]]; then
   exit 1
 fi
 
-# Display and save the updated changelog
 log_newline
-echo "${updated_changelog}"
+echo "${updated_changelog}" | head -n 50
+if [[ "$(echo "${updated_changelog}" | wc -l)" -gt 50 ]]; then
+  log_message "... (showing only the first 50 lines)"
+fi
 log_newline
 log_line
+
+if [[ "${updated_changelog}" == "${current_changelog}" ]]; then
+  log_warning "No changes to add to the changelog. No update needed."
+  exit 0
+fi
 
 if ! press_enter_to_continue "Press Enter to save the updated CHANGELOG.md, any other key to abort."; then
   log_warning "Update aborted"
