@@ -144,7 +144,7 @@ if [[ -z "${updated_changelog}" ]]; then
 fi
 
 log_newline
-echo "${updated_changelog}" | head -n 50
+echo "${updated_changelog}" | head -n 30
 if [[ "$(echo "${updated_changelog}" | wc -l)" -gt 50 ]]; then
   log_message "... (showing only the first 50 lines)"
 fi
@@ -166,6 +166,8 @@ if ! echo "${updated_changelog}" > "${changelog_path}"; then
   log_error "ERROR: Failed to save CHANGELOG.md"
   exit 1
 fi
+
+git diff "${changelog_path}"
 
 log_success "CHANGELOG.md has been successfully updated!"
 log_line
