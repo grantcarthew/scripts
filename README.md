@@ -1,6 +1,19 @@
-# Scripts
+# Scripts <!-- omit in toc -->
 
 My scripts for all kinds of automation and workflows.
+
+- [Dependencies](#dependencies)
+  - [Core Tools](#core-tools)
+  - [Cloud \& Services](#cloud--services)
+  - [Infrastructure Tools](#infrastructure-tools)
+- [Installation](#installation)
+  - [One-Liner](#one-liner)
+  - [Manual Installation](#manual-installation)
+    - [Task 1 - Install Git](#task-1---install-git)
+    - [Task 2 - Clone](#task-2---clone)
+    - [Task 3 - PATH](#task-3---path)
+    - [Task 4 - Libraries](#task-4---libraries)
+- [AI Enhanced Tools](#ai-enhanced-tools)
 
 ## Dependencies
 
@@ -10,11 +23,31 @@ The following dependencies are used throughout this repository.
 
 You may not need them all if you are only interested in a few scripts.
 
+### Core Tools
+
+- [aichat](https://github.com/sigoden/aichat): CLI tool for interacting with AI models (used in changelog generation)
+- [curl](https://curl.se/): Command-line tool for transferring data with URLs
 - [entr](https://github.com/eradman/entr): Run arbitrary commands when files change
 - [fd](https://github.com/sharkdp/fd): A simple, fast and user-friendly alternative to 'find'
-- [gh](https://cli.github.com/): GitHub CLI brings GitHub to your terminal
+- [fzf](https://github.com/junegunn/fzf): Command-line fuzzy finder
+- [git](https://git-scm.com/): Distributed version control system
 - [jq](https://github.com/jqlang/jq): Command-line JSON processor
-- [ripgrep](https://github.com/BurntSushi/ripgrep): Regex directory search while respecting your gitignore
+- [lsd](https://github.com/lsd-rs/lsd): The next gen ls command
+- [python](https://www.python.org/): Python interpreter (Python 3 recommended)
+- [ripgrep (rg)](https://github.com/BurntSushi/ripgrep): Regex directory search while respecting your gitignore
+
+### Cloud & Services
+
+- [aws](https://aws.amazon.com/cli/): AWS Command Line Interface
+- [gcloud](https://cloud.google.com/sdk/gcloud): Google Cloud CLI
+- [gh](https://cli.github.com/): GitHub CLI brings GitHub to your terminal
+- [kubectl](https://kubernetes.io/docs/reference/kubectl/): Kubernetes command-line tool
+
+### Infrastructure Tools
+
+- [terraform](https://www.terraform.io/): Infrastructure as code tool
+- [tflint](https://github.com/terraform-linters/tflint): Terraform linter
+- [trivy](https://github.com/aquasecurity/trivy): Vulnerability scanner for containers and infrastructure as code
 
 ## Installation
 
@@ -68,3 +101,8 @@ This example is for the terraform scripts:
 ```shell
 echo 'export PATH="${PATH}:${HOME}/bin/scripts/lib/terraform"' >> "${HOME}/.bashrc"
 ```
+
+## AI Enhanced Tools
+
+- [gcm](lib/git/gcm): Git Commit Generator
+- [ucl](lib/git/ucl): Update Change Log
