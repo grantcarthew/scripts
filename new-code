@@ -1,64 +1,80 @@
 #!/usr/bin/env bash
 
-# Environment setup
-set -o pipefail
+# Environment setup - Leave this block intact
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-export PATH="${PATH}:${SCRIPT_DIR}"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
 
 function print_usage() {
-    cat <<EOF
+  cat <<EOF
 Usage: $(basename "$0") [length]
 
 Generate a random alphanumeric code with specific constraints.
-
-Description:
-  - Alphanumeric only, no symbols
-  - Does not include i, l, 1, o, 0
-  - Always starts with a letter
-  - Only uses lower-case letters: abcdefghjkmnpqrstuvwxyz
-  - Only uses these numbers: 23456789
-  - Probability of numbers to letters is even
+The code is designed to be readable and avoid ambiguous characters.
 
 Optional arguments:
   length             The length of the code (default: 4)
   -h, --help         Show this help message and exit
+
+Code constraints:
+  - Alphanumeric only, no symbols
+  - Does not include i, l, 1, o, 0 (ambiguous characters)
+  - Always starts with a letter
+  - Only uses lower-case letters: abcdefghjkmnpqrstuvwxyz
+  - Only uses these numbers: 23456789
+  - Probability of numbers to letters is even
 EOF
 }
 
 if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-    print_usage
-    exit 1
+  print_usage
+  exit 1
 fi
 
-# Set default length if not provided
-length="${1:-4}"
+declare length="${1:-4}"
+
+# Validate length is numeric and positive
+if [[ -n "${1}" && ! "${1}" =~ ^[1-9][0-9]*$ ]]; then
+  log_error "ERROR: Length must be a positive integer"
+  exit 1
+fi
 
 # Define character sets
-letters="abcdefghjkmnpqrstuvwxyz"
-numbers="23456789"
+declare letters="abcdefghjkmnpqrstuvwxyz"
+declare numbers="23456789"
 
 # Extend numbers to match the length of letters for even distribution
-extended_numbers=""
+declare extended_numbers=""
 while [[ ${#extended_numbers} -lt ${#letters} ]]; do
-    extended_numbers="${extended_numbers}${numbers:$((RANDOM % ${#numbers})):1}"
+  extended_numbers="${extended_numbers}${numbers:$((RANDOM % ${#numbers})):1}"
 done
 
 # Combine characters for selection
-all_chars="${letters}${extended_numbers}"
+declare all_chars="${letters}${extended_numbers}"
 
 # Generate the code
-code=""
-for ((i = 0; i < ${length}; i++)); do
-    if [[ $i -eq 0 ]]; then
-        # Ensure the first character is a letter
-        char="${letters:$((RANDOM % ${#letters})):1}"
-    else
-        char="${all_chars:$((RANDOM % ${#all_chars})):1}"
-    fi
-    code="${code}${char}"
+declare code=""
+for ((i = 0; i < length; i++)); do
+  if [[ $i -eq 0 ]]; then
+    # Ensure the first character is a letter
+    char="${letters:$((RANDOM % ${#letters})):1}"
+  else
+    char="${all_chars:$((RANDOM % ${#all_chars})):1}"
+  fi
+  code="${code}${char}"
 done
 
-log_newline
+# Display the result
 printf "%s" "${code}"
 log_newline
