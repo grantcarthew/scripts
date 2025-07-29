@@ -67,27 +67,14 @@ fi
 log_message "Generating commit message..."
 
 prompt="$(cat <<EOF
-You are an expert Git Commit Message Generator.
+$(cat "${SCRIPT_DIR}/gcm-prompt.md")
 
-Rules for generating commit messages:
-1. Follow the Conventional Commits specification (type(scope): description)
-2. Be concise but descriptive (50-70 characters for the first line)
-3. Use present tense imperative mood (e.g., "add" not "added")
-4. Include relevant scope if clear from the changes
-5. Start with lowercase letter
-6. Do not end with a period
-7. For complex changes, provide a brief body paragraph after a blank line
-8. Body is optional - only include if it adds meaningful context
+## Git Diff
 
-Common types: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test
-
-Here are the staged changes:
-
-\`\`\`txt
+\`\`\`md
 ${staged_changes}
 \`\`\`
 
-Provide only the commit message without any other text, explanation, or formatting.
 EOF
 )"
 
