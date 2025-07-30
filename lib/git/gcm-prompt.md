@@ -23,6 +23,7 @@
 - Include relevant scope if clear from the changes
 - Start with lowercase letter
 - Do not end with a period
+- If the changed file is the CHANGELOG.md file or similar, the message should reflect the change to the CHANGELOG.md file
 - Body is optional:
   - Only include if it adds meaningful context
   - For complex changes, provide a brief body paragraph after a blank line
