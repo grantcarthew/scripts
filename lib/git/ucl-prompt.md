@@ -25,6 +25,7 @@
 - Analyze the provided information
 - Determine if the current CHANGELOG.md document needs updating
 - Classify changes into standard categories: `Added`, `Changed`, `Fixed`, `Removed`, `Deprecated`, `Security`
+- Only add categories to the change log if they have content
 - Prioritize **precision** in your responses
 - Update the content as needed
 - Output the updated CHANGELOG.md content
