@@ -168,7 +168,7 @@ if ! echo "${updated_changelog}" > "${changelog_path}"; then
   exit 1
 fi
 
-git diff "${changelog_path}"
+GIT_PAGER='' git diff "${changelog_path}"
 
 log_success "CHANGELOG.md has been successfully updated!"
 log_line
