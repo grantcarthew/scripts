@@ -105,4 +105,5 @@ echo 'export PATH="${PATH}:${HOME}/bin/scripts/lib/terraform"' >> "${HOME}/.bash
 ## AI Enhanced Tools
 
 - [gcm](lib/git/gcm): Git Commit Generator
+- [gig](lib/git/gig): Git Ignore Generator (.gitignore)
 - [ucl](lib/git/ucl): Update Change Log

@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/../../bash_modules/user-input.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <request>
+
+Generate a .gitignore file using AI for the specified request.
+
+Dependencies:
+  git                Git version control
+  aichat             AI chat tool
+
+Required arguments:
+  request            Technology name or detailed request
+                     (e.g., "python" or "node react typescript")
+
+This script will:
+1. Read the current .gitignore file exists
+2. Generate a new .gitignore using AI for the specified request
+3. Display the generated content
+4. Ask you to confirm saving it
+EOF
+}
+
+if [[ $# -eq 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  [[ $# -eq 0 ]] && exit 1 || exit 0
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "[g]it [i]gnore [g]enerator"
+
+dependencies=(git aichat)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "ERROR: Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+  log_error "ERROR: Not inside a git repository"
+  exit 1
+fi
+
+# Prepare Input
+# -----------------------------------------------------------------------------
+declare request="${*}"
+
+# Request is required and was validated in print_usage
+
+declare gitignore_path
+gitignore_path="$(git rev-parse --show-toplevel)/.gitignore"
+declare existing_content=""
+
+if [[ -f "${gitignore_path}" ]]; then
+  log_message "Found existing .gitignore file"
+  existing_content="$(cat "${gitignore_path}")"
+  log_newline
+  log_message "Existing .gitignore content:"
+  log_line
+  echo "${existing_content}"
+  log_line
+else
+  log_message "No existing .gitignore found. Will create a new one."
+fi
+
+# Generate .gitignore Content
+# -----------------------------------------------------------------------------
+log_message "Generating .gitignore content..."
+
+prompt="$(cat <<EOF
+$(cat "${SCRIPT_DIR}/gig-prompt.md")
+
+## .gitignore Request
+
+Please create an improved version that maintains any custom rules while adding appropriate rules for the specified technologies.
+
+Following is the user request or technology to generate .gitignore rules for:
+
+\`\`\`txt
+${request}
+\`\`\`
+
+## Existing .gitignore Content
+
+Note: If the .gitignore content is empty, you will need to create a new one.
+
+\`\`\`
+${existing_content}
+\`\`\`
+
+EOF
+)"
+
+if ! gitignore_content=$(aichat "${prompt}"); then
+  log_error "ERROR: AI chat command failed"
+  exit 1
+fi
+
+if [[ -z "${gitignore_content}" ]]; then
+  log_error "ERROR: Generated .gitignore content is empty"
+  exit 1
+fi
+
+# Extract content between the first code fence markers
+gitignore_content=$(echo "${gitignore_content}" | awk '/^```/{flag=1;next} /^```/{flag=0} flag')
+
+if [[ -z "${gitignore_content}" ]]; then
+  # If code block extraction failed, use the entire output
+  gitignore_content=$(aichat "${prompt}")
+fi
+
+log_newline
+log_message "New .gitignore content:"
+log_line
+echo "${gitignore_content}"
+log_line
+
+if ! press_enter_to_continue "Press Enter to save the .gitignore file, any other key to abort."; then
+  log_warning "Save aborted"
+  exit 1
+fi
+
+# Save .gitignore File
+# -----------------------------------------------------------------------------
+log_message "Saving .gitignore to '${gitignore_path}'..."
+
+if ! echo "${gitignore_content}" > "${gitignore_path}"; then
+  log_error "ERROR: Failed to write .gitignore file"
+  exit 1
+fi
+
+log_success ".gitignore file successfully saved"
