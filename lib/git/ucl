@@ -144,9 +144,10 @@ if [[ -z "${updated_changelog}" ]]; then
 fi
 
 log_newline
-echo "${updated_changelog}" | head -n 30
-if [[ "$(echo "${updated_changelog}" | wc -l)" -gt 50 ]]; then
-  log_message "... (showing only the first 50 lines)"
+preview_lines=30
+echo "${updated_changelog}" | head -n ${preview_lines}
+if [[ "$(echo "${updated_changelog}" | wc -l)" -gt ${preview_lines} ]]; then
+  log_message "... (showing only the first ${preview_lines} lines)"
 fi
 log_newline
 log_line
