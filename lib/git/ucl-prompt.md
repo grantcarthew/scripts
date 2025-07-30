@@ -33,7 +33,7 @@
 ## Restrictions
 
 - Only output the generated changelog content in markdown format
-- Only output markdown text for a writing directly to a markdown document (.md)
+- Only output markdown text for writing directly to a markdown document (.md)
 - Do not include the `## [Unreleased]` header in your output
 - You MUST NOT frame the output in a code block
 
