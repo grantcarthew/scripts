@@ -64,6 +64,7 @@ fi
 # Prepare Input
 # -----------------------------------------------------------------------------
 declare request="${*}"
+log_message "Request: '${request}'"
 
 # Request is required and was validated in print_usage
 
