@@ -1,5 +1,48 @@
-/.vscode
+# Custom / Project Specific
 /lib/private/*
 !/lib/private/README.md
 AGENTS.*
 GEMINI.md
+
+# Python
+# Byte-compiled / Optimized files
+*.pyc
+__pycache__/
+*.pyd
+*.so
+
+# Virtual Environment
+venv/
+env/
+.venv/
+.env/
+pip-log.txt
+pip.log
+
+# Distribution / Packaging
+dist/
+build/
+*.egg
+*.egg-info/
+.eggs/
+*.whl
+*.tar.gz
+*.zip
+
+# Database
+*.sqlite3
+db.sqlite3
+
+# IDE / OS
+/.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary / Backup
+*.log
+*.tmp
+*.bak
+*.swp
+*~
