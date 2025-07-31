@@ -46,3 +46,6 @@ desktop.ini
 *.bak
 *.swp
 *~
+
+# Terraform
+lib/terraform/.tfplan/

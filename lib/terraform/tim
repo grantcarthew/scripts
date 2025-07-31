@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 
-set -o pipefail
-SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-log_title "[t]erraform [i]mport <resource> <id>"
+log_tf_title "[t]erraform [i]mport <resource> <id>"
 
 [[ "${#}" -ne 2 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "❯ terraform import ${1} ${2}"
 terraform import "${1}" "${2}"
