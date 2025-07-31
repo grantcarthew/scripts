@@ -8,5 +8,6 @@ log_title "[t]erraform [s]tate [r]e[m]ove <resource-id>"
 
 [[ "${#}" -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
+log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "❯ terraform state rm ${1}"
 terraform state rm "${1}"

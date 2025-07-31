@@ -8,6 +8,7 @@ log_title "[t]erraform [l]int"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
+log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "Running terraform formatting and linting tools"
 
 log_heading "Formatting"

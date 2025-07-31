@@ -14,5 +14,6 @@ if [[ "${1}" == "aa" ]]; then
   exit 0
 fi
 
+log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "❯ terraform apply"
 terraform apply

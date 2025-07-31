@@ -8,5 +8,6 @@ log_title "[t]erraform [s]tate [l]ist"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
+log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "❯ terraform state list"
 terraform state list

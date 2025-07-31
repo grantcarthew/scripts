@@ -13,5 +13,6 @@ code="$("${SCRIPT_DIR}/../../new-code")"
 default_tfplan_file="$(basename "${PWD}")-${code}.tfplan"
 tfplan_file="${1:-$default_tfplan_file}"
 
+log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "❯ terraform plan -out=${tfplan_file}"
 terraform plan -out="${tfplan_file}"

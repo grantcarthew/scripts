@@ -8,5 +8,6 @@ log_title "[t]erraform [p]lan"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
+log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "❯ terraform plan"
 terraform plan
