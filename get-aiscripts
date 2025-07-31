@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0")
+
+Searches for AI scripts (files ending in -prompt.md) and displays them along with their titles.
+
+Dependencies:
+  fd                 A simple, fast and user-friendly alternative to 'find'
+  rg                 ripgrep recursively searches directories for a regex pattern
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+# Dependency Checks
+# -----------------------------------------------------------------------------
+dependencies=(fd rg)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+log_title "AI Enhanced Script Finder"
+
+# Find files ending with -prompt.md and process their names
+fd --type f --glob '*-prompt.md' "${SCRIPT_DIR}" | while read -r file; do
+  filename=$(basename "${file}")
+  script_name=${filename%-prompt.md}
+  script_path="$(dirname "${file}")/${script_name}"
+
+  if [[ -f "${script_path}" ]]; then
+    title=$(rg -o 'log_title "([^"]+)"' -r '$1' "${script_path}")
+    if [[ -n "${title}" ]]; then
+        log_message "  ${script_name}: ${title}"
+    else
+        log_message "  ${script_name}: (title not found)"
+    fi
+  else
+    log_message "   ${script_name}: (script not found)"
+  fi
+done
