@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 
-set -o pipefail
-SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-log_title "[t]erraform [i]nit & [p]lan"
+log_tf_title "[t]erraform [i]nit & [p]lan"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
-log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "Removing .terraform directory and .terraform.lock.hcl file"
 log_message "❯ rm -rf .terraform && rm -f .terraform.lock.hcl"
 rm -rf .terraform && rm -f .terraform.lock.hcl
 log_message "❯ terraform init -upgrade"
 terraform init -upgrade
-log_message "❯ terraform plan"
-terraform plan
+
+
+PLAN_FILE="$(new_tf_plan_file)"
+
+log_message "Saving plan to '${PLAN_FILE}'"
+log_message "❯ terraform plan -out='${PLAN_FILE}'"
+terraform plan -out="${PLAN_FILE}"
+
+log_message "To apply this plan, run: terraform apply '${PLAN_FILE}'"

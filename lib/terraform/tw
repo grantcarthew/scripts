@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 
-set -o pipefail
-SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-log_title "[t]erraform [w]atch"
-log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
+log_tf_title "[t]erraform [w]atch"
 log_message "This command will run 'terraform fmt -recursive' and 'terraform validate'"
 log_message "on every file change in the current directory."
 

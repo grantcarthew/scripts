@@ -1,19 +1,16 @@
 #!/usr/bin/env bash
 
-set -o pipefail
-SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-log_title "[t]erraform [a]pply [aa]"
+log_tf_title "[t]erraform [a]pply [plan-file]"
 
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-if [[ "${1}" == "aa" ]]; then
-  log_message "❯ terraform apply -auto-approve"
-  terraform apply -auto-approve
+if [[ -n "${1}" ]]; then
+  log_message "❯ terraform apply ${1}"
+  terraform apply "${1}"
   exit 0
 fi
 
-log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "❯ terraform apply"
 terraform apply
