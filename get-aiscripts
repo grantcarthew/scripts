@@ -39,9 +39,10 @@ for cmd in "${dependencies[@]}"; do
     fi
 done
 
-log_title "AI Enhanced Script Finder"
+log_title "AI Enhanced Scripts"
 
 # Find files ending with -prompt.md and process their names
+# -----------------------------------------------------------------------------
 fd --type f --glob '*-prompt.md' "${SCRIPT_DIR}" | while read -r file; do
   filename=$(basename "${file}")
   script_name=${filename%-prompt.md}
