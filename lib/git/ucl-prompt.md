@@ -28,6 +28,7 @@
 - Only add categories to the change log if they have content
 - Prioritize **precision** in your responses
 - Update the content as needed
+- For existing CHANGELOG.md content, standardise the format based on Keep a Changelog and CommonMark
 - Output the updated CHANGELOG.md content
 
 ## Restrictions
