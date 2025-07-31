@@ -8,8 +8,7 @@ log_title "[t]erraform [i]nit [bucket-name]"
 
 [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-tf_version="$(terraform version -json | jq -r '.terraform_version')"
-log_message "Terraform Version: ${tf_version}"
+log_message "Terraform Version: $(terraform version -json | jq -r '.terraform_version')"
 log_message "Removing .terraform directory and .terraform.lock.hcl file"
 log_message "❯ rm -rf .terraform && rm -f .terraform.lock.hcl"
 rm -rf .terraform && rm -f .terraform.lock.hcl

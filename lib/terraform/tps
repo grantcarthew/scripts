@@ -8,5 +8,7 @@ log_title "[t]erraform [p]lan [s]ummary"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
+tf_version="$(terraform version -json | jq -r '.terraform_version')"
+log_message "Terraform Version: ${tf_version}"
 log_message "❯ terraform plan | rg '# |Plan:' | rg -v '\.data\.|# \('"
 terraform plan | rg '# |Plan:' | rg -v '\.data\.|# \('
