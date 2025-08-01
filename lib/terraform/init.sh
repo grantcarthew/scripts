@@ -34,7 +34,7 @@ function log_tf_title() {
 }
 
 function new_tf_plan_file() {
-  echo "${TFPLAN_DIR}/$(date +%Y-%m-%d-%H%M%S).tfplan"
+  echo "${TFPLAN_DIR}/$(date +%Y-%m-%d-%H%M%S)-$(basename "${PWD}").tfplan"
 }
 
 function get_latest_tf_plan_file() {
