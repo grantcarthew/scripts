@@ -5,13 +5,21 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-dependencies=(terraform jq fd rg entr tflint trivy)
+dependencies=(terraform jq fd rg entr tflint trivy terraform-docs)
+missing_dependencies=()
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
-    log_error "ERROR: Missing dependency - '${cmd}'"
-    exit 1
+    missing_dependencies+=("${cmd}")
   fi
 done
+
+if [[ "${#missing_dependencies[@]}" -gt 0 ]]; then
+  log_error "ERROR: Missing dependencies:"
+  for dep in "${missing_dependencies[@]}"; do
+    log_error "  - ${dep}"
+  done
+  exit 1
+fi
 
 TFPLAN_DIR="${SCRIPT_DIR}/.tfplan"
 
