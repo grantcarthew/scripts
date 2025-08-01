@@ -49,7 +49,7 @@ fd --type f --glob '*-prompt.md' "${SCRIPT_DIR}" | while read -r file; do
   script_path="$(dirname "${file}")/${script_name}"
 
   if [[ -f "${script_path}" ]]; then
-    title=$(rg -o 'log_title "([^"]+)"' -r '$1' "${script_path}")
+    title=$(rg -o 'log_.*title "([^"]+)"' -r '$1' "${script_path}")
     if [[ -n "${title}" ]]; then
         log_message "  ${script_name}: ${title}"
     else
