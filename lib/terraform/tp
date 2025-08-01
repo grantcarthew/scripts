@@ -8,9 +8,7 @@ log_tf_title "[t]erraform [p]lan"
 
 PLAN_FILE="$(new_tf_plan_file)"
 
-log_message "Saving plan to '${PLAN_FILE}'"
-log_message "❯ terraform plan -out='${PLAN_FILE}'"
-
+log_message "Saving plan to:"
+log_message "'${PLAN_FILE}'"
+log_message "❯ terraform plan -out='$(basename "${PLAN_FILE}")'"
 terraform plan -out="${PLAN_FILE}"
-
-log_message "\nTo apply this plan, run: terraform apply '${PLAN_FILE}'"
