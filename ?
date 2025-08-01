@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [lib-name]
+
+This script helps you find and view documentation for available script libraries.
+
+When run without a library name, it lists all available libraries.
+
+When a library name is provided, it searches for matching libraries:
+
+- If one match is found, it displays the scripts within that library and their descriptions.
+- If multiple matches are found, it uses the fuzzy finder (fzf) to let you select a library.
+- If no matches are found, it will list the available libraries.
+
+Dependencies:
+  fzf                Command-line fuzzy finder
+  fd                 Fast directory search tool
+
+Optional arguments:
+  lib-name           The name of the library to inspect
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "Script Libraries"
+
+if ! command -v fzf &>/dev/null; then
+    log_error "ERROR: Missing dependency - 'fzf'"
+    exit 1
+fi
+
+declare lib_name="${1-}"
+declare -r lib_dir="${SCRIPT_DIR}/lib"
+
+# Main Logic
+# -----------------------------------------------------------------------------
+if [[ -z "${lib_name}" ]]; then
+  fd --max-depth 1 --type d . "${lib_dir}" | xargs -n1 basename | sort | sed 's/^/  /'
+  exit 0
+fi
+
+log_heading "Finding '${lib_name}' Library Scripts"
+
+declare -a matching_dirs
+mapfile -t matching_dirs < <(find "${lib_dir}" -mindepth 1 -maxdepth 1 -type d -name "*${lib_name}*")
+
+declare selected_dir=""
+
+if [[ "${#matching_dirs[@]}" -eq 0 ]]; then
+  log_warning "No libraries found matching: '${lib_name}'"
+  log_newline
+  log_heading "Available Libraries"
+  fd --max-depth 1 --type d . "${lib_dir}" | xargs -n1 basename | sort | sed 's/^/  /'
+  exit 0
+elif [[ "${#matching_dirs[@]}" -gt 1 ]]; then
+  selected_dir=$(printf "%s\n" "${matching_dirs[@]}" | fzf)
+else
+  selected_dir="${matching_dirs[0]}"
+fi
+
+if [[ -z "${selected_dir}" || ! -d "${selected_dir}" ]]; then
+  log_error "No library selected or invalid directory."
+  exit 1
+fi
+
+dir_basename=$(basename "${selected_dir}")
+log_subheading "Scripts in '${dir_basename}'"
+
+fd --type f --exclude "*.sh" --exclude "README.md" . "${selected_dir}" --print0 | while IFS= read -r -d $'\0' file; do
+  match=$(grep -m 1 -oE 'log_.*title ".*"' "${file}")
+  if [[ -n "${match}" ]]; then
+    title=$(echo "${match}" | sed -e 's/.*log_.*title \"//' -e 's/\"$//')
+    filename=$(basename "${file}")
+    echo "${filename}: ${title}"
+  fi
+done | column -t -s ':' | sed 's/^/  /'
