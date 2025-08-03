@@ -9,8 +9,9 @@ log_tf_title "[t]erraform [p]lan [s]how"
 LATEST_PLAN="$(get_latest_tf_plan_file)"
 
 if [[ -n "${LATEST_PLAN}" ]]; then
-  log_message "Latest plan file: '${LATEST_PLAN}'"
-  log_message "❯ terraform show '${LATEST_PLAN}'"
+  log_message "Latest plan file:"
+  log_message "'${LATEST_PLAN}'"
+  log_message "❯ terraform show $(basename "${LATEST_PLAN}")"
   terraform show "${LATEST_PLAN}"
   exit 0
 fi
