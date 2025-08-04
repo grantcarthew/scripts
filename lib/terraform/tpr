@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
+
+log_tf_title "[t]erraform [p]lan [r]eview"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+LATEST_PLAN="$(get_latest_tf_plan_file)"
+TF_OUTPUT=""
+
+if [[ -n "${LATEST_PLAN}" ]]; then
+  log_message "Latest plan file:"
+  log_message "'${LATEST_PLAN}'"
+  log_message "❯ terraform show $(basename "${LATEST_PLAN}")"
+  TF_OUTPUT="$(terraform show "${LATEST_PLAN}")"
+else
+  log_warning "No terraform plan files found in '${TFPLAN_DIR}'"
+  log_message "Running terraform plan"
+  log_message "❯ terraform plan"
+  TF_OUTPUT=$(tp)
+fi
+
+if [[ -z "${TF_OUTPUT}" ]]; then
+    log_error "ERROR: Terraform output is empty"
+    exit 1
+fi
+
+log_message "Reviewing terraform output..."
+
+prompt="$(cat <<EOF
+$(cat "${SCRIPT_DIR}/tpr-prompt.md")
+
+## Terraform Output
+
+\`\`\`md
+${TF_OUTPUT}
+\`\`\`
+
+EOF
+)"
+
+if ! review=$(aichat --model "${AI_MODEL_PRO}" "${prompt}"); then
+  log_error "ERROR: AI chat command failed"
+  exit 1
+fi
+
+if [[ -z "${review}" ]]; then
+  log_error "ERROR: Generated review is empty"
+  exit 1
+fi
+
+log_newline
+echo "${review}"
+log_newline
