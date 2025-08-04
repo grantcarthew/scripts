@@ -4,6 +4,14 @@ set -o pipefail
 
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
 
 dependencies=(terraform jq fd rg entr tflint trivy terraform-docs)
 missing_dependencies=()
