@@ -7,7 +7,7 @@
 # The user's settings file is located at ~/.config/scripts/settings.conf.
 # Default values are sourced from settings-defaults.conf in the same directory as this script.
 
-_SETTINGS_SH_SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+SETTINGS_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 
 function _settings_ensure_file_exists() {
   local settings_file="${1}"
@@ -26,7 +26,7 @@ function settings_get_path() {
 }
 
 function settings_get_defaults_path() {
-  printf "%s" "${_SETTINGS_SH_SCRIPT_DIR}/settings-defaults.conf"
+  printf "%s" "${SETTINGS_DIR}/settings-defaults.conf"
 }
 
 function settings_get() {
@@ -40,12 +40,7 @@ function settings_get() {
   value=$(sed -n "s/^${key}=//p" "${user_settings_file}")
 
   if [[ -n "${value}" ]]; then
-    if [[ "$(uname)" == "Darwin" ]]; then
-      printf "%s" "${value}" | base64 -d
-    else
-      # Use -w 0 to prevent line wrapping
-      printf "%s" "${value}" | base64 --decode
-    fi
+    printf "%s" "${value}" | base64 -d
     return
   fi
 
@@ -75,12 +70,7 @@ function settings_set() {
   temp_file=$(mktemp)
 
   local encoded_value
-  if [[ "$(uname)" == "Darwin" ]]; then
-    encoded_value=$(printf "%s" "${value}" | base64)
-  else
-    # Use -w 0 to prevent line wrapping
-    encoded_value=$(printf "%s" "${value}" | base64 -w 0)
-  fi
+  encoded_value=$(printf "%s" "${value}" | base64 -w 0)
 
   # Use grep to remove the old key and append the new one
   grep -v "^${key}=" "${settings_file}" > "${temp_file}"
@@ -125,11 +115,7 @@ function settings_list() {
       local value="${line#*=}"
 
       local decoded_value
-      if [[ "$(uname)" == "Darwin" ]]; then
-        decoded_value=$(printf "%s" "${value}" | base64 -d)
-      else
-        decoded_value=$(printf "%s" "${value}" | base64 --decode)
-      fi
+      decoded_value=$(printf "%s" "${value}" | base64 -d)
       printf '%s="%s"\n' "${key}" "${decoded_value}"
   done < "${settings_file}"
 }

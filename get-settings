@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/bash_modules/settings.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0")
+
+Lists the script settings in a user-friendly format.
+
+Dependencies:
+  rg                 RipGrep recursively searches directories for a regex pattern
+  sed                Stream editor for filtering and transforming text
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+# Dependency Checks
+# -----------------------------------------------------------------------------
+dependencies=(rg sed)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+log_title "Get Script Settings"
+log_message "Settings file: $(settings_get_path)"
+log_newline
+settings_list

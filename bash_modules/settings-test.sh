@@ -152,7 +152,7 @@ USER_NAME="test-user"')
 assert_equals_base64 "$(echo "${EXPECTED_LIST}" | sort)" "$(echo "${LIST_OUTPUT}" | sort)" "Should list all key-value pairs correctly decoded and sorted"
 
 # Test 8: Correctly handles values with special characters
-SPECIAL_CHARS_VALUE=$'hello "world" & a/path/here with spaces and !@#$%^&*()_+-=[]{ \\|;:",<.>/?~'
+SPECIAL_CHARS_VALUE=$'hello "world" & a/path/here with spaces and !@#$%^&*()_+-=[]{} \\|;:",<.>/?~'
 settings_set "SPECIAL" "${SPECIAL_CHARS_VALUE}"
 SPECIAL_RESULT=$(settings_get "SPECIAL")
 assert_equals_base64 "${SPECIAL_CHARS_VALUE}" "${SPECIAL_RESULT}" "Should correctly handle a value with a wide range of special characters"
