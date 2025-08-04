@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *":${SCRIPT_DIR}:"* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0")
+
+Review staged git changes using AI.
+
+Dependencies:
+  git                Git version control
+  aichat             AI chat tool
+
+This script will:
+1. Check if there are staged git changes
+2. Get a review of the changes from AI
+3. Report on any findings
+EOF
+}
+
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "[g]it [d]iff [r]eview"
+
+dependencies=(git aichat)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "ERROR: Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+  log_error "ERROR: Not inside a git repository"
+  exit 1
+fi
+
+staged_changes="$(git diff --staged)"
+if [[ -z "${staged_changes}" ]]; then
+  log_error "ERROR: No staged changes found. Use 'git add' to stage changes first."
+  exit 1
+fi
+
+# AI Review
+# -----------------------------------------------------------------------------
+log_message "Getting AI review of staged changes..."
+
+prompt="$(cat <<EOF
+$(cat "${SCRIPT_DIR}/gdr-prompt.md")
+
+## Git Diff
+
+\`\`\`md
+${staged_changes}
+\`\`\`
+
+EOF
+)"
+
+if ! review=$(aichat --model "${AI_MODEL_PRO}" "${prompt}"); then
+  log_error "ERROR: AI chat command failed"
+  exit 1
+fi
+
+if [[ -z "${review}" ]]; then
+  log_error "ERROR: Generated review is empty"
+  exit 1
+fi
+
+log_newline
+echo "${review}"
+log_newline
