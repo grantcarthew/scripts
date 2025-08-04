@@ -8,6 +8,7 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/../../bash_modules/user-input.sh"
+source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
@@ -78,7 +79,7 @@ ${staged_changes}
 EOF
 )"
 
-if ! commit_message=$(aichat "${prompt}"); then
+if ! commit_message=$(aichat --model "${AI_MODEL_FAST}" "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi
