@@ -2,6 +2,7 @@
 /lib/private/*
 !/lib/private/README.md
 AGENTS.*
+ASSIGNMENT.md
 GEMINI.md
 
 # Python
