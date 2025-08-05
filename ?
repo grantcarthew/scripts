@@ -14,22 +14,17 @@ function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [lib-name]
 
-This script helps you find and view documentation for available scripts and script libraries.
+Find and view documentation for scripts and script libraries.
 
-When run without a library name, it lists all bash scripts in the current directory with their descriptions, followed by all available libraries.
-
-When a library name is provided, it searches for matching libraries:
-
-- If one match is found, it displays the scripts within that library and their descriptions.
-- If multiple matches are found, it uses the fuzzy finder (fzf) to let you select a library.
-- If no matches are found, it will list the available libraries.
+Without arguments: Lists bash scripts with descriptions, then libraries.
+With lib-name: Searches for matching libraries and displays their scripts.
 
 Dependencies:
   fzf                Command-line fuzzy finder
   fd                 Fast directory search tool
 
 Optional arguments:
-  lib-name           The name of the library to inspect
+  lib-name           Library name to inspect
   -h, --help         Show this help message and exit
 EOF
 }
@@ -45,6 +40,28 @@ function ctrlc_trap() {
   exit 130
 }
 trap ctrlc_trap SIGINT
+
+function list_libraries() {
+  for dir in "${lib_dir}"/*/; do
+    if [[ -d "${dir}" ]]; then
+      dir_name=$(basename "${dir}")
+      readme_file="${dir}/README.md"
+
+      if [[ -f "${readme_file}" && -r "${readme_file}" ]]; then
+        title_line=$(grep -m 1 '^# ' "${readme_file}" 2>/dev/null)
+        if [[ -n "${title_line}" ]]; then
+          title="${title_line#\# }"
+          title="${title%% <!--*}"
+          echo "${dir_name}:${title}"
+        else
+          echo "${dir_name}:No description"
+        fi
+      else
+        echo "${dir_name}:No README.md"
+      fi
+    fi
+  done | sort | column -t -s ':' | sed 's/^/  /'
+}
 
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
@@ -84,7 +101,7 @@ if [[ -z "${lib_name}" ]]; then
 
   log_newline
   log_heading "Available Libraries"
-  fd --max-depth 1 --type d . "${lib_dir}" | xargs -n1 basename | sort | sed 's/^/  /'
+  list_libraries
   exit 0
 fi
 
@@ -99,7 +116,7 @@ if [[ "${#matching_dirs[@]}" -eq 0 ]]; then
   log_warning "No libraries found matching: '${lib_name}'"
   log_newline
   log_heading "Available Libraries"
-  fd --max-depth 1 --type d . "${lib_dir}" | xargs -n1 basename | sort | sed 's/^/  /'
+  list_libraries
   exit 0
 elif [[ "${#matching_dirs[@]}" -gt 1 ]]; then
   selected_dir=$(printf "%s\n" "${matching_dirs[@]}" | fzf)
