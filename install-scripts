@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Installs scripts from GitHub repository
 
 # Environment setup
 set -o pipefail

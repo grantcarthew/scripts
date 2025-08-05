@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Gets the bash-template
 
 # Environment setup
 set -o pipefail

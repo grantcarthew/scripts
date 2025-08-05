@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Queries my command notes from GitHub
 
 usage() {
     cat <<-EOF

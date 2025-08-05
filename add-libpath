@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Adds a library directory to PATH in .bashrc
 
 # Environment setup
 set -o pipefail
