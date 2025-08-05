@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # Key-Value Settings File Management
-# ---------------------------------------
+# -----------------------------------------------------------------------------
 # Provides a simple key-value store using a plain text file.
-# Values are base64 encoded to handle special characters.
+# Values are stored as quoted strings to handle special characters and newlines.
 # The user's settings file is located at ~/.config/scripts/settings.conf.
 # Default values are sourced from settings-defaults.conf in the same directory as this script.
 
@@ -35,23 +35,42 @@ function settings_get() {
   user_settings_file="$(settings_get_path)"
   _settings_ensure_file_exists "${user_settings_file}"
 
-  # Use sed to robustly extract the value after the first '='
+  # Extract value from user settings file
   local value
-  value=$(sed -n "s/^${key}=//p" "${user_settings_file}")
+  value=$(awk -F= -v key="${key}" '
+    $1 == key {
+      val = substr($0, length(key) + 2)
+      if (val ~ /^".*"$/) {
+        val = substr(val, 2, length(val) - 2)
+      }
+      gsub(/\\"/, "\"", val)
+      gsub(/\\n/, "\n", val)
+      print val
+      exit
+    }
+  ' "${user_settings_file}")
 
   if [[ -n "${value}" ]]; then
-    printf "%s" "${value}" | base64 -d
+    printf "%s" "${value}"
     return
   fi
 
+  # Fall back to defaults file if key not found in user settings
   local defaults_settings_file
   defaults_settings_file="$(settings_get_defaults_path)"
   if [[ -f "${defaults_settings_file}" ]]; then
     local default_value
-    # In defaults, value is not encoded, but might be quoted
-    default_value=$(sed -n "s/^${key}=//p" "${defaults_settings_file}" | sed -e 's/^"//' -e 's/"$//')
+    default_value=$(awk -F= -v key="${key}" '
+      $1 == key {
+        val = substr($0, length(key) + 2)
+        if (val ~ /^".*"$/) {
+          val = substr(val, 2, length(val) - 2)
+        }
+        print val
+        exit
+      }
+    ' "${defaults_settings_file}")
     if [[ -n "${default_value}" ]]; then
-      # Set it in user's config (which will encode it) and return it
       settings_set "${key}" "${default_value}"
       printf "%s" "${default_value}"
       return
@@ -66,36 +85,43 @@ function settings_set() {
   local settings_file
   settings_file="$(settings_get_path)"
   _settings_ensure_file_exists "${settings_file}"
+
   local temp_file
   temp_file=$(mktemp)
 
-  local encoded_value
-  encoded_value=$(printf "%s" "${value}" | base64 -w 0)
+  # Escape quotes and encode newlines for single-line storage
+  local escaped_value
+  escaped_value=$(printf "%s" "${value}" | awk '
+    BEGIN { RS = "\n"; ORS = "" }
+    {
+      gsub(/"/, "\\\"")
+      if (NR > 1) printf "\\n"
+      printf "%s", $0
+    }
+  ')
 
-  # Use grep to remove the old key and append the new one
-  grep -v "^${key}=" "${settings_file}" > "${temp_file}"
-  printf "%s=%s\n" "${key}" "${encoded_value}" >> "${temp_file}"
-
+  # Remove existing key and append new value
+  grep -v "^${key}=" "${settings_file}" > "${temp_file}" || true
+  printf '%s="%s"\n' "${key}" "${escaped_value}" >> "${temp_file}"
   mv "${temp_file}" "${settings_file}"
 }
 
 function settings_delete() {
-    local key="${1}"
-    local settings_file
-    settings_file="$(settings_get_path)"
+  local key="${1}"
+  local settings_file
+  settings_file="$(settings_get_path)"
 
-    if [[ ! -f "${settings_file}" ]]; then
-        return
-    fi
+  if [[ ! -f "${settings_file}" ]]; then
+    return
+  fi
 
-    # Only modify the file if the key actually exists
-    if grep -q "^${key}=" "${settings_file}"; then
-        local temp_file
-        temp_file=$(mktemp)
-        # Use grep to filter out the key
-        grep -v "^${key}=" "${settings_file}" > "${temp_file}"
-        mv "${temp_file}" "${settings_file}"
-    fi
+  # Only modify the file if the key exists
+  if grep -q "^${key}=" "${settings_file}"; then
+    local temp_file
+    temp_file=$(mktemp)
+    grep -v "^${key}=" "${settings_file}" > "${temp_file}"
+    mv "${temp_file}" "${settings_file}"
+  fi
 }
 
 function settings_list() {
@@ -105,17 +131,27 @@ function settings_list() {
     return
   fi
 
-  # Read file line by line robustly
-  while IFS= read -r line || [[ -n "$line" ]]; do
-      # Skip empty lines or comments
-      [[ -z "$line" || "$line" =~ ^# ]] && continue
+  # Read and decode each key-value pair
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    # Skip empty lines or comments
+    [[ -z "${line}" || "${line}" =~ ^# ]] && continue
 
-      # Split key and value at the first '='
-      local key="${line%%=*}"
-      local value="${line#*=}"
+    # Split key and value at the first '='
+    local key="${line%%=*}"
+    local value="${line#*=}"
 
-      local decoded_value
-      decoded_value=$(printf "%s" "${value}" | base64 -d)
-      printf '%s="%s"\n' "${key}" "${decoded_value}"
+    # Decode the value for display
+    local display_value
+    display_value=$(printf "%s" "${value}" | awk '
+      {
+        if ($0 ~ /^".*"$/) {
+          $0 = substr($0, 2, length($0) - 2)
+        }
+        gsub(/\\"/, "\"")
+        gsub(/\\n/, "\n")
+        print
+      }
+    ')
+    printf '%s="%s"\n' "${key}" "${display_value}"
   done < "${settings_file}"
 }
