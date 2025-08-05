@@ -13,13 +13,16 @@ AI_MODEL_PRO="$(settings_get "AI_MODEL_PRO")"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0")
+Usage: $(basename "$0") [special-instructions]
 
 Review staged git changes using AI.
 
 Dependencies:
   git                Git version control
   aichat             AI chat tool
+
+Optional arguments:
+  special-instructions  Special instructions for the AI reviewer
 
 This script will:
 1. Check if there are staged git changes
@@ -28,7 +31,7 @@ This script will:
 EOF
 }
 
-if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+if [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
   print_usage
   exit 0
 fi
@@ -70,9 +73,13 @@ log_message "Getting AI review of staged changes..."
 prompt="$(cat <<EOF
 $(cat "${SCRIPT_DIR}/gdr-prompt.md")
 
+## Special Instructions
+
+${1:-"None"}
+
 ## Git Diff
 
-\`\`\`md
+\`\`\`diff
 ${staged_changes}
 \`\`\`
 
