@@ -43,8 +43,10 @@ function settings_get() {
       if (val ~ /^".*"$/) {
         val = substr(val, 2, length(val) - 2)
       }
+      # Decode in reverse order: special newlines first, then quotes, then backslashes
+      gsub(/\\x0A/, "\n", val)  # Decode our special newline sequence
       gsub(/\\"/, "\"", val)
-      gsub(/\\n/, "\n", val)
+      gsub(/\\\\/, "\\", val)
       print val
       exit
     }
@@ -90,12 +92,14 @@ function settings_set() {
   temp_file=$(mktemp)
 
   # Escape quotes and encode newlines for single-line storage
+  # Use a special sequence for actual newlines to distinguish from literal \n
   local escaped_value
   escaped_value=$(printf "%s" "${value}" | awk '
     BEGIN { RS = "\n"; ORS = "" }
     {
-      gsub(/"/, "\\\"")
-      if (NR > 1) printf "\\n"
+      gsub(/\\/, "\\\\")   # Escape existing backslashes first
+      gsub(/"/, "\\\"")    # Then escape quotes
+      if (NR > 1) printf "\\x0A"  # Use \x0A for actual newlines
       printf "%s", $0
     }
   ')
@@ -147,8 +151,10 @@ function settings_list() {
         if ($0 ~ /^".*"$/) {
           $0 = substr($0, 2, length($0) - 2)
         }
+        # Decode in reverse order: special newlines first, then quotes, then backslashes
+        gsub(/\\x0A/, "\n")  # Decode our special newline sequence
         gsub(/\\"/, "\"")
-        gsub(/\\n/, "\n")
+        gsub(/\\\\/, "\\")
         print
       }
     ')

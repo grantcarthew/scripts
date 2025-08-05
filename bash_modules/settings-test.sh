@@ -35,6 +35,7 @@ TESTS_FAILED=0
 
 function cleanup() {
   rm -f "${TEST_SETTINGS_FILE}" "${DEFAULTS_FILE}"
+  rm -rf "/tmp/settings-test-nonexistent"
 }
 trap cleanup EXIT
 
@@ -155,6 +156,135 @@ WHITESPACE_VALUE='  leading and trailing spaces  '
 settings_set "WHITESPACE" "${WHITESPACE_VALUE}"
 WHITESPACE_RESULT=$(settings_get "WHITESPACE")
 assert_equals "${WHITESPACE_VALUE}" "${WHITESPACE_RESULT}" "Should correctly handle values with leading/trailing whitespace"
+
+# Test 15: Handles empty string values
+settings_set "EMPTY_VALUE" ""
+EMPTY_RESULT=$(settings_get "EMPTY_VALUE")
+assert_equals "" "${EMPTY_RESULT}" "Should correctly handle empty string values"
+
+# Test 16: Handles keys with special characters
+SPECIAL_KEY="my-key_with.special@chars"
+settings_set "${SPECIAL_KEY}" "special_key_value"
+SPECIAL_KEY_RESULT=$(settings_get "${SPECIAL_KEY}")
+assert_equals "special_key_value" "${SPECIAL_KEY_RESULT}" "Should correctly handle keys with special characters"
+
+# Test 17: Handles very long values
+LONG_VALUE=$(printf 'a%.0s' {1..1000})
+settings_set "LONG_VALUE" "${LONG_VALUE}"
+LONG_RESULT=$(settings_get "LONG_VALUE")
+assert_equals "${LONG_VALUE}" "${LONG_RESULT}" "Should correctly handle very long values"
+
+# Test 18: Multiple equals signs in value
+MULTI_EQUALS_VALUE="key1=value1=more=data"
+settings_set "MULTI_EQUALS" "${MULTI_EQUALS_VALUE}"
+MULTI_EQUALS_RESULT=$(settings_get "MULTI_EQUALS")
+assert_equals "${MULTI_EQUALS_VALUE}" "${MULTI_EQUALS_RESULT}" "Should correctly handle values with multiple equals signs"
+
+# Test 19: Values that look like comments
+COMMENT_VALUE="# this looks like a comment but isn't"
+settings_set "COMMENT_TEST" "${COMMENT_VALUE}"
+COMMENT_RESULT=$(settings_get "COMMENT_TEST")
+assert_equals "${COMMENT_VALUE}" "${COMMENT_RESULT}" "Should correctly handle values that look like comments"
+
+# Test 20: Test settings_get with missing arguments
+NO_ARG_RESULT=$(settings_get)
+assert_empty "${NO_ARG_RESULT}" "Should return empty string when no key argument is provided"
+
+# Test 21: Test settings_set with missing value argument
+rm -f "${TEST_SETTINGS_FILE}"
+settings_set "NO_VALUE_KEY"
+NO_VALUE_RESULT=$(settings_get "NO_VALUE_KEY")
+assert_equals "" "${NO_VALUE_RESULT}" "Should handle missing value argument by setting empty string"
+
+# Test 22: Test settings_delete with missing argument
+settings_delete
+# Should not crash - verify by setting a value after
+settings_set "AFTER_DELETE" "value"
+AFTER_DELETE_RESULT=$(settings_get "AFTER_DELETE")
+assert_equals "value" "${AFTER_DELETE_RESULT}" "Should handle missing delete argument gracefully"
+
+# Test 23: Handles values with backslashes
+BACKSLASH_VALUE="path\\to\\file and \\n not newline"
+settings_set "BACKSLASH_TEST" "${BACKSLASH_VALUE}"
+BACKSLASH_RESULT=$(settings_get "BACKSLASH_TEST")
+assert_equals "${BACKSLASH_VALUE}" "${BACKSLASH_RESULT}" "Should correctly handle values with backslashes"
+
+# Test 24: Handles tab characters
+TAB_VALUE=$(printf "line1\tcolumn2\tcolumn3")
+settings_set "TAB_TEST" "${TAB_VALUE}"
+TAB_RESULT=$(settings_get "TAB_TEST")
+assert_equals "${TAB_VALUE}" "${TAB_RESULT}" "Should correctly handle values with tab characters"
+
+# Test 25: Defaults file with unquoted values
+UNQUOTED_DEFAULTS=$(mktemp)
+cat > "${UNQUOTED_DEFAULTS}" <<EOF
+UNQUOTED_KEY=unquoted_value
+QUOTED_DEFAULT="quoted_value"
+EOF
+function settings_get_defaults_path() {
+  echo "${UNQUOTED_DEFAULTS}"
+}
+export -f settings_get_defaults_path
+rm -f "${TEST_SETTINGS_FILE}"
+UNQUOTED_DEFAULT_RESULT=$(settings_get "UNQUOTED_KEY")
+assert_equals "unquoted_value" "${UNQUOTED_DEFAULT_RESULT}" "Should handle unquoted values in defaults file"
+QUOTED_DEFAULT_RESULT=$(settings_get "QUOTED_DEFAULT")
+assert_equals "quoted_value" "${QUOTED_DEFAULT_RESULT}" "Should handle quoted values in defaults file"
+rm -f "${UNQUOTED_DEFAULTS}"
+
+# Test 26: Settings file permissions (when directory doesn't exist)
+NONEXISTENT_DIR="/tmp/settings-test-nonexistent"
+rm -rf "${NONEXISTENT_DIR}"
+export TEST_SETTINGS_FILE="${NONEXISTENT_DIR}/settings.conf"
+function settings_get_path() {
+  echo "${TEST_SETTINGS_FILE}"
+}
+export -f settings_get_path
+settings_set "PERMISSION_TEST" "value"
+PERMISSION_RESULT=$(settings_get "PERMISSION_TEST")
+assert_equals "value" "${PERMISSION_RESULT}" "Should create directory and file when they don't exist"
+rm -rf "${NONEXISTENT_DIR}"
+
+# Reset to original test file
+export TEST_SETTINGS_FILE="/tmp/settings-test-settings.conf"
+function settings_get_path() {
+  echo "${TEST_SETTINGS_FILE}"
+}
+export -f settings_get_path
+
+# Test 27: Settings list handles comments in file
+rm -f "${TEST_SETTINGS_FILE}"
+cat > "${TEST_SETTINGS_FILE}" <<EOF
+# This is a comment
+KEY1="value1"
+# Another comment
+KEY2="value2"
+
+# Empty line above and below
+
+KEY3="value3"
+EOF
+LIST_WITH_COMMENTS=$(settings_list)
+EXPECTED_WITH_COMMENTS=$(printf 'KEY1="value1"\nKEY2="value2"\nKEY3="value3"')
+assert_equals "$(echo "${EXPECTED_WITH_COMMENTS}" | sort)" "$(echo "${LIST_WITH_COMMENTS}" | sort)" "Should ignore comments and empty lines when listing"
+
+# Test 28: Unicode and international characters
+UNICODE_VALUE="Héllo Wörld 🌍 测试 العربية עברית"
+settings_set "UNICODE_TEST" "${UNICODE_VALUE}"
+UNICODE_RESULT=$(settings_get "UNICODE_TEST")
+assert_equals "${UNICODE_VALUE}" "${UNICODE_RESULT}" "Should correctly handle Unicode and international characters"
+
+# Test 29: Value overwriting preserves file integrity
+rm -f "${TEST_SETTINGS_FILE}"
+settings_set "KEY1" "value1"
+settings_set "KEY2" "value2"
+settings_set "KEY3" "value3"
+settings_set "KEY2" "new_value2"  # Overwrite middle key
+FINAL_LIST=$(settings_list)
+EXPECTED_FINAL=$(printf 'KEY1="value1"\nKEY2="new_value2"\nKEY3="value3"')
+assert_equals "$(echo "${EXPECTED_FINAL}" | sort)" "$(echo "${FINAL_LIST}" | sort)" "Should maintain file integrity when overwriting values"
+FINAL_LINE_COUNT=$(wc -l < "${TEST_SETTINGS_FILE}")
+assert_equals "3" "${FINAL_LINE_COUNT}" "Should have exactly 3 lines after overwriting"
 
 
 # Test Summary
