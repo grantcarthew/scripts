@@ -9,6 +9,13 @@
 
 SETTINGS_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 
+# Dependency check
+if ! command -v rg >/dev/null 2>&1; then
+  echo "ERROR: settings.sh requires RipGrep (rg) but it's not installed" >&2
+  echo "Install with: brew install ripgrep" >&2
+  return 1 2>/dev/null || exit 1
+fi
+
 function _settings_ensure_file_exists() {
   local settings_file="${1}"
   local settings_dir
