@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/bash_modules/settings.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <key> <value>
+
+Sets a script setting with the specified key and value.
+
+Dependencies:
+  rg                 RipGrep recursively searches directories for a regex pattern
+
+Required arguments:
+  key                The setting key to set
+  value              The value to assign to the key
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -lt 2 || $# -gt 2 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Dependency Checks
+# -----------------------------------------------------------------------------
+dependencies=(rg)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "ERROR: Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+# Report Operational Values
+# -----------------------------------------------------------------------------
+log_title "Set Script Setting"
+
+declare key="${1}"
+declare value="${2}"
+
+log_message "$(
+  cat <<EOF
+  Target: '$(settings_get_path)'
+     key: '${key}'
+   value: '${value}'
+EOF
+)"
+
+# Main Logic
+# -----------------------------------------------------------------------------
+log_heading "Setting Configuration"
+
+settings_set "${key}" "${value}"
+
+log_success "Setting '${key}' has been set successfully"
