@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Launches Python for simple math on the terminal
 
 function print_usage() {
   cat <<EOF

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Generate a random human readable alphanumeric code
 
 # Environment setup - Leave this block intact
 # -----------------------------------------------------------------------------

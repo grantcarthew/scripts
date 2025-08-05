@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Gets a script setting or lists all settings
 
 # Environment setup
 # -----------------------------------------------------------------------------

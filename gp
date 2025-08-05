@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copies my AI Prompts from GitHub into the local clipboard
 
 # Environment setup
 set -o pipefail

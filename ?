@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Find available scripts and script libraries
 
 # Environment setup
 # -----------------------------------------------------------------------------
@@ -13,9 +14,9 @@ function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [lib-name]
 
-This script helps you find and view documentation for available script libraries.
+This script helps you find and view documentation for available scripts and script libraries.
 
-When run without a library name, it lists all available libraries.
+When run without a library name, it lists all bash scripts in the current directory with their descriptions, followed by all available libraries.
 
 When a library name is provided, it searches for matching libraries:
 
@@ -47,7 +48,7 @@ trap ctrlc_trap SIGINT
 
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
-log_title "Script Libraries"
+log_title "Scripts and Libraries"
 
 if ! command -v fzf &>/dev/null; then
     log_error "ERROR: Missing dependency - 'fzf'"
@@ -60,6 +61,29 @@ declare -r lib_dir="${SCRIPT_DIR}/lib"
 # Main Logic
 # -----------------------------------------------------------------------------
 if [[ -z "${lib_name}" ]]; then
+  log_heading "Bash Scripts"
+
+  for file in "${SCRIPT_DIR}"/*; do
+    if [[ -f "${file}" && ! "${file}" =~ \.(sh|md)$ ]]; then
+      if [[ -r "${file}" ]]; then
+        first_line=$(head -n 1 "${file}" 2>/dev/null)
+        if [[ "${first_line}" =~ \#\!/.*bash ]]; then
+          second_line=$(sed -n '2p' "${file}" 2>/dev/null)
+          filename=$(basename "${file}")
+
+          if [[ "${second_line}" =~ ^\#[[:space:]]*(.*) ]]; then
+            description="${BASH_REMATCH[1]}"
+            echo "${filename}:${description}"
+          else
+            echo "${filename}"
+          fi
+        fi
+      fi
+    fi
+  done | column -t -s ':' | sed 's/^/  /'
+
+  log_newline
+  log_heading "Available Libraries"
   fd --max-depth 1 --type d . "${lib_dir}" | xargs -n1 basename | sort | sed 's/^/  /'
   exit 0
 fi

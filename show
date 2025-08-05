@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Show the contents executable script in a PATH
 
 # Environment setup
 set -o pipefail

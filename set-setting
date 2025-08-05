@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Sets a script setting with the specified key and value
 
 # Environment setup
 # -----------------------------------------------------------------------------
