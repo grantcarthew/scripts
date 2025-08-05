@@ -203,7 +203,7 @@ function is_bash_script() {
     # is_bash_script <file-path>
     local file="${1}"
 
-    if head --lines=1 "${file}" | grep -Pq '^#!.*bash'; then
+    if head --lines=1 "${file}" | rg -Pq '^#!.*bash'; then
         echo "File is a Bash script: '${file}'"
         return 0
     else
