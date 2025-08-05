@@ -105,7 +105,7 @@ function settings_set() {
   ')
 
   # Remove existing key and append new value
-  grep -v "^${key}=" "${settings_file}" > "${temp_file}" || true
+  rg -v "^${key}=" "${settings_file}" > "${temp_file}" || true
   printf '%s="%s"\n' "${key}" "${escaped_value}" >> "${temp_file}"
   mv "${temp_file}" "${settings_file}"
 }
@@ -120,10 +120,10 @@ function settings_delete() {
   fi
 
   # Only modify the file if the key exists
-  if grep -q "^${key}=" "${settings_file}"; then
+  if rg -q "^${key}=" "${settings_file}"; then
     local temp_file
     temp_file=$(mktemp)
-    grep -v "^${key}=" "${settings_file}" > "${temp_file}"
+    rg -v "^${key}=" "${settings_file}" > "${temp_file}"
     mv "${temp_file}" "${settings_file}"
   fi
 }

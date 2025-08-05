@@ -80,7 +80,7 @@ assert_equals "vertexai:gemini-2.5-pro" "${AI_PRO}" "Should retrieve 'vertexai:g
 
 # Test 2: Writes a retrieved default to the user settings
 expected_quoted_default='AI_MODEL_PRO="vertexai:gemini-2.5-pro"'
-actual_quoted_default=$(grep "AI_MODEL_PRO" "${TEST_SETTINGS_FILE}")
+actual_quoted_default=$(rg "AI_MODEL_PRO" "${TEST_SETTINGS_FILE}")
 assert_equals "${expected_quoted_default}" "${actual_quoted_default}" "Should write the retrieved default value to the user settings file, properly quoted"
 
 # Test 3: Sets and gets a new value
