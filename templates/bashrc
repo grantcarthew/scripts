@@ -135,34 +135,6 @@ export EDITOR="nvim"
 export VISUAL="nvim"
 
 #-----------------------------------------------------------------
-# Paths
-#-----------------------------------------------------------------
-__insert_path "${HOME}/bin"
-__insert_path "${HOME}/.local/bin"
-__insert_path "${HOME}/bin/scripts"
-
-#-----------------------------------------------------------------
-# Aliases
-#-----------------------------------------------------------------
-alias c="code ."
-alias clip="xclip -selection clipboard"
-alias info="fastfetch"
-alias ls="lsd --all --long --group-dirs first"
-alias open="xdg-open ."
-alias port="sudo lsof -i -P -n | grep"
-alias present="mplayer tv:// -tv driver=v4l2:device=/dev/video2:noaudio:width=320:height=240 -noborder -ontop -geometry 99%:99%"
-alias sudo="sudo " # Permits calling sudo alias
-alias tree="lsd --tree"
-alias vim="nvim"
-
-# Alias Reminder
-__line
-echo " ${CYAN}Alias List${NORMAL}"
-__line
-alias | sort | awk -F'[ =]' '{printf "%-10s %s\n", $2, substr($0, index($0,$3))}'
-__line
-
-#-----------------------------------------------------------------
 # Tokens and Keys
 #-----------------------------------------------------------------
 
@@ -184,6 +156,18 @@ eval "$(mcfly init bash)"
 eval "$(starship init bash)"
 eval "$(zoxide init bash)"
 eval "$(mise activate bash)"
+
+#-----------------------------------------------------------------
+# Paths
+#-----------------------------------------------------------------
+__insert_path "${HOME}/bin"
+__insert_path "${HOME}/.local/bin"
+__insert_path "${HOME}/bin/scripts"
+
+#-----------------------------------------------------------------
+# Headers
+#-----------------------------------------------------------------
+bsh # Private: Displays scripts in the ~/bin directory
 
 #-----------------------------------------------------------------
 # Appended Statements
