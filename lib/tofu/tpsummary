@@ -2,16 +2,15 @@
 
 source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-log_tf_title "[t]ofu [p]lan [s]how"
+log_tf_title "[t]ofu [p]lan [summary]"
 
 [[ "${#}" -gt 0 ]] && exit 1
 
 LATEST_PLAN="$(get_latest_tf_plan_file)"
-
 if [[ -n "${LATEST_PLAN}" ]]; then
   log_message "Latest plan file: '${LATEST_PLAN}'"
-  log_message "❯ tofu show '${LATEST_PLAN}'"
-  tofu show "${LATEST_PLAN}"
+  log_message "❯ tofu show $(basename "${LATEST_PLAN}") | rg '# |Plan:' | rg -v '.data.|# \('"
+  tofu show "${LATEST_PLAN}" | rg '# |Plan:' | rg -v '.data.|# \('
   exit 0
 fi
 

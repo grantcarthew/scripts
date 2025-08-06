@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
 
-title="sudo [d]ocker [c]ontainer [l]ist"
-if [[ $# -gt 0 ]]; then
-    cat <<EOT
-      Title: ${title}
-      Usage: dcl [-h]
-Description: Displays the list of Docker containers including both running and stopped containers
-   Commands:
-     - sudo docker container list --all
-EOT
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-echo "${title}"
-docker container list --all
+log_title "sudo [d]ocker [c]ontainer [l]ist"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_subheading "command: sudo docker container list --all"
+sudo docker container list --all
+log_line

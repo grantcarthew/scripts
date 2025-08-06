@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
 
-title="sudo [s]ystemctl [s]tart [d]ocker"
-if [[ $# -gt 0 ]]; then
-    cat <<EOT
-      Title: ${title}
-      Usage: ssd [-h]
-Description: Starts the Docker daemon and shows status
-   Commands:
-     - sudo systemctl start docker
-     - sudo systemctl status docker --no-pager
-EOT
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-echo "${title}"
+log_title "sudo [s]ystemctl [s]tart [d]ocker"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_subheading "command: sudo systemctl start docker"
 sudo systemctl start docker
+
+log_subheading "command: sudo systemctl status docker --no-pager"
 sudo systemctl status docker --no-pager
+log_line

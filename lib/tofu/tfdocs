@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
+
+log_tf_title "[t]erra[f]orm [docs]"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_message "❯ terraform-docs markdown table --anchor=false --output-file README.md ."
+terraform-docs markdown table --anchor=false --output-file README.md .

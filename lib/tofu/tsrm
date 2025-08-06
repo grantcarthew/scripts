@@ -1,26 +1,10 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-Usage: tsrm <resource-id> [-h]
+log_tf_title "[t]ofu [s]tate [r]e[m]ove <resource-id>"
 
-OpenTofu State RM
+[[ "${#}" -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-Runs a OpenTofu State Remove
-
-Required arguments:
-  resource-id            Resource to remove
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -ne 1 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
-    usage
-    exit 0
-fi
-
+log_message "❯ tofu state rm ${1}"
 tofu state rm "${1}"

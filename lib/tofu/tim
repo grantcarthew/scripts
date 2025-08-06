@@ -1,27 +1,10 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-Usage: tim <resource> <id> [-h]
+log_tf_title "[t]ofu [i]mport <resource> <id>"
 
-OpenTofu Import
+[[ "${#}" -ne 2 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-Runs a tofu import
-
-Required arguments:
-  resource               Source resource id
-  id                     Source name or id
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -ne 2 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
-    usage
-    exit 0
-fi
-
+log_message "❯ tofu import ${1} ${2}"
 tofu import "${1}" "${2}"
