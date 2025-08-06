@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
+
+log_tf_title "[t]ofu [p]lan [l]i[s]t"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_subheading "Listing plan files in '${TFPLAN_DIR}'"
+fd --type f . "${TFPLAN_DIR}"

@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
 
-usage() {
-    echo 'Usage: dil'
-    echo
-    echo 'Displays the list of Docker images'
-    echo
-    echo 'Optional arguments:'
-    echo '  -h, --help             Show this help message and exit'
-}
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-if [[ $# -gt 0 ]]; then
-    usage
-    exit 1
-fi
+log_title "[d]ocker [i]mage [l]ist"
 
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_subheading "command: docker image list"
 docker image list
+log_line

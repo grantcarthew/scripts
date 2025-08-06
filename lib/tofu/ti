@@ -1,24 +1,21 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-Usage: ti [-h]
+log_tf_title "[t]ofu [i]nit [bucket-name]"
 
-OpenTofu Initialisation
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-Runs a tofu init with upgrade then a plan
+log_message "Removing .terraform directory and .terraform.lock.hcl file"
+log_message "❯ rm -rf .terraform && rm -f .terraform.lock.hcl"
+rm -rf .terraform && rm -f .terraform.lock.hcl
 
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -gt 0 ]]; then
-    usage
-    exit 0
+if [[ -z "${1}" ]]; then
+  log_message "❯ tofu init -upgrade"
+  tofu init -upgrade
+  exit 0
 fi
 
-tofu init -upgrade
-tofu plan
+log_message "Bucket Name: '${1}'"
+log_message "❯ tofu init -upgrade -backend-config=\"bucket=${1}\""
+tofu init -upgrade -backend-config="bucket=${1}"

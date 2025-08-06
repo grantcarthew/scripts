@@ -1,28 +1,22 @@
 #!/usr/bin/env bash
 
-usage() {
-    echo 'Usage: dsp [clean]'
-    echo
-    echo 'Runs the "docker system prune --all" command to remove all stopped containers and images'
-    echo
-    echo 'Optional arguments:'
-    echo '  -h, --help             Show this help message and exit'
-    echo '  clean                  Stop all running containers before pruning'
-}
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-if [[ $# -gt 1 ]]; then
-    usage
-    exit 1
-fi
+log_title "[d]ocker [s]ystem [p]rune [clean]"
 
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    usage
-    exit 0
-fi
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ "$1" == "clean" ]]; then
-    echo "Stopping all running containers..."
-    docker stop $(docker ps -aq)
+  log_subheading "command: docker stop \$(docker ps -aq)"
+  if [[ "$(docker ps -aq)" ]]; then
+    docker stop "$(docker ps -aq)"
+  else
+    log_message "No containers running"
+  fi
 fi
 
+log_subheading "command: docker system prune --all"
 docker system prune --all
+log_line

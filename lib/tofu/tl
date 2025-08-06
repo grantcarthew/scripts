@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
+
+log_tf_title "[t]ofu [l]int"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_message "Running tofu formatting and linting tools"
+
+log_heading "Formatting"
+log_message "❯ tofu fmt -recursive"
+tofu fmt -recursive
+
+log_heading "Validating"
+log_message "❯ tofu validate"
+tofu validate
+
+log_heading "Linting"
+log_message "❯ tflint --recursive"
+tflint --recursive
+
+log_heading "Security scanning with trivy"
+log_message "❯ trivy config ."
+trivy config .

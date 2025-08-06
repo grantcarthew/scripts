@@ -7,7 +7,7 @@ export PATH="${PATH}:${SCRIPT_DIR}"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 reset
-log_title "System Upgrade"
+log_title "System Update"
 
 log_heading "Flatpak"
 flatpak upgrade --assumeyes
@@ -15,8 +15,26 @@ flatpak upgrade --assumeyes
 log_heading "Brew"
 brew upgrade
 
+log_heading "mise"
+mise upgrade
+
 log_heading "Deno"
 deno upgrade
+
+log_heading "Gemini CLI"
+npm install -g @google/gemini-cli
+log_success "Gemini CLI upgrade successful: $(gemini --version)"
+
+log_heading "scripts"
+cd "${HOME}/bin/scripts" || exit 1
+git pull origin main
+
+log_heading "notes"
+cd "${HOME}/Projects/notes" || exit 1
+git pull origin main
+
+log_heading "AnythingLLM"
+curl -fsSL https://cdn.anythingllm.com/latest/installer.sh | sh
 
 log_heading "Pacman"
 sudo pacman --sync --refresh --sysupgrade

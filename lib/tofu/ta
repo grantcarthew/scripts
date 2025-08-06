@@ -1,28 +1,16 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-Usage: ta [aa] [-h]
+log_tf_title "[t]ofu [a]pply [plan-file]"
 
-OpenTofu Apply
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-Runs a tofu apply with optional auto approve
-
-Optional arguments:
-  aa                     Auto approve the apply
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -gt 1 ]] || [[ "${1}" == "-h" ]] || [[ "${1}" == "--help" ]]; then
-    usage
-    exit 0
+if [[ -n "${1}" ]]; then
+  log_message "❯ tofu apply ${1}"
+  tofu apply "${1}"
+  exit 0
 fi
 
-if [[ "${1}" == "aa" ]];then
-  tofu apply -auto-approve
-else
-  tofu apply
-fi
+log_message "❯ tofu apply"
+tofu apply

@@ -1,3 +1,3 @@
 # OpenTofu Scripts
 
-Simple scripts to save typing the full OpenTofu commands.
+Simple scripts to save typing the full Tofu commands.

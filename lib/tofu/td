@@ -1,23 +1,10 @@
 #!/usr/bin/env bash
 
-usage() {
-    cat <<EOF
+source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-Usage: td [-h]
+log_tf_title "[t]ofu [d]estroy"
 
-OpenTofu Destroy
+[[ "${#}" -gt 0 ]] && exit 1
 
-Runs a tofu destroy
-
-Optional arguments:
-  -h, --help             Show this help message and exit
-
-EOF
-}
-
-if [[ "${#}" -gt 0 ]]; then
-    usage
-    exit 0
-fi
-
+log_message "❯ tofu destroy"
 tofu destroy
