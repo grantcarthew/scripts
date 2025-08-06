@@ -17,6 +17,7 @@ Dependencies:
   fzf                For interactive directory selection
   lsd                For directory listing in preview
   rg                 For searching .bashrc file
+  fd                 For finding directories
 
 Required arguments:
   lib_name           Name or part of library directory name (optional)
@@ -42,7 +43,7 @@ if [[ ! -d "${lib_dir}" ]]; then
 fi
 
 # Dependency check
-dependencies=(fzf lsd rg)
+dependencies=(fzf lsd rg fd)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -50,40 +51,35 @@ for cmd in "${dependencies[@]}"; do
   fi
 done
 
-mapfile -t lib_dirs < <(find "${lib_dir}" -maxdepth 1 -type d -not -path "${lib_dir}" -exec basename {} \;)
+mapfile -t lib_dirs < <(fd -t d -d 1 . "${lib_dir}")
 if [[ ${#lib_dirs[@]} -eq 0 ]]; then
   log_error "ERROR: No library directories found in '${lib_dir}'"
   exit 1
 fi
 
+# Extract just the directory names for display
+mapfile -t lib_names < <(printf "%s\n" "${lib_dirs[@]}" | xargs -I {} basename {})
+
 selected_dir=""
 if [[ -n "${lib_name}" ]]; then
-  mapfile -t matches < <(find "${lib_dir}" -maxdepth 1 -type d -name "*${lib_name}*" -not -path "${lib_dir}" -exec basename {} \;)
+  mapfile -t matches < <(fd -t d -d 1 "${lib_name}" "${lib_dir}")
   if [[ ${#matches[@]} -eq 1 ]]; then
-    selected_dir="${lib_dir}/${matches[0]}"
+    selected_dir="${matches[0]}"
   elif [[ ${#matches[@]} -gt 1 ]]; then
-    selected_dir_name=$(printf "%s\n" "${matches[@]}" | fzf --prompt="Select library directory: " --query="${lib_name}" --preview "lsd --oneline --group-directories-first '${lib_dir}/{}'")
-    if [[ -z "${selected_dir_name}" ]]; then
-      log_error "ERROR: No directory selected"
-      exit 1
-    fi
-    selected_dir="${lib_dir}/${selected_dir_name}"
+    mapfile -t match_names < <(printf "%s\n" "${matches[@]}" | xargs -I {} basename {})
+    selected_name=$(printf "%s\n" "${match_names[@]}" | fzf --prompt="Select library directory: " --query="${lib_name}" --preview "lsd --oneline --group-directories-first '${lib_dir}/{}'")
+    [[ -z "${selected_name}" ]] && { log_error "ERROR: No directory selected"; exit 1; }
+    selected_dir="${lib_dir}/${selected_name}"
   else
     log_warning "No exact match for '${lib_name}', using fzf to select"
-    selected_dir_name=$(printf "%s\n" "${lib_dirs[@]}" | fzf --prompt="Select library directory: " --query="${lib_name}" --preview "lsd --oneline --group-directories-first '${lib_dir}/{}'")
-    if [[ -z "${selected_dir_name}" ]]; then
-      log_error "ERROR: No directory selected"
-      exit 1
-    fi
-    selected_dir="${lib_dir}/${selected_dir_name}"
+    selected_name=$(printf "%s\n" "${lib_names[@]}" | fzf --prompt="Select library directory: " --query="${lib_name}" --preview "lsd --oneline --group-directories-first '${lib_dir}/{}'")
+    [[ -z "${selected_name}" ]] && { log_error "ERROR: No directory selected"; exit 1; }
+    selected_dir="${lib_dir}/${selected_name}"
   fi
 else
-  selected_dir_name=$(printf "%s\n" "${lib_dirs[@]}" | fzf --prompt="Select library directory: " --preview "lsd --oneline --group-directories-first '${lib_dir}/{}'")
-  if [[ -z "${selected_dir_name}" ]]; then
-    log_error "ERROR: No directory selected"
-    exit 1
-  fi
-  selected_dir="${lib_dir}/${selected_dir_name}"
+  selected_name=$(printf "%s\n" "${lib_names[@]}" | fzf --prompt="Select library directory: " --preview "lsd --oneline --group-directories-first '${lib_dir}/{}'")
+  [[ -z "${selected_name}" ]] && { log_error "ERROR: No directory selected"; exit 1; }
+  selected_dir="${lib_dir}/${selected_name}"
 fi
 
 log_message "Library: ${selected_dir}"
@@ -96,6 +92,8 @@ if rg -F "${lib_path_pattern}" "${bashrc}" >/dev/null; then
 fi
 
 # Convert absolute path to use ${HOME} variable
+# Remove any trailing slash from selected_dir
+selected_dir="${selected_dir%/}"
 relative_path="${selected_dir/#${HOME}/\${HOME\}}"
 echo "export PATH=\"\${PATH}:${relative_path}\"" >> "${bashrc}"
 log_success "Added '${relative_path}' to PATH in .bashrc"
