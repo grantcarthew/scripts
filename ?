@@ -22,6 +22,7 @@ With lib-name: Searches for matching libraries and displays their scripts.
 Dependencies:
   fzf                Command-line fuzzy finder
   fd                 Fast directory search tool
+  rg                 RipGrep text search tool
 
 Optional arguments:
   lib-name           Library name to inspect
@@ -48,7 +49,7 @@ function list_libraries() {
       readme_file="${dir}/README.md"
 
       if [[ -f "${readme_file}" && -r "${readme_file}" ]]; then
-        title_line=$(grep -m 1 '^# ' "${readme_file}" 2>/dev/null)
+        title_line=$(rg -m 1 '^# ' "${readme_file}" 2>/dev/null)
         if [[ -n "${title_line}" ]]; then
           title="${title_line#\# }"
           title="${title%% <!--*}"
@@ -67,10 +68,13 @@ function list_libraries() {
 # -----------------------------------------------------------------------------
 log_title "Scripts and Libraries"
 
-if ! command -v fzf &>/dev/null; then
-    log_error "ERROR: Missing dependency - 'fzf'"
-    exit 1
-fi
+dependencies=(fzf fd rg)
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
 
 declare lib_name="${1-}"
 declare -r lib_dir="${SCRIPT_DIR}/lib"
@@ -133,7 +137,7 @@ dir_basename=$(basename "${selected_dir}")
 log_subheading "Scripts in '${dir_basename}'"
 
 fd --type f --exclude "*.sh" --exclude "README.md" . "${selected_dir}" --print0 | while IFS= read -r -d $'\0' file; do
-  match=$(grep -m 1 -oE 'log_.*title ".*"' "${file}")
+  match=$(rg -m 1 -oE 'log_.*title ".*"' "${file}")
   if [[ -n "${match}" ]]; then
     title=$(echo "${match}" | sed -e 's/.*log_.*title \"//' -e 's/\"$//')
     filename=$(basename "${file}")
