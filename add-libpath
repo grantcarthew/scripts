@@ -16,6 +16,7 @@ Adds a library directory to PATH in .bashrc if not already present.
 Dependencies:
   fzf                For interactive directory selection
   lsd                For directory listing in preview
+  rg                 For searching .bashrc file
 
 Required arguments:
   lib_name           Name or part of library directory name (optional)
@@ -35,14 +36,13 @@ log_title "Add Library Path"
 lib_dir="${SCRIPT_DIR}/lib"
 lib_name="${1}"
 
-log_heading "Validate Library Directory"
 if [[ ! -d "${lib_dir}" ]]; then
   log_error "ERROR: Library directory '${lib_dir}' does not exist"
   exit 1
 fi
 
 # Dependency check
-dependencies=(fzf lsd)
+dependencies=(fzf lsd rg)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -50,9 +50,7 @@ for cmd in "${dependencies[@]}"; do
   fi
 done
 
-log_heading "Select Library Directory"
 mapfile -t lib_dirs < <(find "${lib_dir}" -maxdepth 1 -type d -not -path "${lib_dir}" -exec basename {} \;)
-
 if [[ ${#lib_dirs[@]} -eq 0 ]]; then
   log_error "ERROR: No library directories found in '${lib_dir}'"
   exit 1
@@ -88,13 +86,16 @@ else
   selected_dir="${lib_dir}/${selected_dir_name}"
 fi
 
-log_heading "Check .bashrc"
+log_message "Library: ${selected_dir}"
+log_message "Checking .bashrc..."
 bashrc="${HOME}/.bashrc"
-if grep -Fx "export PATH=\"\${PATH}:${selected_dir}\"" "${bashrc}" >/dev/null; then
-  log_success "Path '${selected_dir}' already in .bashrc"
+lib_path_pattern="/lib/$(basename "${selected_dir}")"
+if rg -F "${lib_path_pattern}" "${bashrc}" >/dev/null; then
+  log_success "Path containing '${lib_path_pattern}' already in .bashrc"
   exit 0
 fi
 
-log_heading "Update .bashrc"
-echo "export PATH=\"\${PATH}:${selected_dir}\"" >> "${bashrc}"
-log_success "Added '${selected_dir}' to PATH in .bashrc"
+# Convert absolute path to use ${HOME} variable
+relative_path="${selected_dir/#${HOME}/\${HOME\}}"
+echo "export PATH=\"\${PATH}:${relative_path}\"" >> "${bashrc}"
+log_success "Added '${relative_path}' to PATH in .bashrc"
