@@ -11,7 +11,8 @@ log_title "[g]it [d]iff --[s]taged [path]"
 if [[ -z "${1}" ]]; then
   log_message "❯ git diff --staged"
   git diff --staged
-else
-  log_message "❯ git diff --staged ${1}"
-  git diff --staged "${1}"
+  exit 0
 fi
+
+log_message "❯ git diff --staged ${1}"
+git diff --staged "${1}"
