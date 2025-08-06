@@ -11,7 +11,8 @@ log_title "[g]it [d]iff [file-path]"
 if [[ -z "${1}" ]]; then
   log_message "❯ git diff"
   git diff
-else
-  log_message "❯ git diff ${1}"
-  git diff "${1}"
+  exit 0
 fi
+
+log_message "❯ git diff ${1}"
+git diff "${1}"
