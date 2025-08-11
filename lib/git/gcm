@@ -107,6 +107,12 @@ if ! git commit -m "${commit_message}"; then
 fi
 
 log_line
+
+if ! git remote get-url origin &>/dev/null; then
+  log_warning "No 'origin' remote found. Skipping push option."
+  exit 0
+fi
+
 if ! press_enter_to_continue "Press Enter to push, any other key to abort."; then
   log_warning "Push aborted"
   exit 1
