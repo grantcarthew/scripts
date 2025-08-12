@@ -93,6 +93,8 @@ if [[ "${current_branch}" == "${default_branch}" ]]; then
   exit 1
 fi
 
+log_message "Special Instructions: ${special_instructions}"
+
 # Generate diff between default and current branch
 # -----------------------------------------------------------------------------
 log_message "Generating diff between ${default_branch} and ${current_branch}..."
