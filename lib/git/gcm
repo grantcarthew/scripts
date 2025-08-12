@@ -32,7 +32,7 @@ This script will:
 EOF
 }
 
-if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+if [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
   print_usage
   exit 0
 fi
