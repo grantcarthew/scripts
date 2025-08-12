@@ -14,13 +14,16 @@ AI_MODEL_FAST="$(settings_get "AI_MODEL_FAST")"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0")
+Usage: $(basename "$0") [special-instructions]
 
 Generate a commit message using AI for the currently staged changes.
 
 Dependencies:
   git                Git version control
   aichat             AI chat tool
+
+Arguments:
+  special-instructions  Optional special instructions for the AI prompt
 
 This script will:
 1. Check if there are staged git changes
@@ -32,6 +35,12 @@ EOF
 if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
   print_usage
   exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+  special_instructions="None"
+else
+  special_instructions="$*"
 fi
 
 function ctrlc_trap() {
@@ -70,6 +79,10 @@ log_message "Generating commit message..."
 
 prompt="$(cat <<EOF
 $(cat "${SCRIPT_DIR}/gcm-prompt.md")
+
+## Special Instructions
+
+${special_instructions}
 
 ## Git Diff
 
