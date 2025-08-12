@@ -14,13 +14,16 @@ AI_MODEL_PRO="$(settings_get "AI_MODEL_PRO")"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0")
+Usage: $(basename "$0") [special-instructions]
 
 Update CHANGELOG.md using AI based on current branch changes.
 
 Dependencies:
   git                Git version control
   aichat             AI chat tool
+
+Arguments:
+  special-instructions  Optional special instructions for the AI prompt
 
 This script will:
 1. Determine the default branch (main or master)
@@ -31,7 +34,16 @@ This script will:
 EOF
 }
 
-[[ "${#}" -gt 0 ]] && print_usage && exit 0
+if [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+  special_instructions="None"
+else
+  special_instructions="$*"
+fi
 
 function ctrlc_trap() {
   log_newline
@@ -114,6 +126,10 @@ log_message "Generating updated changelog..."
 # Generate prompt using heredoc
 prompt="$(cat <<EOF
 $(cat "${SCRIPT_DIR}/ucl-prompt.md")
+
+## Special Instructions
+
+${special_instructions}
 
 ## Information
 
