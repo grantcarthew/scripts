@@ -79,21 +79,21 @@ else
   log_error "ERROR: Could not determine default branch (neither main nor master found)"
   exit 1
 fi
-log_message "Default branch: ${default_branch}"
+log_message "       Default branch: ${default_branch}"
 
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 if [[ $? -ne 0 ]]; then
   log_error "ERROR: Failed to determine current branch"
   exit 1
 fi
-log_message "Current branch: ${current_branch}"
+log_message "       Current branch: ${current_branch}"
 
 if [[ "${current_branch}" == "${default_branch}" ]]; then
   log_error "ERROR: Current branch is the default branch. Please switch to a feature branch."
   exit 1
 fi
 
-log_message "Special Instructions: ${special_instructions}"
+log_message " Special Instructions: ${special_instructions}"
 
 # Generate diff between default and current branch
 # -----------------------------------------------------------------------------
