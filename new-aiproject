@@ -11,9 +11,12 @@ source "${SCRIPT_DIR}/bash_modules/terminal.sh"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0") [project_name] [overview]
+Usage: $(basename "$0") [--spec] [project_name] [overview]
 
-Generates a new SPEC.md file from a template.
+Generates a new project file from a template.
+
+Options:
+  --spec            Generate a SPEC.md file (default: generates workflow)
 
 Optional arguments:
   project_name      The name of the project.
@@ -34,15 +37,52 @@ function ctrlc_trap() {
 }
 trap ctrlc_trap SIGINT
 
+# Parse arguments
+# -----------------------------------------------------------------------------
+declare use_spec_template=false
+declare project_name=""
+declare project_overview=""
+
+while [[ $# -gt 0 ]]; do
+  case "${1}" in
+    --spec)
+      use_spec_template=true
+      shift
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    --*|-*)
+      log_error "Unknown option: '${1}'"
+      print_usage
+      exit 1
+      ;;
+    *)
+      if [[ -z "${project_name}" ]]; then
+        project_name="${1}"
+      elif [[ -z "${project_overview}" ]]; then
+        project_overview="${1}"
+      else
+        log_error "Too many arguments provided"
+        print_usage
+        exit 1
+      fi
+      shift
+      ;;
+  esac
+done
+
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
-log_title "New Project Specification"
+if [[ "${use_spec_template}" == true ]]; then
+  log_title "New Project Specification"
+else
+  log_title "New Project Workflow"
+fi
 
 # Arguments
 # -----------------------------------------------------------------------------
-declare project_name="${1}"
-declare project_overview="${2}"
-
 if [[ -z "${project_name}" ]]; then
   read -r -p "Enter project name: " project_name
 fi
@@ -108,7 +148,15 @@ ${cli_tools_cask}"
     ;;
 esac
 
-log_heading "Generating SPEC.md"
+if [[ "${use_spec_template}" == true ]]; then
+  log_heading "Generating SPEC.md"
+  output_file="SPEC.md"
+  mo_template_file="${SCRIPT_DIR}/new-aiproject-spec-template.md"
+else
+  log_heading "Generating WORKFLOW.md"
+  output_file="WORKFLOW.md"
+  mo_template_file="${SCRIPT_DIR}/new-aiproject-job-template.md"
+fi
 
 export PROJECT_NAME="${project_name}"
 export PROJECT_OVERVIEW="${project_overview}"
@@ -117,16 +165,14 @@ export TERMINAL_TYPE="${terminal_type}"
 export PACKAGE_MANAGER="${package_manager}"
 export CLI_TOOLS="${cli_tools}"
 
-mo_template_file="${SCRIPT_DIR}/new-spec-template.md"
-
 if [[ ! -f "${mo_template_file}" ]]; then
     log_error "Template file not found: '${mo_template_file}'"
     exit 1
 fi
 
 log_message "Substituting variables in '${mo_template_file}'"
-mo "${mo_template_file}" > SPEC.md
+mo "${mo_template_file}" > "${output_file}"
 
-log_success "Successfully created 'SPEC.md'"
+log_success "Successfully created '${output_file}'"
 
-nvim SPEC.md
+nvim "${output_file}"

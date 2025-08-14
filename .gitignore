@@ -1,8 +1,9 @@
 # Custom / Project Specific
 /lib/private/*
 !/lib/private/README.md
-AGENTS.*
+AGENTS.md
 SPEC.md
+WORKFLOW.md
 GEMINI.md
 
 # Python
