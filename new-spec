@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [project_name] [overview]
+
+Generates a new SPEC.md file from a template.
+
+Optional arguments:
+  project_name      The name of the project.
+  overview          A short overview of the project.
+  -h, --help        Show this help message and exit
+EOF
+}
+
+if [[ "${1-}" == "-h" || "${1-}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "New Project Specification"
+
+# Arguments
+# -----------------------------------------------------------------------------
+declare project_name="${1}"
+declare project_overview="${2}"
+
+if [[ -z "${project_name}" ]]; then
+  read -r -p "Enter project name: " project_name
+fi
+
+if [[ -z "${project_overview}" ]]; then
+  read -r -p "Enter project overview: " project_overview
+  if [[ -z "${project_overview}" ]]; then
+    project_overview="A brief overview of the project."
+  fi
+fi
+
+# Dependency Checks
+# -----------------------------------------------------------------------------
+if ! command -v mo >/dev/null; then
+  log_warning "Command 'mo' not found. Installing to '${HOME}/bin'."
+  if [[ ! -d "${HOME}/bin" ]]; then
+    mkdir -p "${HOME}/bin"
+  fi
+  curl -sSL https://raw.githubusercontent.com/tests-always-included/mo/master/mo -o "${HOME}/bin/mo"
+  chmod +x "${HOME}/bin/mo"
+  export PATH="${HOME}/bin:${PATH}"
+  log_success "Installed 'mo' successfully."
+fi
+
+function get_terminal_type() {
+  if [[ -n "${TERM_PROGRAM}" ]]; then
+    printf "%s" "${TERM_PROGRAM}"
+  elif [[ -n "${TERM}" ]]; then
+    printf "%s" "${TERM}"
+  else
+    printf "unknown"
+  fi
+}
+
+# Main Logic
+# -----------------------------------------------------------------------------
+log_heading "Gathering System Information"
+
+declare operating_system
+operating_system=$(uname -s)
+declare package_manager
+declare cli_tools
+declare terminal_type
+terminal_type=$(get_terminal_type)
+
+case "${operating_system}" in
+  Darwin)
+    package_manager="brew"
+    log_message "Detected macOS. Using 'brew' for package management."
+    cli_tools_leaves=$(brew leaves | paste -sd, | fold -w 80)
+    cli_tools_cask=$(brew list --cask | paste -sd, | fold -w 80)
+    cli_tools="${cli_tools_leaves}
+${cli_tools_cask}"
+    ;;
+  Linux)
+    package_manager="pacman or apt"
+    log_message "Detected Linux. Using placeholder values."
+    cli_tools="Placeholder for Linux CLI tools"
+    ;;
+  *)
+    log_error "Unsupported operating system: '${operating_system}'"
+    exit 1
+    ;;
+esac
+
+log_heading "Generating SPEC.md"
+
+export PROJECT_NAME="${project_name}"
+export PROJECT_OVERVIEW="${project_overview}"
+export OPERATING_SYSTEM="${operating_system}"
+export TERMINAL_TYPE="${terminal_type}"
+export PACKAGE_MANAGER="${package_manager}"
+export CLI_TOOLS="${cli_tools}"
+
+mo_template_file="${SCRIPT_DIR}/new-spec-prompt.md"
+
+if [[ ! -f "${mo_template_file}" ]]; then
+    log_error "Template file not found: '${mo_template_file}'"
+    exit 1
+fi
+
+log_message "Substituting variables in '${mo_template_file}'"
+mo "${mo_template_file}" > SPEC.md
+
+log_success "Successfully created 'SPEC.md'"
