@@ -10,9 +10,21 @@ log_title "[g]it [d]iff [file-path]"
 
 if [[ -z "${1}" ]]; then
   log_message "❯ git diff"
-  git diff
+  if git diff --quiet; then
+    log_message "No unstaged changes found. Checking staged changes..."
+    log_message "❯ git diff --staged"
+    git diff --staged
+  else
+    git diff
+  fi
   exit 0
 fi
 
 log_message "❯ git diff ${1}"
-git diff "${1}"
+if git diff --quiet -- "${1}"; then
+  log_message "No unstaged changes found for '${1}'. Checking staged changes..."
+  log_message "❯ git diff --staged ${1}"
+  git diff --staged -- "${1}"
+else
+  git diff -- "${1}"
+fi
