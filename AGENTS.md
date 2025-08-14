@@ -56,6 +56,15 @@ When generating or refactoring any shell script, you must strictly adhere to the
 - Scripts will have minimal comments and be extremely readable
 - Use 2 spaces for tabs
 
+## Information Gathering
+
+Use any of the tools at your disposal to retrieve the information you need:
+
+- Run command help to ensure you are using the correct syntax (--help)
+- Search the internet for information
+- Ask me for any information or changes to the tasks to help you achieve success
+- You can access any information on my computer using `pwd` and `cat <path>`
+
 ## Bash Script Template
 
 - Use all or part of this template as you see fit
