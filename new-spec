@@ -128,3 +128,5 @@ log_message "Substituting variables in '${mo_template_file}'"
 mo "${mo_template_file}" > SPEC.md
 
 log_success "Successfully created 'SPEC.md'"
+
+nvim SPEC.md
