@@ -117,7 +117,7 @@ export TERMINAL_TYPE="${terminal_type}"
 export PACKAGE_MANAGER="${package_manager}"
 export CLI_TOOLS="${cli_tools}"
 
-mo_template_file="${SCRIPT_DIR}/new-spec-prompt.md"
+mo_template_file="${SCRIPT_DIR}/new-spec-template.md"
 
 if [[ ! -f "${mo_template_file}" ]]; then
     log_error "Template file not found: '${mo_template_file}'"
