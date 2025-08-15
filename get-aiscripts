@@ -54,7 +54,13 @@ fd --type f --glob '*-prompt.md' "${SCRIPT_DIR}" | while read -r file; do
     if [[ -n "${title}" ]]; then
         log_message "  ${script_name}: ${title}"
     else
-        log_message "  ${script_name}: (title not found)"
+        # Look for comment title on the first line after shebang
+        comment_title=$(sed -n '2p' "${script_path}" | sed 's/^# *//')
+        if [[ -n "${comment_title}" && "${comment_title}" != *"Environment setup"* ]]; then
+            log_message "  ${script_name}: ${comment_title}"
+        else
+            log_message "  ${script_name}: (title not found)"
+        fi
     fi
   else
     log_message "   ${script_name}: (script not found)"
