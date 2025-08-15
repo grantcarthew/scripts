@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Get CLI command help
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/bash_modules/settings.sh"
+AI_MODEL="$(settings_get "AI_MODEL_PRO")"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <command_description>
+
+Get Bash commands for specific tasks using AI assistance
+
+Dependencies:
+  aichat             AI chat command for command generation
+
+Required arguments:
+  command_description The description of the command or task needed
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Main Logic
+# -----------------------------------------------------------------------------
+prompt_file="${SCRIPT_DIR}/get-clihelp-prompt.md"
+prompt="$(cat "${prompt_file}")"
+prompt+=$'\n\n'"${*}"
+aichat --model "${AI_MODEL}" "${prompt}"

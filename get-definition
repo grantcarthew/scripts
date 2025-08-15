@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Get word definition with options
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/bash_modules/settings.sh"
+AI_MODEL="$(settings_get "AI_MODEL_MID")"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <word_or_phrase>
+
+Get definition, synonyms, and antonyms for English words or phrases
+
+Dependencies:
+  aichat             AI chat command for language processing
+
+Required arguments:
+  word_or_phrase     The word or phrase to define and analyze
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+
+if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Main Logic
+# -----------------------------------------------------------------------------
+prompt_file="${SCRIPT_DIR}/get-definition-prompt.md"
+prompt="$(cat "${prompt_file}")"
+prompt+=$'\n\n'"${*}"
+aichat --model "${AI_MODEL}" "${prompt}"
