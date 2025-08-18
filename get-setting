@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/bash_modules/settings.sh"
+source "${SCRIPT_DIR}/bash_modules/utils.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
@@ -46,22 +47,31 @@ done
 log_title "Get Script Setting"
 log_message "Source: $(settings_get_path)"
 
-declare key="${1}"
+# If no argument provided, list all settings
+if [[ -z "${1}" ]]; then
+  log_message "Listing all settings:"
+  log_newline
+  settings_list
+  exit 0
+fi
 
-if [[ -n "${key}" ]]; then
-  declare value
-  value="$(settings_get "${key}")"
-
-  if [[ -n "${value}" ]]; then
-    log_newline
-    printf '%s="%s"\n' "${key}" "${value}"
-    exit 0
-  fi
-
-  log_error "Key '${key}' not found in settings"
+# Validate that key is not empty or whitespace-only
+if [[ -z "${1// /}" ]]; then
+  log_error "ERROR: Key argument cannot be empty or whitespace-only"
+  print_usage
   exit 1
 fi
 
-log_message "Listing all settings:"
-log_newline
-settings_list
+# Get the value for the specified key
+declare key="${1}"
+declare value
+value="$(settings_get "${key}")"
+
+if [[ -n "${value}" ]]; then
+  log_newline
+  printf '%s="%s"\n' "$(to_upper "${key}")" "${value}"
+  exit 0
+fi
+
+log_error "Key '$(to_upper "${key}")' not found in settings"
+exit 1

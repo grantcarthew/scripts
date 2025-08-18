@@ -6,14 +6,15 @@
 # Values are stored as quoted strings to handle special characters and newlines.
 # The user's settings file is located at ~/.config/scripts/settings.conf.
 # Default values are sourced from settings-defaults.conf in the same directory as this script.
+# Keys are always stored in uppercase for consistency and case-insensitive access.
 
-SETTINGS_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${MODULES_DIR}/utils.sh"
 
-# Dependency check
 if ! command -v rg >/dev/null 2>&1; then
   echo "ERROR: settings.sh requires RipGrep (rg) but it's not installed" >&2
   echo "Install with: brew install ripgrep" >&2
-  return 1 2>/dev/null || exit 1
+  exit 1
 fi
 
 function _settings_ensure_file_exists() {
@@ -33,11 +34,12 @@ function settings_get_path() {
 }
 
 function settings_get_defaults_path() {
-  printf "%s" "${SETTINGS_DIR}/settings-defaults.conf"
+  printf "%s" "${MODULES_DIR}/settings-defaults.conf"
 }
 
 function settings_get() {
-  local key="${1}"
+  local key
+  key="$(to_upper "${1}")"
   local user_settings_file
   user_settings_file="$(settings_get_path)"
   _settings_ensure_file_exists "${user_settings_file}"
@@ -92,7 +94,8 @@ function settings_get() {
 }
 
 function settings_set() {
-  local key="${1}"
+  local key
+  key="$(to_upper "${1}")"
   local value="${2}"
   local settings_file
   settings_file="$(settings_get_path)"
@@ -121,7 +124,8 @@ function settings_set() {
 }
 
 function settings_delete() {
-  local key="${1}"
+  local key
+  key="$(to_upper "${1}")"
   local settings_file
   settings_file="$(settings_get_path)"
 
