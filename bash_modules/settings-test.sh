@@ -13,11 +13,7 @@ source "${SCRIPT_DIR}/terminal.sh"
 source "${SCRIPT_DIR}/settings.sh"
 
 # Test setup - override settings paths to use temporary files
-export TEST_SETTINGS_FILE="/tmp/settings-test-settings.conf"
-function settings_get_path() {
-  echo "${TEST_SETTINGS_FILE}"
-}
-export -f settings_get_path
+export SETTINGS_FILE_PATH="/tmp/settings-test-settings.conf"
 
 DEFAULTS_FILE=$(mktemp)
 cat > "${DEFAULTS_FILE}" <<EOF
@@ -25,16 +21,13 @@ AI_MODEL_PRO="vertexai:gemini-2.5-pro"
 AI_MODEL_FLASH="vertexai:gemini-2.5-flash"
 EOF
 
-function settings_get_defaults_path() {
-  echo "${DEFAULTS_FILE}"
-}
-export -f settings_get_defaults_path
+export SETTINGS_DEFAULTS_PATH="${DEFAULTS_FILE}"
 
 TESTS_PASSED=0
 TESTS_FAILED=0
 
 function cleanup() {
-  rm -f "${TEST_SETTINGS_FILE}" "${DEFAULTS_FILE}"
+  rm -f "${SETTINGS_FILE_PATH}" "${DEFAULTS_FILE}"
   rm -rf "/tmp/settings-test-nonexistent"
 }
 trap cleanup EXIT
@@ -72,7 +65,7 @@ function assert_empty() {
 
 # Main Test Execution
 log_heading "Running settings.sh Automated Tests"
-rm -f "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 
 # Test 1: Retrieves a value from the defaults file
 AI_PRO=$(settings_get "AI_MODEL_PRO")
@@ -80,7 +73,7 @@ assert_equals "vertexai:gemini-2.5-pro" "${AI_PRO}" "Should retrieve 'vertexai:g
 
 # Test 2: Writes a retrieved default to the user settings
 expected_quoted_default='AI_MODEL_PRO="vertexai:gemini-2.5-pro"'
-actual_quoted_default=$(rg "AI_MODEL_PRO" "${TEST_SETTINGS_FILE}")
+actual_quoted_default=$(rg "AI_MODEL_PRO" "${SETTINGS_FILE_PATH}")
 assert_equals "${expected_quoted_default}" "${actual_quoted_default}" "Should write the retrieved default value to the user settings file, properly quoted"
 
 # Test 3: Sets and gets a new value
@@ -122,7 +115,7 @@ EQUALS_RESULT=$(settings_get "EQUALS_TEST")
 assert_equals "${EQUALS_VALUE}" "${EQUALS_RESULT}" "Should correctly handle a value containing an equals sign"
 
 # Test 10: Deleting a non-existent key does not affect other keys
-rm -f "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 settings_set "KEY_A" "VALUE_A"
 settings_set "KEY_B" "VALUE_B"
 settings_delete "KEY_C"
@@ -130,12 +123,12 @@ RESULT_A=$(settings_get "KEY_A")
 RESULT_B=$(settings_get "KEY_B")
 assert_equals "VALUE_A" "${RESULT_A}" "Deleting a non-existent key should not affect other keys (A)"
 assert_equals "VALUE_B" "${RESULT_B}" "Deleting a non-existent key should not affect other keys (B)"
-LINE_COUNT=$(wc -l < "${TEST_SETTINGS_FILE}" | tr -d ' ')
+LINE_COUNT=$(wc -l < "${SETTINGS_FILE_PATH}" | tr -d ' ')
 assert_equals "2" "${LINE_COUNT}" "Should be exactly 2 lines in the settings file"
 
 # Test 11: Listing from an empty file returns nothing
-rm -f "${TEST_SETTINGS_FILE}"
-touch "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
+touch "${SETTINGS_FILE_PATH}"
 LIST_EMPTY_OUTPUT=$(settings_list)
 assert_empty "${LIST_EMPTY_OUTPUT}" "Listing from an empty file should return nothing"
 
@@ -191,7 +184,7 @@ NO_ARG_RESULT=$(settings_get)
 assert_empty "${NO_ARG_RESULT}" "Should return empty string when no key argument is provided"
 
 # Test 21: Test settings_set with missing value argument
-rm -f "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 settings_set "NO_VALUE_KEY"
 NO_VALUE_RESULT=$(settings_get "NO_VALUE_KEY")
 assert_equals "" "${NO_VALUE_RESULT}" "Should handle missing value argument by setting empty string"
@@ -221,40 +214,35 @@ cat > "${UNQUOTED_DEFAULTS}" <<EOF
 UNQUOTED_KEY=unquoted_value
 QUOTED_DEFAULT="quoted_value"
 EOF
-function settings_get_defaults_path() {
-  echo "${UNQUOTED_DEFAULTS}"
-}
-export -f settings_get_defaults_path
-rm -f "${TEST_SETTINGS_FILE}"
+# Temporarily override defaults file
+ORIGINAL_DEFAULTS_PATH="${SETTINGS_DEFAULTS_PATH}"
+export SETTINGS_DEFAULTS_PATH="${UNQUOTED_DEFAULTS}"
+rm -f "${SETTINGS_FILE_PATH}"
 UNQUOTED_DEFAULT_RESULT=$(settings_get "UNQUOTED_KEY")
 assert_equals "unquoted_value" "${UNQUOTED_DEFAULT_RESULT}" "Should handle unquoted values in defaults file"
 QUOTED_DEFAULT_RESULT=$(settings_get "QUOTED_DEFAULT")
 assert_equals "quoted_value" "${QUOTED_DEFAULT_RESULT}" "Should handle quoted values in defaults file"
+# Restore original defaults file
+export SETTINGS_DEFAULTS_PATH="${ORIGINAL_DEFAULTS_PATH}"
 rm -f "${UNQUOTED_DEFAULTS}"
 
 # Test 26: Settings file permissions (when directory doesn't exist)
 NONEXISTENT_DIR="/tmp/settings-test-nonexistent"
 rm -rf "${NONEXISTENT_DIR}"
-export TEST_SETTINGS_FILE="${NONEXISTENT_DIR}/settings.conf"
-function settings_get_path() {
-  echo "${TEST_SETTINGS_FILE}"
-}
-export -f settings_get_path
+# Temporarily override settings file path
+ORIGINAL_SETTINGS_PATH="${SETTINGS_FILE_PATH}"
+export SETTINGS_FILE_PATH="${NONEXISTENT_DIR}/settings.conf"
 settings_set "PERMISSION_TEST" "value"
 PERMISSION_RESULT=$(settings_get "PERMISSION_TEST")
 assert_equals "value" "${PERMISSION_RESULT}" "Should create directory and file when they don't exist"
 rm -rf "${NONEXISTENT_DIR}"
 
 # Reset to original test file
-export TEST_SETTINGS_FILE="/tmp/settings-test-settings.conf"
-function settings_get_path() {
-  echo "${TEST_SETTINGS_FILE}"
-}
-export -f settings_get_path
+export SETTINGS_FILE_PATH="${ORIGINAL_SETTINGS_PATH}"
 
 # Test 27: Settings list handles comments in file
-rm -f "${TEST_SETTINGS_FILE}"
-cat > "${TEST_SETTINGS_FILE}" <<EOF
+rm -f "${SETTINGS_FILE_PATH}"
+cat > "${SETTINGS_FILE_PATH}" <<EOF
 # This is a comment
 KEY1="value1"
 # Another comment
@@ -275,7 +263,7 @@ UNICODE_RESULT=$(settings_get "UNICODE_TEST")
 assert_equals "${UNICODE_VALUE}" "${UNICODE_RESULT}" "Should correctly handle Unicode and international characters"
 
 # Test 29: Value overwriting preserves file integrity
-rm -f "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 settings_set "KEY1" "value1"
 settings_set "KEY2" "value2"
 settings_set "KEY3" "value3"
@@ -283,18 +271,18 @@ settings_set "KEY2" "new_value2"  # Overwrite middle key
 FINAL_LIST=$(settings_list)
 EXPECTED_FINAL=$(printf 'KEY1="value1"\nKEY2="new_value2"\nKEY3="value3"')
 assert_equals "$(echo "${EXPECTED_FINAL}" | sort)" "$(echo "${FINAL_LIST}" | sort)" "Should maintain file integrity when overwriting values"
-FINAL_LINE_COUNT=$(wc -l < "${TEST_SETTINGS_FILE}" | tr -d ' ')
+FINAL_LINE_COUNT=$(wc -l < "${SETTINGS_FILE_PATH}" | tr -d ' ')
 assert_equals "3" "${FINAL_LINE_COUNT}" "Should have exactly 3 lines after overwriting"
 
 # Test 30: Case insensitive key setting - lowercase input becomes uppercase in storage
-rm -f "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 settings_set "lowercase_key" "test_value"
-STORED_LINE=$(rg "LOWERCASE_KEY" "${TEST_SETTINGS_FILE}")
+STORED_LINE=$(rg "LOWERCASE_KEY" "${SETTINGS_FILE_PATH}")
 assert_equals 'LOWERCASE_KEY="test_value"' "${STORED_LINE}" "Should store lowercase key as uppercase in settings file"
 
 # Test 31: Case insensitive key setting - mixed case input becomes uppercase in storage
 settings_set "MiXeD_CaSe_KeY" "mixed_value"
-MIXED_STORED_LINE=$(rg "MIXED_CASE_KEY" "${TEST_SETTINGS_FILE}")
+MIXED_STORED_LINE=$(rg "MIXED_CASE_KEY" "${SETTINGS_FILE_PATH}")
 assert_equals 'MIXED_CASE_KEY="mixed_value"' "${MIXED_STORED_LINE}" "Should store mixed case key as uppercase in settings file"
 
 # Test 32: Case insensitive key retrieval - lowercase input retrieves uppercase stored key
@@ -320,17 +308,17 @@ MIXED_DELETED_RESULT=$(settings_get "MIXED_CASE_KEY")
 assert_empty "${MIXED_DELETED_RESULT}" "Should delete key using mixed case input"
 
 # Test 37: Case insensitive overwriting - different case inputs should update same key
-rm -f "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 settings_set "test_key" "value1"
 settings_set "TEST_KEY" "value2"
 settings_set "Test_Key" "value3"
 OVERWRITE_RESULT=$(settings_get "test_key")
 assert_equals "value3" "${OVERWRITE_RESULT}" "Should overwrite same key regardless of case input"
-LINE_COUNT_CASE_TEST=$(wc -l < "${TEST_SETTINGS_FILE}" | tr -d ' ')
+LINE_COUNT_CASE_TEST=$(wc -l < "${SETTINGS_FILE_PATH}" | tr -d ' ')
 assert_equals "1" "${LINE_COUNT_CASE_TEST}" "Should have only one line when overwriting same key with different cases"
 
 # Test 38: Verify all keys in list output are uppercase
-rm -f "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 settings_set "lower" "value1"
 settings_set "UPPER" "value2"
 settings_set "MiXeD" "value3"
@@ -339,7 +327,7 @@ EXPECTED_CASE_LIST=$(printf 'LOWER="value1"\nUPPER="value2"\nMIXED="value3"')
 assert_equals "$(echo "${EXPECTED_CASE_LIST}" | sort)" "$(echo "${LIST_CASE_OUTPUT}" | sort)" "Should display all keys in uppercase in list output"
 
 # Test 39: Test script integration - set-setting and get-setting with case insensitive keys
-rm -f "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 # Simulate what set-setting script does - convert key to uppercase before setting
 SCRIPT_KEY="$(to_upper "test_script_key")"
 settings_set "${SCRIPT_KEY}" "script_test_value"
@@ -349,7 +337,7 @@ SCRIPT_RESULT=$(settings_get "${SCRIPT_LOOKUP_KEY}")
 assert_equals "script_test_value" "${SCRIPT_RESULT}" "Should work correctly with script integration pattern"
 
 # Test 40: Test that different case inputs for same key in script context work
-rm -f "${TEST_SETTINGS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 SCRIPT_KEY_LOWER="$(to_upper "script_key")"
 SCRIPT_KEY_UPPER="$(to_upper "SCRIPT_KEY")"
 SCRIPT_KEY_MIXED="$(to_upper "Script_Key")"
@@ -358,7 +346,7 @@ settings_set "${SCRIPT_KEY_UPPER}" "value2"
 settings_set "${SCRIPT_KEY_MIXED}" "value3"
 SCRIPT_FINAL_RESULT=$(settings_get "${SCRIPT_KEY_LOWER}")
 assert_equals "value3" "${SCRIPT_FINAL_RESULT}" "Should handle script-style case conversion consistently"
-SCRIPT_LINE_COUNT=$(wc -l < "${TEST_SETTINGS_FILE}" | tr -d ' ')
+SCRIPT_LINE_COUNT=$(wc -l < "${SETTINGS_FILE_PATH}" | tr -d ' ')
 assert_equals "1" "${SCRIPT_LINE_COUNT}" "Should have only one line when script converts different cases to same key"
 
 # Test 41: Test defaults file lookup with case insensitive keys
@@ -368,11 +356,10 @@ UPPERCASE_DEFAULT="upper_value"
 LOWERCASE_DEFAULT="lower_value"
 MIXED_CASE_DEFAULT="mixed_value"
 EOF
-function settings_get_defaults_path() {
-  echo "${CASE_DEFAULTS_FILE}"
-}
-export -f settings_get_defaults_path
-rm -f "${TEST_SETTINGS_FILE}"
+# Temporarily override defaults file
+ORIGINAL_DEFAULTS_PATH="${SETTINGS_DEFAULTS_PATH}"
+export SETTINGS_DEFAULTS_PATH="${CASE_DEFAULTS_FILE}"
+rm -f "${SETTINGS_FILE_PATH}"
 # Test retrieval of uppercase key from defaults
 UPPER_DEFAULT_RESULT=$(settings_get "UPPERCASE_DEFAULT")
 assert_equals "upper_value" "${UPPER_DEFAULT_RESULT}" "Should retrieve uppercase key from defaults file"
@@ -382,9 +369,9 @@ assert_equals "lower_value" "${LOWER_DEFAULT_RESULT}" "Should retrieve lowercase
 # Test retrieval of mixed case key from defaults
 MIXED_DEFAULT_RESULT=$(settings_get "mixed_case_default")
 assert_equals "mixed_value" "${MIXED_DEFAULT_RESULT}" "Should retrieve mixed case key from defaults file with case conversion"
+# Restore original defaults file
+export SETTINGS_DEFAULTS_PATH="${ORIGINAL_DEFAULTS_PATH}"
 rm -f "${CASE_DEFAULTS_FILE}"
-# Clean up the mock function to prevent test pollution
-unset -f settings_get_defaults_path
 
 # Test 42: Test empty key validation in settings functions
 EMPTY_KEY_RESULT=$(settings_get "")
