@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[k]ubectl [d]describe [s]tatefulset"
-    echo "kubectl describe statefulset [statefulset-name]"
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[k]ubectl [d]escribe [s]tatefulset [statefulset-name]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ -z "${1}" ]]; then
-    kubectl describe statefulset
-else
-    kubectl describe statefulset "${1}"
+  log_message "❯ kubectl describe statefulset"
+  kubectl describe statefulset
+  exit 0
 fi
+
+log_message "❯ kubectl describe statefulset ${1}"
+kubectl describe statefulset "${1}"

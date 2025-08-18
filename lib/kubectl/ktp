@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 0 ]]; then
-    echo "[k]ubectl [t]op [p]od"
-    echo "kubectl top pod"
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
+log_title "[k]ubectl [t]op [p]od"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_message "❯ kubectl top pod"
 kubectl top pod

@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[k]ubectl [g]et [e]ndpoint [a]ll namespaces"
-    echo "kubectl get endpoints --all-namespaces [filter]"
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[k]ubectl [g]et [e]ndpoints [a]ll namespaces [filter]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ -z "${1}" ]]; then
-    kubectl get endpoints --all-namespaces
-else
-    deployments="$(kubectl get endpoints --all-namespaces)"
-    echo "${deployments}" | head -n 1
-    echo "${deployments}" | rg "${1}"
+  log_message "❯ kubectl get endpoints --all-namespaces"
+  kubectl get endpoints --all-namespaces
+  exit 0
 fi
+
+log_message "❯ kubectl get endpoints --all-namespaces | rg ${1}"
+endpoints="$(kubectl get endpoints --all-namespaces)"
+echo "${endpoints}" | head -n 1
+echo "${endpoints}" | tail -n +2 | rg "${1}"

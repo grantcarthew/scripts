@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[k]ubectl [g]et [st]ateful[s]et output [j]son [statefulset-name]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+if [[ -z "${1}" ]]; then
+  log_message "❯ kubectl get statefulset --output json"
+  kubectl get statefulset --output="json"
+  exit 0
+fi
+
+log_message "❯ kubectl get statefulset ${1} --output json"
+kubectl get statefulset "${1}" --output="json"

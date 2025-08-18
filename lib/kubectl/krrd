@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[k]ubectl [r]ollout [r]estart [d]eployment"
-    echo "kubectl rollout restart deployment/<deployment-name>"
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-kubectl rollout restart "deployment/${1}" && \
-  watch kubectl get pods && \
-  kubectl get pods
+log_title "[k]ubectl [r]ollout [r]estart [d]eployment [deployment-name]"
+
+[[ "${#}" -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+log_message "❯ kubectl rollout restart deployment/${1}"
+kubectl rollout restart "deployment/${1}"
+watch kubectl get pods
+kubectl get pods
