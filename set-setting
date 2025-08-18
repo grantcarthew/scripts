@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/bash_modules/settings.sh"
+source "${SCRIPT_DIR}/bash_modules/utils.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
@@ -48,13 +49,20 @@ done
 # -----------------------------------------------------------------------------
 log_title "Set Script Setting"
 
-declare key="${1}"
+# Validate that key is not empty or whitespace-only
+if [[ -z "${1// /}" ]]; then
+  log_error "ERROR: Key argument cannot be empty or whitespace-only"
+  print_usage
+  exit 1
+fi
+
+declare key="${1}"  # No need to convert to uppercase here, settings_set handles it
 declare value="${2}"
 
 log_message "$(
   cat <<EOF
   Target: '$(settings_get_path)'
-     key: '${key}'
+     key: '${key}' (will be stored as '$(to_upper "${key}")')
    value: '${value}'
 EOF
 )"
@@ -65,4 +73,4 @@ log_heading "Setting Configuration"
 
 settings_set "${key}" "${value}"
 
-log_success "Setting '${key}' has been set successfully"
+log_success "Setting '$(to_upper "${key}")' has been set successfully"

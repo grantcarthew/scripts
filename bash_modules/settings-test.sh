@@ -130,7 +130,7 @@ RESULT_A=$(settings_get "KEY_A")
 RESULT_B=$(settings_get "KEY_B")
 assert_equals "VALUE_A" "${RESULT_A}" "Deleting a non-existent key should not affect other keys (A)"
 assert_equals "VALUE_B" "${RESULT_B}" "Deleting a non-existent key should not affect other keys (B)"
-LINE_COUNT=$(wc -l < "${TEST_SETTINGS_FILE}")
+LINE_COUNT=$(wc -l < "${TEST_SETTINGS_FILE}" | tr -d ' ')
 assert_equals "2" "${LINE_COUNT}" "Should be exactly 2 lines in the settings file"
 
 # Test 11: Listing from an empty file returns nothing
@@ -283,8 +283,118 @@ settings_set "KEY2" "new_value2"  # Overwrite middle key
 FINAL_LIST=$(settings_list)
 EXPECTED_FINAL=$(printf 'KEY1="value1"\nKEY2="new_value2"\nKEY3="value3"')
 assert_equals "$(echo "${EXPECTED_FINAL}" | sort)" "$(echo "${FINAL_LIST}" | sort)" "Should maintain file integrity when overwriting values"
-FINAL_LINE_COUNT=$(wc -l < "${TEST_SETTINGS_FILE}")
+FINAL_LINE_COUNT=$(wc -l < "${TEST_SETTINGS_FILE}" | tr -d ' ')
 assert_equals "3" "${FINAL_LINE_COUNT}" "Should have exactly 3 lines after overwriting"
+
+# Test 30: Case insensitive key setting - lowercase input becomes uppercase in storage
+rm -f "${TEST_SETTINGS_FILE}"
+settings_set "lowercase_key" "test_value"
+STORED_LINE=$(rg "LOWERCASE_KEY" "${TEST_SETTINGS_FILE}")
+assert_equals 'LOWERCASE_KEY="test_value"' "${STORED_LINE}" "Should store lowercase key as uppercase in settings file"
+
+# Test 31: Case insensitive key setting - mixed case input becomes uppercase in storage
+settings_set "MiXeD_CaSe_KeY" "mixed_value"
+MIXED_STORED_LINE=$(rg "MIXED_CASE_KEY" "${TEST_SETTINGS_FILE}")
+assert_equals 'MIXED_CASE_KEY="mixed_value"' "${MIXED_STORED_LINE}" "Should store mixed case key as uppercase in settings file"
+
+# Test 32: Case insensitive key retrieval - lowercase input retrieves uppercase stored key
+LOWERCASE_RESULT=$(settings_get "lowercase_key")
+assert_equals "test_value" "${LOWERCASE_RESULT}" "Should retrieve value using lowercase key input"
+
+# Test 33: Case insensitive key retrieval - mixed case input retrieves uppercase stored key
+MIXED_RESULT=$(settings_get "MiXeD_cAsE_kEy")
+assert_equals "mixed_value" "${MIXED_RESULT}" "Should retrieve value using mixed case key input"
+
+# Test 34: Case insensitive key retrieval - uppercase input retrieves uppercase stored key
+UPPER_RESULT=$(settings_get "LOWERCASE_KEY")
+assert_equals "test_value" "${UPPER_RESULT}" "Should retrieve value using uppercase key input"
+
+# Test 35: Case insensitive key deletion - lowercase input deletes uppercase stored key
+settings_delete "lowercase_key"
+DELETED_RESULT=$(settings_get "LOWERCASE_KEY")
+assert_empty "${DELETED_RESULT}" "Should delete key using lowercase input"
+
+# Test 36: Case insensitive key deletion - mixed case input deletes uppercase stored key
+settings_delete "MiXeD_cAsE_kEy"
+MIXED_DELETED_RESULT=$(settings_get "MIXED_CASE_KEY")
+assert_empty "${MIXED_DELETED_RESULT}" "Should delete key using mixed case input"
+
+# Test 37: Case insensitive overwriting - different case inputs should update same key
+rm -f "${TEST_SETTINGS_FILE}"
+settings_set "test_key" "value1"
+settings_set "TEST_KEY" "value2"
+settings_set "Test_Key" "value3"
+OVERWRITE_RESULT=$(settings_get "test_key")
+assert_equals "value3" "${OVERWRITE_RESULT}" "Should overwrite same key regardless of case input"
+LINE_COUNT_CASE_TEST=$(wc -l < "${TEST_SETTINGS_FILE}" | tr -d ' ')
+assert_equals "1" "${LINE_COUNT_CASE_TEST}" "Should have only one line when overwriting same key with different cases"
+
+# Test 38: Verify all keys in list output are uppercase
+rm -f "${TEST_SETTINGS_FILE}"
+settings_set "lower" "value1"
+settings_set "UPPER" "value2"
+settings_set "MiXeD" "value3"
+LIST_CASE_OUTPUT=$(settings_list)
+EXPECTED_CASE_LIST=$(printf 'LOWER="value1"\nUPPER="value2"\nMIXED="value3"')
+assert_equals "$(echo "${EXPECTED_CASE_LIST}" | sort)" "$(echo "${LIST_CASE_OUTPUT}" | sort)" "Should display all keys in uppercase in list output"
+
+# Test 39: Test script integration - set-setting and get-setting with case insensitive keys
+rm -f "${TEST_SETTINGS_FILE}"
+# Simulate what set-setting script does - convert key to uppercase before setting
+SCRIPT_KEY="$(to_upper "test_script_key")"
+settings_set "${SCRIPT_KEY}" "script_test_value"
+# Simulate what get-setting script does - convert key to uppercase before getting
+SCRIPT_LOOKUP_KEY="$(to_upper "test_script_key")"
+SCRIPT_RESULT=$(settings_get "${SCRIPT_LOOKUP_KEY}")
+assert_equals "script_test_value" "${SCRIPT_RESULT}" "Should work correctly with script integration pattern"
+
+# Test 40: Test that different case inputs for same key in script context work
+rm -f "${TEST_SETTINGS_FILE}"
+SCRIPT_KEY_LOWER="$(to_upper "script_key")"
+SCRIPT_KEY_UPPER="$(to_upper "SCRIPT_KEY")"
+SCRIPT_KEY_MIXED="$(to_upper "Script_Key")"
+settings_set "${SCRIPT_KEY_LOWER}" "value1"
+settings_set "${SCRIPT_KEY_UPPER}" "value2"
+settings_set "${SCRIPT_KEY_MIXED}" "value3"
+SCRIPT_FINAL_RESULT=$(settings_get "${SCRIPT_KEY_LOWER}")
+assert_equals "value3" "${SCRIPT_FINAL_RESULT}" "Should handle script-style case conversion consistently"
+SCRIPT_LINE_COUNT=$(wc -l < "${TEST_SETTINGS_FILE}" | tr -d ' ')
+assert_equals "1" "${SCRIPT_LINE_COUNT}" "Should have only one line when script converts different cases to same key"
+
+# Test 41: Test defaults file lookup with case insensitive keys
+CASE_DEFAULTS_FILE=$(mktemp)
+cat > "${CASE_DEFAULTS_FILE}" <<EOF
+UPPERCASE_DEFAULT="upper_value"
+LOWERCASE_DEFAULT="lower_value"
+MIXED_CASE_DEFAULT="mixed_value"
+EOF
+function settings_get_defaults_path() {
+  echo "${CASE_DEFAULTS_FILE}"
+}
+export -f settings_get_defaults_path
+rm -f "${TEST_SETTINGS_FILE}"
+# Test retrieval of uppercase key from defaults
+UPPER_DEFAULT_RESULT=$(settings_get "UPPERCASE_DEFAULT")
+assert_equals "upper_value" "${UPPER_DEFAULT_RESULT}" "Should retrieve uppercase key from defaults file"
+# Test retrieval of lowercase key from defaults (should be converted to uppercase for lookup)
+LOWER_DEFAULT_RESULT=$(settings_get "lowercase_default")
+assert_equals "lower_value" "${LOWER_DEFAULT_RESULT}" "Should retrieve lowercase key from defaults file with case conversion"
+# Test retrieval of mixed case key from defaults
+MIXED_DEFAULT_RESULT=$(settings_get "mixed_case_default")
+assert_equals "mixed_value" "${MIXED_DEFAULT_RESULT}" "Should retrieve mixed case key from defaults file with case conversion"
+rm -f "${CASE_DEFAULTS_FILE}"
+# Clean up the mock function to prevent test pollution
+unset -f settings_get_defaults_path
+
+# Test 42: Test empty key validation in settings functions
+EMPTY_KEY_RESULT=$(settings_get "")
+assert_empty "${EMPTY_KEY_RESULT}" "Should return empty string for empty key in settings_get"
+
+# Test 43: Test whitespace-only key handling in settings module
+# The settings module will convert whitespace to uppercase and handle it
+settings_set "   " "whitespace_test"
+WHITESPACE_RETRIEVE=$(settings_get "   ")
+assert_equals "whitespace_test" "${WHITESPACE_RETRIEVE}" "Should handle whitespace-only keys consistently in settings module"
 
 
 # Test Summary
