@@ -1,4 +1,4 @@
-# Workflow: {{PROJECT_NAME}}
+# Assignment: {{PROJECT_NAME}}
 
 ## Objective
 

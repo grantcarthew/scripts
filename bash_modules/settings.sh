@@ -75,6 +75,9 @@ function settings_get() {
         if (val ~ /^".*"$/) {
           val = substr(val, 2, length(val) - 2)
         }
+        # Decode escaped quotes and backslashes from defaults file
+        gsub(/\\"/, "\"", val)
+        gsub(/\\\\/, "\\", val)
         print val
         exit
       }

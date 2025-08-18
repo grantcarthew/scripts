@@ -16,7 +16,7 @@ Usage: $(basename "$0") [--spec] [project_name] [overview]
 Generates a new project file from a template.
 
 Options:
-  --spec            Generate a SPEC.md file (default: generates workflow)
+  --spec            Generate a SPEC.md file (default: generates assignment)
 
 Optional arguments:
   project_name      The name of the project.
@@ -78,7 +78,7 @@ done
 if [[ "${use_spec_template}" == true ]]; then
   log_title "New Project Specification"
 else
-  log_title "New Project Workflow"
+  log_title "New Project Assignment"
 fi
 
 # Arguments
@@ -153,9 +153,9 @@ if [[ "${use_spec_template}" == true ]]; then
   output_file="SPEC.md"
   mo_template_file="${SCRIPT_DIR}/new-aiproject-spec-template.md"
 else
-  log_heading "Generating WORKFLOW.md"
-  output_file="WORKFLOW.md"
-  mo_template_file="${SCRIPT_DIR}/new-aiproject-job-template.md"
+  log_heading "Generating ASSIGNMENT.md"
+  output_file="ASSIGNMENT.md"
+  mo_template_file="${SCRIPT_DIR}/new-aiproject-assignment-template.md"
 fi
 
 export PROJECT_NAME="${project_name}"
