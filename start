@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# Start AI project development
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/bash_modules/settings.sh"
+source "${SCRIPT_DIR}/bash_modules/utils.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [--ai <provider>]
+
+Start AI project development
+
+Dependencies:
+  claude             The Claude CLI tool
+  gemini             The Gemini CLI tool
+
+Optional arguments:
+  --ai <provider>    Use specific AI provider (claude, gemini)
+  -h, --help         Show this help message and exit
+EOF
+}
+# Parse arguments
+declare ai_override=""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    --ai)
+      if [[ -z "${2}" ]]; then
+        log_error "ERROR: --ai requires a provider argument"
+        exit 1
+      fi
+      ai_override=$(to_upper "${2}")
+      shift 2
+      ;;
+    *)
+      log_error "ERROR: Unknown argument '${1}'"
+      print_usage
+      exit 1
+      ;;
+  esac
+done
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "Starting AI Project Development"
+
+# Determine AI provider
+declare ai_provider
+if [[ -n "${ai_override}" ]]; then
+  ai_provider="${ai_override}"
+else
+  ai_provider=$(settings_get "AI_PROVIDER")
+fi
+
+log_message "Using AI provider: '${ai_provider}'"
+
+# Get AI command
+declare ai_command
+ai_command=$(settings_get "AI_COMMAND_${ai_provider}")
+if [[ -z "${ai_command}" ]]; then
+  log_error "ERROR: No command configured for AI provider '${ai_provider}'"
+  log_error "Expected setting: AI_COMMAND_${ai_provider}"
+  exit 1
+fi
+
+# Extract the actual command name for dependency check
+declare cmd_name
+cmd_name=$(echo "${ai_command}" | awk '{print $1}')
+if ! command -v "${cmd_name}" >/dev/null; then
+  log_error "ERROR: Missing dependency - '${cmd_name}'"
+  exit 1
+fi
+
+# Check for AGENTS.md if using Claude
+if [[ "${ai_provider}" == "CLAUDE" && ! -f "AGENTS.md" ]]; then
+  log_error "ERROR: AGENTS.md file required for Claude but not found"
+  exit 1
+fi
+
+# Main Logic
+# -----------------------------------------------------------------------------
+
+declare prompt=""
+
+if [[ -f "ASSIGNMENT.md" ]]; then
+  log_message "Found ASSIGNMENT.md file"
+  prompt="Read the @ASSIGNMENT.md file and start your assignment"
+elif [[ -f "SPEC.md" ]]; then
+  log_message "Found SPEC.md file"
+  prompt="Read the SPEC.md file and start implementing the solution"
+else
+  log_error "ERROR: Neither ASSIGNMENT.md nor SPEC.md file found in current directory"
+  exit 1
+fi
+
+log_message "Executing: ${ai_command} \"${prompt}\""
+eval "${ai_command} \"${prompt}\""
