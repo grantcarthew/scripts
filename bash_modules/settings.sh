@@ -30,11 +30,11 @@ function _settings_ensure_file_exists() {
 }
 
 function settings_get_path() {
-  printf "%s" "${HOME}/.config/scripts/settings.conf"
+  printf "%s" "${SETTINGS_FILE_PATH:-${HOME}/.config/scripts/settings.conf}"
 }
 
 function settings_get_defaults_path() {
-  printf "%s" "${MODULES_DIR}/settings-defaults.conf"
+  printf "%s" "${SETTINGS_DEFAULTS_PATH:-${MODULES_DIR}/settings-defaults.conf}"
 }
 
 function settings_get() {
