@@ -137,7 +137,7 @@ dir_basename=$(basename "${selected_dir}")
 log_subheading "Scripts in '${dir_basename}'"
 
 fd --type f --exclude "*.sh" --exclude "README.md" . "${selected_dir}" --print0 | while IFS= read -r -d $'\0' file; do
-  match=$(rg -m 1 -oE 'log_.*title ".*"' "${file}")
+  match=$(rg -m 1 -o 'log_.*title ".*"' "${file}")
   if [[ -n "${match}" ]]; then
     title=$(echo "${match}" | sed -e 's/.*log_.*title \"//' -e 's/\"$//')
     filename=$(basename "${file}")
