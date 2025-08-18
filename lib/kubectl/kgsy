@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[k]ubectl [g]et [s]ecret output [y]aml"
-    echo "kubectl get secret [secret-name] --output=yaml"
-    exit 1
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[k]ubectl [g]et [s]ecret output [y]aml [secret-name]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+if [[ -z "${1}" ]]; then
+  log_message "❯ kubectl get secret --output=yaml"
+  kubectl get secret --output="yaml"
+  exit 0
 fi
 
+log_message "❯ kubectl get secret ${1} --output=yaml"
 kubectl get secret "${1}" --output="yaml"

@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[k]ubectl [g]et [s]ervice [a]ll namespaces"
-    echo "kubectl get service --all-namespaces [filter]"
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[k]ubectl [g]et [s]ervice [a]ll namespaces [filter]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ -z "${1}" ]]; then
-    kubectl get service --all-namespaces
-else
-    deployments="$(kubectl get service --all-namespaces)"
-    echo "${deployments}" | head -n 1
-    echo "${deployments}" | rg "${1}"
+  log_message "❯ kubectl get service --all-namespaces"
+  kubectl get service --all-namespaces
+  exit 0
 fi
+
+log_message "❯ kubectl get service --all-namespaces | rg ${1}"
+services="$(kubectl get service --all-namespaces)"
+echo "${services}" | head -n 1
+echo "${services}" | tail -n +2 | rg "${1}"

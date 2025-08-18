@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[k]ubectl [g]et [e]ndpoints output [y]aml"
-    echo "kubectl get endpoints [endpoint-name] --output=yaml"
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[k]ubectl [g]et [e]ndpoints output [y]aml [endpoint-name]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ -z "${1}" ]]; then
-    kubectl get endpoints --output yaml
-else
-    kubectl get endpoints "${1}" --output yaml
+  log_message "❯ kubectl get endpoints --output yaml"
+  kubectl get endpoints --output="yaml"
+  exit 0
 fi
+
+log_message "❯ kubectl get endpoints ${1} --output yaml"
+kubectl get endpoints "${1}" --output="yaml"

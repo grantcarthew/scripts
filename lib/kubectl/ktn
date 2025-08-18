@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 0 ]]; then
-    echo "[k]ubectl [t]op [n]ode"
-    echo "kubectl top node"
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
+log_title "[k]ubectl [t]op [n]ode"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_message "❯ kubectl top node"
 kubectl top node

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[k]ubectl [r]ollout [r]estart [s]tatefulset [statefulset-name]"
+
+[[ "${#}" -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+log_message "❯ kubectl rollout restart statefulset/${1}"
+kubectl rollout restart "statefulset/${1}"
+watch kubectl get statefulset "statefulset/${1}"
+kubectl get statefulset "statefulset/${1}"

@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-    echo "[k]ubectl [g]et [n]ame[s]pace output [y]aml"
-    echo "kubectl get namespace [namespace-name] --output=yaml"
-    exit 1
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[k]ubectl [g]et [n]ame[s]pace output [y]aml [namespace-name]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+if [[ -z "${1}" ]]; then
+  log_message "❯ kubectl get namespace --output=yaml"
+  kubectl get namespace --output="yaml"
+  exit 0
 fi
 
+log_message "❯ kubectl get namespace ${1} --output=yaml"
 kubectl get namespace "${1}" --output="yaml"

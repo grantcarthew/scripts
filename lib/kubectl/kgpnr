@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 0 ]]; then
-    echo "[k]ubectl [g]et [p]od all namespaces [n]ot [r]unning"
-    echo "kubectl get pods --all-namespaces --field-selector=status.phase!=Running"
-    exit 1
-fi
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
+log_title "[k]ubectl [g]et [p]ods all namespaces [n]ot [r]unning"
+
+[[ "${#}" -gt 0 ]] && exit 1
+
+log_message "❯ kubectl get pods --all-namespaces --field-selector=status.phase!=Running"
 kubectl get pods --all-namespaces --field-selector=status.phase!=Running

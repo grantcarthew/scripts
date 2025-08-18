@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 
-if [[ $# -gt 0 ]]; then
-    echo "[k]ubectl [g]et [st]ateful[s]et [a]ll namespaces"
-    echo "kubectl get statefulset --all-namespaces"
-    exit 1
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[k]ubectl [g]et [st]ateful[s]et [a]ll namespaces [filter]"
+
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+if [[ -z "${1}" ]]; then
+  log_message "❯ kubectl get statefulset --all-namespaces"
+  kubectl get statefulset --all-namespaces
+  exit 0
 fi
 
-kubectl get statefulset --all-namespaces
+log_message "❯ kubectl get statefulset --all-namespaces | rg ${1}"
+statefulsets="$(kubectl get statefulset --all-namespaces)"
+echo "${statefulsets}" | head -n 1
+echo "${statefulsets}" | tail -n +2 | rg "${1}"
