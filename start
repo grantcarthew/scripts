@@ -14,7 +14,7 @@ source "${SCRIPT_DIR}/bash_modules/utils.sh"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0") [--ai <provider>]
+Usage: $(basename "$0") [--ai <provider>] [prompt]
 
 Start AI project development
 
@@ -24,13 +24,16 @@ Dependencies:
 
 Optional arguments:
   --ai <provider>    Use specific AI provider (claude, gemini)
+  prompt             Custom prompt to use instead of default file-based prompts
   -h, --help         Show this help message and exit
+
 EOF
 }
 # Parse arguments
 declare ai_override=""
+declare custom_prompt=""
 while [[ $# -gt 0 ]]; do
-  case $1 in
+  case "${1}" in
     -h|--help)
       print_usage
       exit 0
@@ -43,10 +46,19 @@ while [[ $# -gt 0 ]]; do
       ai_override=$(to_upper "${2}")
       shift 2
       ;;
-    *)
-      log_error "ERROR: Unknown argument '${1}'"
+    -*)
+      log_error "ERROR: Unknown option '${1}'"
       print_usage
       exit 1
+      ;;
+    *)
+      if [[ -n "${custom_prompt}" ]]; then
+        log_error "ERROR: Only one prompt argument allowed"
+        print_usage
+        exit 1
+      fi
+      custom_prompt="${1}"
+      shift
       ;;
   esac
 done
@@ -100,15 +112,17 @@ fi
 
 declare prompt=""
 
-if [[ -f "ASSIGNMENT.md" ]]; then
+if [[ -n "${custom_prompt}" ]]; then
+  log_message "Using custom prompt"
+  prompt="${custom_prompt}"
+elif [[ -f "ASSIGNMENT.md" ]]; then
   log_message "Found ASSIGNMENT.md file"
   prompt="Read the @ASSIGNMENT.md file and start your assignment"
 elif [[ -f "SPEC.md" ]]; then
   log_message "Found SPEC.md file"
   prompt="Read the SPEC.md file and start implementing the solution"
 else
-  log_error "ERROR: Neither ASSIGNMENT.md nor SPEC.md file found in current directory"
-  exit 1
+  log_warning "WARNING: Neither ASSIGNMENT.md nor SPEC.md file found in current directory"
 fi
 
 log_message "Executing: ${ai_command} \"${prompt}\""
