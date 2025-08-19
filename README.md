@@ -17,7 +17,7 @@ My scripts for all kinds of automation and workflows.
 
 ## Dependencies
 
-Most of these scripts have been written to run on Linux.
+Most of these scripts have been written to run on Unix-like systems (Linux, macOS).
 
 The following dependencies are used throughout this repository.
 
@@ -26,6 +26,7 @@ You may not need them all if you are only interested in a few scripts.
 ### Core Tools
 
 - [aichat](https://github.com/sigoden/aichat): CLI tool for interacting with AI models (used in changelog generation)
+- [bash](https://www.gnu.org/software/bash/): Unix shell and command language
 - [curl](https://curl.se/): Command-line tool for transferring data with URLs
 - [entr](https://github.com/eradman/entr): Run arbitrary commands when files change
 - [fd](https://github.com/sharkdp/fd): A simple, fast and user-friendly alternative to 'find'
@@ -35,6 +36,7 @@ You may not need them all if you are only interested in a few scripts.
 - [lsd](https://github.com/lsd-rs/lsd): The next gen ls command
 - [python](https://www.python.org/): Python interpreter (Python 3 recommended)
 - [ripgrep (rg)](https://github.com/BurntSushi/ripgrep): Regex directory search while respecting your gitignore
+- [shellcheck](https://github.com/koalaman/shellcheck): Static analysis tool for shell scripts
 
 ### Cloud & Services
 
@@ -46,10 +48,13 @@ You may not need them all if you are only interested in a few scripts.
 ### Infrastructure Tools
 
 - [terraform](https://www.terraform.io/): Infrastructure as code tool
+- [terraform-docs](https://github.com/terraform-docs/terraform-docs): Generate documentation for Terraform modules
 - [tflint](https://github.com/terraform-linters/tflint): Terraform linter
 - [trivy](https://github.com/aquasecurity/trivy): Vulnerability scanner for containers and infrastructure as code
 
 ## Installation
+
+Compatible with Unix-like systems including Linux and macOS. Many dependencies can be installed via package managers like `apt`, `yum`, `pacman`, `yay`, `brew`, etc.
 
 ### One-Liner
 
@@ -59,7 +64,7 @@ bash <(curl -s https://raw.githubusercontent.com/grantcarthew/scripts/main/insta
 
 The above command will:
 
-- Create a "${HOME}/bin" directory if it doesn't not already exist
+- Create a "${HOME}/bin" directory if it doesn't already exist
 - Clone this repository into "${HOME}/bin/scripts"
 - Add "${HOME}/bin/scripts" to your PATH environment variable
 
@@ -77,7 +82,7 @@ You'll need [git](https://git-scm.com/docs/git-checkout) to be able to clone thi
 
 Open a terminal and run the following commands making changes where you see fit:
 
-```shell
+```bash
 mkdir -p "${HOME}/bin"
 cd "${HOME}/bin"
 git clone git@github.com:grantcarthew/scripts.git
@@ -88,7 +93,7 @@ cd -
 
 Add the **${HOME}/bin/scripts** directory to your PATH environment variable:
 
-```shell
+```bash
 echo 'export PATH="${PATH}:${HOME}/bin/scripts"' >> "${HOME}/.bashrc"
 ```
 
@@ -98,7 +103,7 @@ Review the directories in the **lib** directory and add any you want to your bas
 
 This example is for the terraform scripts:
 
-```shell
+```bash
 echo 'export PATH="${PATH}:${HOME}/bin/scripts/lib/terraform"' >> "${HOME}/.bashrc"
 ```
 
