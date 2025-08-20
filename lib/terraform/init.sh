@@ -42,7 +42,20 @@ function log_tf_title() {
 }
 
 function new_tf_plan_file() {
+  cleanup_old_tf_plan_files
   echo "${TFPLAN_DIR}/$(date +%Y-%m-%d-%H%M%S)-$(basename "${PWD}").tfplan"
+}
+
+function cleanup_old_tf_plan_files() {
+  local old_files
+  old_files=$(fd "." "${TFPLAN_DIR}" --type f --extension tfplan --change-older-than 30d)
+  
+  if [[ -n "${old_files}" ]]; then
+    while IFS= read -r plan_file; do
+      log_message "Removing old plan file: $(basename "${plan_file}")"
+      rm -f "${plan_file}"
+    done <<< "${old_files}"
+  fi
 }
 
 function get_latest_tf_plan_file() {
