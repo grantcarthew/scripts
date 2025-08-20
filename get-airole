@@ -58,7 +58,6 @@ for arg in "$@"; do
 done
 
 log_title "Grant Carthew's GitHub Prompts"
-log_heading "Dependency Check"
 
 dependencies=(curl jq rg fzf)
 for cmd in "${dependencies[@]}"; do
@@ -67,7 +66,6 @@ for cmd in "${dependencies[@]}"; do
     exit 1
   fi
 done
-log_success "Command-line dependencies installed"
 
 log_heading "Fetching Prompts"
 
