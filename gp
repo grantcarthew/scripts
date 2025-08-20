@@ -9,7 +9,7 @@ source "${SCRIPT_DIR}/bash_modules/desktop.sh"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0") [file_filter] [-h]
+Usage: $(basename "$0") [file_filter] [-i|--include-initial-response] [-h]
 
 Copies Grant Carthew's AI Prompts from GitHub into the local clipboard
 
@@ -26,15 +26,35 @@ Dependencies:
     - macOS: pbcopy
 
 Optional arguments:
-  file_filter        The file name or part thereof
-  -h, --help         Show this help message and exit
+  file_filter                      The file name or part thereof
+  -i, --include-initial-response   Include the initial response template
+  -h, --help                       Show this help message and exit
 EOF
 }
 
-if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-  print_usage
-  exit 1
-fi
+file_filter=""
+include_initial_response=false
+
+for arg in "$@"; do
+  case "$arg" in
+    -i|--include-initial-response)
+      include_initial_response=true
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    *)
+      if [[ -z "$file_filter" ]]; then
+        file_filter="$arg"
+      else
+        log_error "ERROR: Too many arguments"
+        print_usage
+        exit 1
+      fi
+      ;;
+  esac
+done
 
 log_title "Grant Carthew's GitHub Prompts"
 log_heading "Dependency Check"
@@ -76,9 +96,9 @@ fi
 
 readarray -t files < <(echo "${file_list}" | jq -r '.[] | select(.type == "file" and .name != "README.md") | .name') || exit 1
 
-if [[ -n "$1" ]]; then
-  log_message "Filtering for: ${1}"
-  readarray -t files < <(printf '%s\n' "${files[@]}" | rg -i "$1")
+if [[ -n "$file_filter" ]]; then
+  log_message "Filtering for: ${file_filter}"
+  readarray -t files < <(printf '%s\n' "${files[@]}" | rg -i "$file_filter")
 fi
 
 log_heading "File Selection"
@@ -119,9 +139,10 @@ fi
 
 log_message "Prompt title: $(echo "${raw_content}" | rg -m 1 '^#')"
 
-log_message "Adding initial response template"
-raw_content+="$(
-  cat <<EOT
+if [[ "$include_initial_response" == true ]]; then
+  log_message "Adding initial response template"
+  raw_content+="$(
+    cat <<EOT
 
 
 ## Initial Response
@@ -129,7 +150,8 @@ raw_content+="$(
 Respond only once to this message with "I am an expert in {{subject}}, let's get working!"
 
 EOT
-)"
+  )"
+fi
 
 # If we are outputting to a terminal, copy to clipboard.
 if [[ -t 1 ]]; then
