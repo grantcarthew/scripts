@@ -11,7 +11,8 @@ function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [file_filter] [-i|--include-initial-response] [-h]
 
-Copies Grant Carthew's AI Prompts from GitHub into the local clipboard
+Copies Grant Carthew's AI role prompts from GitHub into the local
+clipboard or a specified file.
 
 Repository: https://github.com/grantcarthew/notes/tree/main
 
