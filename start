@@ -101,9 +101,9 @@ if ! command -v "${cmd_name}" >/dev/null; then
   exit 1
 fi
 
-# Check for AGENTS.md if using Claude
-if [[ "${ai_provider}" == "CLAUDE" && ! -f "AGENTS.md" ]]; then
-  log_error "ERROR: AGENTS.md file required for Claude but not found"
+# Check for ROLE.md if using Claude
+if [[ "${ai_provider}" == "CLAUDE" && ! -f "ROLE.md" ]]; then
+  log_error "ERROR: ROLE.md file required for Claude but not found"
   exit 1
 fi
 
