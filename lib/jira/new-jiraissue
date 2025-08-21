@@ -51,14 +51,14 @@ trap ctrlc_trap SIGINT
 parse_array_setting() {
   local setting_value="$1"
   local -n result_array=$2
-  
+
   result_array=()
-  
+
   if [[ -n "${setting_value}" && "${setting_value}" != "()" ]]; then
     # Remove parentheses
     local cleaned=${setting_value#\(}
     cleaned=${cleaned%\)}
-    
+
     # Extract quoted strings safely
     while IFS= read -r -d '' item; do
       result_array+=("$item")
@@ -158,7 +158,7 @@ jira_project=$(settings_get "JIRA_DEFAULT_PROJECT")
 # Interactive mode for missing values
 if [[ -z "${no_input}" ]]; then
   log_heading "Interactive Issue Creation"
-  
+
   # Issue type selection
   if [[ -z "${issue_type}" ]]; then
     log_message "Select issue type:"
@@ -171,13 +171,13 @@ if [[ -z "${no_input}" ]]; then
       # Default types
       issue_type=$(printf '%s\n' "Task" "Bug" "Story" "Epic" | fzf --prompt="Issue type: " --height=40% --reverse)
     fi
-    
+
     if [[ -z "${issue_type}" ]]; then
       log_failure "No issue type selected"
       exit 1
     fi
   fi
-  
+
   # Priority selection
   if [[ -z "${priority}" ]]; then
     log_message "Select priority:"
@@ -187,10 +187,10 @@ if [[ -z "${no_input}" ]]; then
     if [[ ${#priorities_array[@]} -gt 0 ]]; then
       priority=$(printf '%s\n' "${priorities_array[@]}" | fzf --prompt="Priority: " --height=40% --reverse)
     else
-      priority=$(printf '%s\n' "Medium" "High" "Low" "Highest" "Lowest" | fzf --prompt="Priority: " --height=40% --reverse)
+      priority=$(printf '%s\n' "Critical" "Major" "Medium" "Moderate" "Minor" "Trivial" "Blocker" | fzf --prompt="Priority: " --height=40% --reverse)
     fi
   fi
-  
+
   # Assignee selection
   if [[ -z "${assignee}" ]]; then
     log_message "Select assignee (or skip):"
@@ -204,7 +204,7 @@ if [[ -z "${no_input}" ]]; then
       fi
     fi
   fi
-  
+
   # Summary prompt
   if [[ -z "${summary}" ]]; then
     read -rp "Issue summary: " summary
@@ -213,7 +213,7 @@ if [[ -z "${no_input}" ]]; then
       exit 1
     fi
   fi
-  
+
   # Body prompt
   if [[ -z "${body}" && -z "${template}" ]]; then
     read -rp "Issue description (optional): " body
