@@ -1,0 +1,202 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+source "${BASH_MODULES_DIR}/settings.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [ISSUE-KEY] [options]
+
+View a specific Jira issue or list issues interactively
+
+Dependencies:
+  jira                   The jira CLI tool
+  fzf                    Fuzzy finder for interactive selection
+
+Optional arguments:
+  ISSUE-KEY              Specific issue to view (e.g., GCP-479)
+  --comments NUM         Show N comments (default: 1)
+  --plain                Display in plain mode
+  --raw                  Show raw JSON output
+  --list                 Force list mode
+  -h, --help             Show this help message and exit
+
+Examples:
+  $(basename "$0")                    # Interactive list and selection
+  $(basename "$0") GCP-479            # View specific issue
+  $(basename "$0") GCP-479 --comments 5   # View issue with 5 comments
+  $(basename "$0") --list             # List issues only
+EOF
+}
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Parse arguments
+declare issue_key=""
+declare comments="1"
+declare plain_mode=""
+declare raw_mode=""
+declare list_mode=""
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    --comments)
+      comments="$2"
+      shift 2
+      ;;
+    --plain)
+      plain_mode="--plain"
+      shift
+      ;;
+    --raw)
+      raw_mode="--raw"
+      shift
+      ;;
+    --list)
+      list_mode="true"
+      shift
+      ;;
+    -*)
+      log_error "Unknown option: $1"
+      print_usage
+      exit 1
+      ;;
+    *)
+      if [[ -z "${issue_key}" ]]; then
+        issue_key="$1"
+      else
+        log_error "Multiple issue keys provided"
+        print_usage
+        exit 1
+      fi
+      shift
+      ;;
+  esac
+done
+
+# Title and Dependency Checks
+log_title "Jira Issue Viewer"
+
+dependencies=(jira)
+if [[ -z "${issue_key}" || "${list_mode}" == "true" ]]; then
+  dependencies+=(fzf)
+fi
+
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+# Get project setting
+jira_project=$(settings_get "JIRA_DEFAULT_PROJECT")
+
+# Main Logic
+if [[ -n "${issue_key}" && "${list_mode}" != "true" ]]; then
+  # View specific issue
+  log_heading "Viewing Issue: ${issue_key}"
+  
+  # Build command array safely - always use plain mode for non-interactive output
+  cmd=(jira issue view "${issue_key}" --comments "${comments}")
+  if [[ -n "${plain_mode}" ]]; then
+    cmd+=("${plain_mode}")
+  else
+    cmd+=("--plain")
+  fi
+  if [[ -n "${raw_mode}" ]]; then
+    cmd+=("${raw_mode}")
+  fi
+  if [[ -n "${jira_project}" ]]; then
+    cmd+=("--project" "${jira_project}")
+  fi
+  
+  log_message "Executing: ${cmd[*]}"
+  
+  if "${cmd[@]}"; then
+    log_success "Issue viewed successfully"
+  else
+    log_failure "Failed to view issue"
+    exit 1
+  fi
+else
+  # List mode - interactive selection
+  log_heading "Listing Issues"
+  
+  # Create secure temporary file
+  temp_file=$(mktemp)
+  trap "rm -f '${temp_file}'" EXIT
+  
+  # Try to list issues - build command array for safety
+  cmd=(jira issue list)
+  if [[ -n "${plain_mode}" ]]; then
+    cmd+=("${plain_mode}")
+  fi
+  if [[ -n "${jira_project}" ]]; then
+    cmd+=("--project" "${jira_project}")
+  fi
+  
+  log_message "Executing: ${cmd[*]}"
+  
+  if ! "${cmd[@]}" > "${temp_file}" 2>/dev/null; then
+    log_warning "Issue list API is currently broken. This will work when the jira-cli is fixed."
+    log_message "In the meantime, you can:"
+    log_message "  1. Use 'open-jiraissue' to browse issues in your browser"
+    log_message "  2. View specific issues directly: $(basename "$0") ISSUE-KEY"
+    exit 1
+  fi
+  
+  # Use fzf for interactive selection if we have issues
+  if [[ -s "${temp_file}" ]]; then
+    selected_issue=$(cat "${temp_file}" | fzf --prompt="Select issue: " --height=40% --reverse)
+    
+    if [[ -n "${selected_issue}" ]]; then
+      # Extract issue key from the selected line
+      issue_key=$(echo "${selected_issue}" | awk '{print $1}')
+      
+      log_heading "Viewing Selected Issue: ${issue_key}"
+      
+      # Build command array safely - always use plain mode for non-interactive output
+      view_cmd=(jira issue view "${issue_key}" --comments "${comments}")
+      if [[ -n "${plain_mode}" ]]; then
+        view_cmd+=("${plain_mode}")
+      else
+        view_cmd+=("--plain")
+      fi
+      if [[ -n "${raw_mode}" ]]; then
+        view_cmd+=("${raw_mode}")
+      fi
+      if [[ -n "${jira_project}" ]]; then
+        view_cmd+=("--project" "${jira_project}")
+      fi
+      
+      if "${view_cmd[@]}"; then
+        log_success "Issue viewed successfully"
+      else
+        log_failure "Failed to view selected issue"
+        exit 1
+      fi
+    else
+      log_warning "No issue selected"
+      exit 1
+    fi
+  else
+    log_warning "No issues found"
+    exit 1
+  fi
+fi
