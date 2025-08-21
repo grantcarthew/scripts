@@ -4,17 +4,15 @@
 
 {{PROJECT_OVERVIEW}}
 
-## Required Information & Inputs
+## Sequence of Tasks
 
-List of necessary data, files, or access required:
+- List of tasks to perform
+
+## Required Information & Inputs
 
 - Input file
 - API endpoint
 - Credentials
-
-## Sequence of Tasks
-
-- List of tasks to perform
 
 ## Constraints
 
