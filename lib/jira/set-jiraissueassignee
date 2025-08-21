@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+
+# Environment setup
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+source "${BASH_MODULES_DIR}/settings.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <ISSUE-KEY> [ASSIGNEE] [options]
+
+Assign a Jira issue to a user (defaults to self if no assignee specified)
+
+Dependencies:
+  jira                   The jira CLI tool
+  fzf                    Fuzzy finder for interactive selection (only for --interactive)
+
+Required arguments:
+  ISSUE-KEY              Issue key to assign (e.g., GCP-479)
+
+Optional arguments:
+  ASSIGNEE               User email, display name, or special values:
+                           - 'self' or 'me': assign to current user (DEFAULT)
+                           - 'default': assign to default assignee
+                           - 'x' or 'unassign': remove assignee
+                           - '--interactive': show interactive selection menu
+  -h, --help             Show this help message and exit
+
+Examples:
+  $(basename "$0") GCP-479                    # Assign to self (DEFAULT)
+  $(basename "$0") GCP-479 --interactive     # Interactive assignee selection
+  $(basename "$0") GCP-479 "john@company.com" # Assign to specific user
+  $(basename "$0") GCP-479 unassign          # Unassign issue
+EOF
+}
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Helper function to safely parse array settings
+parse_array_setting() {
+  local setting_value="$1"
+  local -n result_array=$2
+  
+  result_array=()
+  
+  if [[ -n "${setting_value}" && "${setting_value}" != "()" ]]; then
+    # Remove parentheses
+    local cleaned=${setting_value#\(}
+    cleaned=${cleaned%\)}
+    
+    # Extract quoted strings safely
+    while IFS= read -r -d '' item; do
+      result_array+=("$item")
+    done < <(echo "$cleaned" | grep -o '"[^"]*"' | sed 's/"//g' | tr '\n' '\0')
+  fi
+}
+
+# Parse arguments
+if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+declare issue_key="$1"
+declare assignee="${2-}"
+
+# Handle --interactive flag and default behavior
+if [[ -z "${assignee}" ]]; then
+  # Default to self when no assignee specified
+  assignee="self"
+elif [[ "${assignee}" == "--interactive" ]]; then
+  # Clear assignee to trigger interactive mode
+  assignee=""
+fi
+
+# Title and Dependency Checks
+log_title "Assign Jira Issue"
+
+dependencies=(jira)
+if [[ -z "${assignee}" ]]; then
+  dependencies+=(fzf)
+fi
+
+for cmd in "${dependencies[@]}"; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+# Get project setting
+jira_project=$(settings_get "JIRA_DEFAULT_PROJECT")
+
+# Interactive assignee selection if not provided
+if [[ -z "${assignee}" ]]; then
+  log_heading "Interactive Assignee Selection"
+  
+  # Get current user for self-assignment option
+  current_user=$(jira me 2>/dev/null || echo "")
+  
+  # Build assignee options
+  assignee_options=()
+  
+  if [[ -n "${current_user}" ]]; then
+    assignee_options+=("self (${current_user})")
+  fi
+  
+  assignee_options+=("unassign" "default")
+  
+  # Add team members from settings
+  team_members=$(settings_get "JIRA_TEAM_MEMBERS")
+  declare -a members_array
+  parse_array_setting "${team_members}" members_array
+  if [[ ${#members_array[@]} -gt 0 ]]; then
+    assignee_options+=("${members_array[@]}")
+  fi
+  
+  log_message "Select assignee:"
+  selected=$(printf '%s\n' "${assignee_options[@]}" | fzf --prompt="Assignee: " --height=40% --reverse)
+  
+  if [[ -z "${selected}" ]]; then
+    log_failure "No assignee selected"
+    exit 1
+  fi
+  
+  # Process selection
+  case "${selected}" in
+    "self"*)
+      assignee="${current_user}"
+      ;;
+    "unassign")
+      assignee="x"
+      ;;
+    "default")
+      assignee="default"
+      ;;
+    *)
+      assignee="${selected}"
+      ;;
+  esac
+  
+  log_message "Selected assignee: ${assignee}"
+fi
+
+# Handle special assignee values
+case "${assignee,,}" in
+  "self"|"me")
+    current_user=$(jira me 2>/dev/null)
+    if [[ -n "${current_user}" ]]; then
+      assignee="${current_user}"
+    else
+      log_failure "Could not determine current user"
+      exit 1
+    fi
+    ;;
+  "unassign"|"none"|"remove")
+    assignee="x"
+    ;;
+esac
+
+# Report Operational Values
+log_heading "Assignment Details"
+log_message "$(
+  cat <<EOF
+   Issue Key: '${issue_key}'
+    Assignee: '${assignee}'
+     Project: '${jira_project}'
+EOF
+)"
+
+# Validation - check if issue exists
+cmd_check=(jira issue view "${issue_key}")
+if [[ -n "${jira_project}" ]]; then
+  cmd_check+=("--project" "${jira_project}")
+fi
+cmd_check+=(--plain)
+if ! "${cmd_check[@]}" > /dev/null 2>&1; then
+  log_failure "Could not access issue ${issue_key}"
+  exit 1
+fi
+
+# Build and execute command
+cmd=(jira issue assign "${issue_key}" "${assignee}")
+
+if [[ -n "${jira_project}" ]]; then
+  cmd+=("--project" "${jira_project}")
+fi
+
+log_heading "Assigning Issue"
+log_message "Executing: ${cmd[*]}"
+
+if "${cmd[@]}"; then
+  if [[ "${assignee}" == "x" ]]; then
+    log_success "Issue ${issue_key} unassigned successfully"
+  else
+    log_success "Issue ${issue_key} assigned to '${assignee}' successfully"
+  fi
+else
+  log_failure "Failed to assign issue"
+  exit 1
+fi
