@@ -43,13 +43,25 @@ function log_tf_title() {
 
 function new_tf_plan_file() {
   cleanup_old_tf_plan_files
-  echo "${TFPLAN_DIR}/$(date +%Y-%m-%d-%H%M%S)-$(basename "${PWD}").tfplan"
+
+  local branch_suffix=""
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    local branch_name
+    branch_name=$(git branch --show-current 2>/dev/null)
+    if [[ -n "${branch_name}" ]]; then
+      local sanitized_branch
+      sanitized_branch=$(echo "${branch_name}" | sed 's/[\\/:*?"<>|# .]/-/g')
+      branch_suffix="-${sanitized_branch}"
+    fi
+  fi
+
+  echo "${TFPLAN_DIR}/$(date +%Y-%m-%d-%H%M%S)-$(basename "${PWD}")${branch_suffix}.tfplan"
 }
 
 function cleanup_old_tf_plan_files() {
   local old_files
   old_files=$(fd "." "${TFPLAN_DIR}" --type f --extension tfplan --change-older-than 30d)
-  
+
   if [[ -n "${old_files}" ]]; then
     while IFS= read -r plan_file; do
       log_message "Removing old plan file: $(basename "${plan_file}")"
