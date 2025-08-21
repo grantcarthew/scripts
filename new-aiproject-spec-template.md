@@ -2,13 +2,9 @@
 
 ## Overview
 
-What problem does this project solve?
-
 {{PROJECT_OVERVIEW}}
 
 ## Functional Requirements
-
-What the system must do and the specific behaviors it must exhibit:
 
 The system MUST:
 
@@ -19,17 +15,17 @@ The system MUST:
 
 ## Constraints & Non-Functional Requirements
 
-Technical constraints, quality attributes, and operational requirements that guide implementation:
-
 - Language/Platform: e.g., Python 3.10+
 - Dependencies: e.g., Must use the 'pandas' library. Must NOT use any external APIs.
 - Performance: e.g., Must process a 50MB CSV file in under 15 seconds.
 - Code Style: e.g., All code must be formatted with 'black' and adhere to PEP 8.
 - Error Handling: e.g., If the input file is not found, the script must exit gracefully with a clear error message.
 
-## Deliverables & Acceptance Criteria
+## Supporting Information
 
-What does "done" looks like in concrete terms:
+- Anything the agent needs to implement the solution
+
+## Deliverables & Acceptance Criteria
 
 - Primary Deliverable: A single, executable Python script named script_name.py.
 - Supporting Files: A requirements.txt file listing all necessary dependencies.
