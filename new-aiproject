@@ -13,10 +13,10 @@ function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [--spec] [project_name] [overview]
 
-Generates a new project file from a template.
+Generates a new PROJECT.md file from an assignment template
 
 Options:
-  --spec            Generate a SPEC.md file (default: generates assignment)
+  --spec            Generate a PROJECT.md file from a specifications template
 
 Optional arguments:
   project_name      The name of the project.
@@ -148,13 +148,12 @@ ${cli_tools_cask}"
     ;;
 esac
 
+declare output_file="PROJECT.md"
 if [[ "${use_spec_template}" == true ]]; then
-  log_heading "Generating SPEC.md"
-  output_file="SPEC.md"
+  log_heading "Generating PROJECT.md based on the specifications template"
   mo_template_file="${SCRIPT_DIR}/new-aiproject-spec-template.md"
 else
-  log_heading "Generating ASSIGNMENT.md"
-  output_file="ASSIGNMENT.md"
+  log_heading "Generating PROJECT.md based on the assignment template"
   mo_template_file="${SCRIPT_DIR}/new-aiproject-assignment-template.md"
 fi
 
@@ -176,3 +175,4 @@ mo "${mo_template_file}" > "${output_file}"
 log_success "Successfully created '${output_file}'"
 
 nvim "${output_file}"
+
