@@ -2,13 +2,21 @@
 
 source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-log_tf_title "[t]erraform [p]lan"
+log_tf_title "[t]erraform [p]lan [target-module]"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
+MODULE_NAME="${1:-}"
 PLAN_FILE="$(new_tf_plan_file)"
 
 log_message "Saving plan to:"
 log_message "'${PLAN_FILE}'"
+
+if [[ -n "${MODULE_NAME}" ]]; then
+  log_message "❯ terraform plan -target ${MODULE_NAME} -out='$(basename "${PLAN_FILE}")'"
+  terraform plan -target "${MODULE_NAME}" -out="${PLAN_FILE}"
+  exit 0
+fi
+
 log_message "❯ terraform plan -out='$(basename "${PLAN_FILE}")'"
 terraform plan -out="${PLAN_FILE}"
