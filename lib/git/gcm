@@ -132,4 +132,4 @@ if ! press_enter_to_continue "Press Enter to push, any other key to abort."; the
 fi
 
 log_message "❯ gpush"
-gpush
+"$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/gpush"

@@ -2,9 +2,17 @@
 
 source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-log_tf_title "[t]erraform [d]estroy"
+log_tf_title "[t]erraform [d]estroy [target-module]"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+MODULE_NAME="${1:-}"
+
+if [[ -n "${MODULE_NAME}" ]]; then
+  log_message "❯ terraform destroy -target ${MODULE_NAME}"
+  terraform destroy -target "${MODULE_NAME}"
+  exit 0
+fi
 
 log_message "❯ terraform destroy"
 terraform destroy
