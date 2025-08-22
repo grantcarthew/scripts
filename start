@@ -110,20 +110,28 @@ fi
 # Main Logic
 # -----------------------------------------------------------------------------
 
+declare and_agents=""
 declare prompt=""
+if [[ -f "AGENTS.md" ]]; then
+  and_agents=" and @AGENTS.md"
+  prompt="Read @AGENTS.md to understand this environment, then ask me how you can help."
+fi
 
 if [[ -n "${custom_prompt}" ]]; then
   log_message "Using custom prompt"
   prompt="${custom_prompt}"
-elif [[ -f "ASSIGNMENT.md" ]]; then
-  log_message "Found ASSIGNMENT.md file"
-  prompt="Read the @ASSIGNMENT.md file and start your assignment"
-elif [[ -f "SPEC.md" ]]; then
-  log_message "Found SPEC.md file"
-  prompt="Read the SPEC.md file and start implementing the solution"
-else
-  log_warning "WARNING: Neither ASSIGNMENT.md nor SPEC.md file found in current directory"
+elif [[ -f "PROJECT.md" ]]; then
+  log_message "Found PROJECT.md file"
+  prompt="Read @PROJECT.md${and_agents}, then propose a detailed, step-by-step plan to achieve the objective."
 fi
 
-log_message "Executing: ${ai_command} \"${prompt}\""
-eval "${ai_command} \"${prompt}\""
+if [[ -n "${prompt}" ]]; then
+  log_message "Executing: ${ai_command} \"${prompt}\""
+  eval "${ai_command} \"${prompt}\""
+  exit 0
+fi
+
+log_message "Executing: ${ai_command}"
+eval "${ai_command}"
+
+
