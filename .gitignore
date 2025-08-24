@@ -1,13 +1,11 @@
 # Custom / Project Specific
 /lib/private/*
 !/lib/private/README.md
-ROLE.md
-SPEC.md
-ASSIGNMENT.md
 CLAUDE.md
 GEMINI.md
 WORKLOG.md
 COMMANDS.md
+PROJECT.md
 
 # Python
 # Byte-compiled / Optimized files

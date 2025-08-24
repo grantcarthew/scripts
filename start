@@ -10,27 +10,27 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/bash_modules/settings.sh"
 source "${SCRIPT_DIR}/bash_modules/utils.sh"
+source "${SCRIPT_DIR}/bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0") [--ai <provider>] [prompt]
+Usage: $(basename "$0") [--ai <service_class>] [prompt]
 
 Start AI project development
 
 Dependencies:
-  claude             The Claude CLI tool
-  gemini             The Gemini CLI tool
+  claude, gemini, aichat   AI CLI tools
 
 Optional arguments:
-  --ai <provider>    Use specific AI provider (claude, gemini)
-  prompt             Custom prompt to use instead of default file-based prompts
-  -h, --help         Show this help message and exit
+  --ai <service_class>  Use specific AI service class (alpha, beta, gamma)
+  prompt               Custom prompt to use instead of default file-based prompts
+  -h, --help           Show this help message and exit
 
 EOF
 }
 # Parse arguments
-declare ai_override=""
+declare ai_service_class=""
 declare custom_prompt=""
 while [[ $# -gt 0 ]]; do
   case "${1}" in
@@ -40,10 +40,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --ai)
       if [[ -z "${2}" ]]; then
-        log_error "ERROR: --ai requires a provider argument"
+        log_error "ERROR: --ai requires a service class argument (alpha, beta, gamma)"
         exit 1
       fi
-      ai_override=$(to_upper "${2}")
+      ai_service_class="${2}"
       shift 2
       ;;
     -*)
@@ -74,37 +74,19 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "Starting AI Project Development"
 
-# Determine AI provider
-declare ai_provider
-if [[ -n "${ai_override}" ]]; then
-  ai_provider="${ai_override}"
+# Determine AI service class - default to alpha (claude) for interactive work
+declare service_class
+if [[ -n "${ai_service_class}" ]]; then
+  service_class="${ai_service_class}"
 else
-  ai_provider=$(settings_get "AI_PROVIDER")
+  service_class="alpha"  # Default to claude for interactive sessions
 fi
 
-log_message "Using AI provider: '${ai_provider}'"
+log_message "Using AI service class: '${service_class}'"
 
-# Get AI command
-declare ai_command
-ai_command=$(settings_get "AI_COMMAND_${ai_provider}")
-if [[ -z "${ai_command}" ]]; then
-  log_error "ERROR: No command configured for AI provider '${ai_provider}'"
-  log_error "Expected setting: AI_COMMAND_${ai_provider}"
-  exit 1
-fi
-
-# Extract the actual command name for dependency check
-declare cmd_name
-cmd_name=$(echo "${ai_command}" | awk '{print $1}')
-if ! command -v "${cmd_name}" >/dev/null; then
-  log_error "ERROR: Missing dependency - '${cmd_name}'"
-  exit 1
-fi
-
-# Check for ROLE.md if using Claude
-if [[ "${ai_provider}" == "CLAUDE" && ! -f "ROLE.md" ]]; then
-  log_error "ERROR: ROLE.md file required for Claude but not found"
-  exit 1
+# Check for ROLE.md file for system prompt
+if [[ ! -f "ROLE.md" ]]; then
+  log_warning "WARNING: ROLE.md file not found - AI will use default system prompt"
 fi
 
 # Main Logic
@@ -125,13 +107,19 @@ elif [[ -f "PROJECT.md" ]]; then
   prompt="Read @PROJECT.md${and_agents}, then propose a detailed, step-by-step plan to achieve the objective."
 fi
 
-if [[ -n "${prompt}" ]]; then
-  log_message "Executing: ${ai_command} \"${prompt}\""
-  eval "${ai_command} \"${prompt}\""
-  exit 0
+# Get AI command using new ai module
+declare ai_command
+if [[ -f "ROLE.md" && -n "${prompt}" ]]; then
+  ai_command=$(ai_get_command "${service_class}" mid ROLE.md "${prompt}")
+elif [[ -f "ROLE.md" ]]; then
+  ai_command=$(ai_get_command "${service_class}" mid ROLE.md)
+elif [[ -n "${prompt}" ]]; then
+  ai_command=$(ai_get_command "${service_class}" mid "" "${prompt}")
+else
+  ai_command=$(ai_get_command "${service_class}" mid)
 fi
 
-log_message "Executing: ${ai_command}"
+log_message "Executing AI command..."
 eval "${ai_command}"
 
 
