@@ -8,8 +8,8 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *":${SCRIPT_DIR}:"* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/../../bash_modules/settings.sh"
+source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
-AI_MODEL_PRO="$(settings_get "AI_MODEL_PRO")"
 
 function print_usage() {
   cat <<EOF
@@ -86,7 +86,7 @@ ${staged_changes}
 EOF
 )"
 
-if ! review=$(aichat --model "${AI_MODEL_PRO}" "${prompt}"); then
+if ! review=$(eval "$(ai_get_command gamma pro "${SCRIPT_DIR}/gdr-prompt.md" "${prompt}")"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
-AI_MODEL_PRO="$(settings_get "AI_MODEL_PRO")"
 
 log_tf_title "[t]erraform [p]lan [r]eview"
 
@@ -41,7 +40,7 @@ ${TF_OUTPUT}
 EOF
 )"
 
-if ! review=$(aichat --model "${AI_MODEL_PRO}" "${prompt}"); then
+if ! review=$(eval "$(ai_get_command gamma pro "${TERRAFORM_LIB_DIR}/tpr-prompt.md" "${prompt}")"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi

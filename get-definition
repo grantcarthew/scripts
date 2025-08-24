@@ -7,7 +7,7 @@ set -o pipefail
 [[ ${DEBUG-} ]] && set -o xtrace
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/bash_modules/settings.sh"
-AI_MODEL="$(settings_get "AI_MODEL_MID")"
+source "${SCRIPT_DIR}/bash_modules/ai.sh"
 
 function print_usage() {
   cat <<EOF
@@ -36,4 +36,4 @@ fi
 prompt_file="${SCRIPT_DIR}/get-definition-prompt.md"
 prompt="$(cat "${prompt_file}")"
 prompt+=$'\n\n'"${*}"
-aichat --model "${AI_MODEL}" "${prompt}"
+eval "$(ai_get_command gamma mid "${prompt_file}" "${*}")"

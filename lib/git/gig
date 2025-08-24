@@ -9,8 +9,8 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/../../bash_modules/user-input.sh"
 source "${SCRIPT_DIR}/../../bash_modules/settings.sh"
+source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
-AI_MODEL_FAST="$(settings_get "AI_MODEL_FAST")"
 
 function print_usage() {
   cat <<EOF
@@ -114,7 +114,7 @@ ${existing_content}
 EOF
 )"
 
-if ! gitignore_content=$(aichat --model "${AI_MODEL_FAST}" "${prompt}"); then
+if ! gitignore_content=$(eval "$(ai_get_command gamma fast "${SCRIPT_DIR}/gig-prompt.md" "${prompt}")"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi
@@ -129,7 +129,7 @@ gitignore_content=$(echo "${gitignore_content}" | awk '/^```/{flag=1;next} /^```
 
 if [[ -z "${gitignore_content}" ]]; then
   # If code block extraction failed, use the entire output
-  gitignore_content=$(aichat --model "${AI_MODEL_FAST}" "${prompt}")
+  gitignore_content=$(eval "$(ai_get_command gamma fast "${SCRIPT_DIR}/gig-prompt.md" "${prompt}")")
 fi
 
 log_newline

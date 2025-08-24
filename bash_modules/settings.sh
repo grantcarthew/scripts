@@ -175,3 +175,4 @@ function settings_list() {
     printf '%s="%s"\n' "${key}" "${display_value}"
   done < "${settings_file}"
 }
+

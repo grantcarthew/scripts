@@ -9,8 +9,8 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/../../bash_modules/user-input.sh"
 source "${SCRIPT_DIR}/../../bash_modules/settings.sh"
+source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
-AI_MODEL_FAST="$(settings_get "AI_MODEL_FAST")"
 
 function print_usage() {
   cat <<EOF
@@ -93,7 +93,7 @@ ${staged_changes}
 EOF
 )"
 
-if ! commit_message=$(aichat --model "${AI_MODEL_FAST}" "${prompt}"); then
+if ! commit_message=$(eval "$(ai_get_command gamma fast "${SCRIPT_DIR}/gcm-prompt.md" "${prompt}")"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi

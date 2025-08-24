@@ -7,6 +7,7 @@ set -o pipefail # set -o errexit hides errors, don't use it
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
@@ -174,5 +175,5 @@ mo "${mo_template_file}" > "${output_file}"
 
 log_success "Successfully created '${output_file}'"
 
-claude --append-system-prompt "$(cat "${SCRIPT_DIR}/new-aiproject-design.md")" --permission-mode acceptEdits "Help me design the new project."
+eval "$(ai_get_command alpha mid "${SCRIPT_DIR}/new-aiproject-design.md" "Help me design the new project.")"
 
