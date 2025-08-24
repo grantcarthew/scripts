@@ -174,5 +174,5 @@ mo "${mo_template_file}" > "${output_file}"
 
 log_success "Successfully created '${output_file}'"
 
-nvim "${output_file}"
+claude --append-system-prompt "$(cat "${SCRIPT_DIR}/new-aiproject-design.md")" --permission-mode acceptEdits "Help me design the new project."
 
