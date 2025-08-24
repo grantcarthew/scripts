@@ -175,5 +175,5 @@ mo "${mo_template_file}" > "${output_file}"
 
 log_success "Successfully created '${output_file}'"
 
-eval "$(ai_get_command alpha mid "${SCRIPT_DIR}/new-aiproject-design.md" "Help me design the new project.")"
+eval "$(ai_get_command alpha mid "${SCRIPT_DIR}/new-aiproject-design-prompt.md" "Help me design the new project.")"
 
