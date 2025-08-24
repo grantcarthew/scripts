@@ -39,7 +39,6 @@ build/
 db.sqlite3
 
 # IDE / OS
-/.vscode/
 .idea/
 .DS_Store
 Thumbs.db
