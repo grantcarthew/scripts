@@ -8,6 +8,14 @@
 
 MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 
+declare CLAUDE_MODEL_FAST="claude-3-5-haiku-latest"
+declare CLAUDE_MODEL_MID="claude-sonnet-4-0"
+declare CLAUDE_MODEL_PRO="claude-opus-4-1"
+declare GEMINI_MODEL_FAST="vertexai:gemini-2.5-flash-lite"
+declare GEMINI_MODEL_MID="vertexai:gemini-2.5-flash"
+declare GEMINI_MODEL_PRO="vertexai:gemini-2.5-pro"
+
+
 function ai_get_command() {
   local service_class="${1}"
   local model_tier="${2}"
@@ -28,27 +36,27 @@ function ai_get_command() {
     alpha) # claude
       actual_service="claude"
       case "${model_tier}" in
-        fast) model="claude-3-haiku-20240307" ;;
-        mid) model="claude-3-5-sonnet-20241022" ;;
-        pro) model="claude-3-5-sonnet-20241022" ;;
+        fast) model="${CLAUDE_MODEL_FAST}" ;;
+        mid) model="${CLAUDE_MODEL_MID}" ;;
+        pro) model="${CLAUDE_MODEL_PRO}" ;;
         *) echo "ERROR: Invalid model_tier '${model_tier}' for alpha" >&2; return 1 ;;
       esac
       ;;
     beta) # gemini
       actual_service="gemini"
       case "${model_tier}" in
-        fast) model="vertexai:gemini-2.5-flash-lite" ;;
-        mid) model="vertexai:gemini-2.5-flash" ;;
-        pro) model="vertexai:gemini-2.5-pro" ;;
+        fast) model="${GEMINI_MODEL_FAST}" ;;
+        mid) model="${GEMINI_MODEL_MID}" ;;
+        pro) model="${GEMINI_MODEL_PRO}" ;;
         *) echo "ERROR: Invalid model_tier '${model_tier}' for beta" >&2; return 1 ;;
       esac
       ;;
     gamma) # aichat
       actual_service="aichat"
       case "${model_tier}" in
-        fast) model="gpt-4o-mini" ;;
-        mid) model="gpt-4o" ;;
-        pro) model="gpt-4o" ;;
+        fast) model="${GEMINI_MODEL_FAST}" ;;
+        mid) model="${GEMINI_MODEL_MID}" ;;
+        pro) model="${GEMINI_MODEL_PRO}" ;;
         *) echo "ERROR: Invalid model_tier '${model_tier}' for gamma" >&2; return 1 ;;
       esac
       ;;
@@ -63,9 +71,15 @@ function ai_get_command() {
 
   # Add service-specific system prompt handling if provided
   if [[ -n "${system_prompt_file}" ]]; then
+    # Read and properly escape the system prompt content
+    local system_prompt_content
+    system_prompt_content="$(cat "${system_prompt_file}")"
+    # Escape single quotes in the content
+    system_prompt_content="${system_prompt_content//\'/\'\\\'\'}"
+
     case "${actual_service}" in
       claude)
-        command="${command} --append-system-prompt \"$(cat \"${system_prompt_file}\")\""
+        command="${command} --append-system-prompt '${system_prompt_content}'"
         # Add permission mode for interactive usage
         command="${command} --permission-mode acceptEdits"
         ;;
@@ -73,14 +87,16 @@ function ai_get_command() {
         command="GEMINI_SYSTEM_MD=\"${system_prompt_file}\" ${command} --approval-mode auto_edit --prompt-interactive"
         ;;
       aichat)
-        command="${command} --system \"$(cat \"${system_prompt_file}\")\""
+        command="${command} --prompt '${system_prompt_content}'"
         ;;
     esac
   fi
 
   # Add prompt if provided
   if [[ -n "${prompt}" ]]; then
-    command="${command} \"${prompt}\""
+    # Escape single quotes in the prompt
+    local escaped_prompt="${prompt//\'/\'\\\'\'}"
+    command="${command} '${escaped_prompt}'"
   fi
 
   printf "%s" "${command}"
