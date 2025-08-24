@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Creates a new AI role document
 
 set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
