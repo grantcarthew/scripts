@@ -29,6 +29,20 @@ Optional arguments:
 
 EOF
 }
+
+function format_ai_command_display() {
+  local ai_command="$1"
+
+  # Check if command contains single quotes (indicating a long prompt)
+  if [[ "${ai_command}" == *\'* ]]; then
+    local command_start="${ai_command%%\'*}"
+    local command_end="${ai_command##*\'}"
+    echo "${command_start}'...'${command_end}"
+  else
+    echo "${ai_command}"
+  fi
+}
+
 # Parse arguments
 declare ai_service_class=""
 declare custom_prompt=""
@@ -72,7 +86,7 @@ trap ctrlc_trap SIGINT
 
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
-log_title "Starting AI Project Development"
+log_title "Starting AI Agent"
 
 # Determine AI service class - default to alpha (claude) for interactive work
 declare service_class
@@ -111,7 +125,7 @@ fi
 declare ai_command
 if [[ -f "ROLE.md" && -n "${prompt}" ]]; then
   ai_command=$(ai_get_command "${service_class}" mid ROLE.md "${prompt}")
-elif [[ -f "ROLE.md" ]]; then
+elif [[ -f "ROLE.md" && -z "${prompt}" ]]; then
   ai_command=$(ai_get_command "${service_class}" mid ROLE.md)
 elif [[ -n "${prompt}" ]]; then
   ai_command=$(ai_get_command "${service_class}" mid "" "${prompt}")
@@ -120,6 +134,5 @@ else
 fi
 
 log_message "Executing AI command..."
+log_message "❯ $(format_ai_command_display "${ai_command}")"
 eval "${ai_command}"
-
-

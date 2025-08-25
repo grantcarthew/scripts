@@ -9,7 +9,7 @@
 MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 
 declare CLAUDE_MODEL_FAST="claude-3-5-haiku-latest"
-declare CLAUDE_MODEL_MID="claude-sonnet-4-0"
+declare CLAUDE_MODEL_MID="claude-sonnet-4@20250514"
 declare CLAUDE_MODEL_PRO="claude-opus-4-1"
 declare GEMINI_MODEL_FAST="vertexai:gemini-2.5-flash-lite"
 declare GEMINI_MODEL_MID="vertexai:gemini-2.5-flash"
