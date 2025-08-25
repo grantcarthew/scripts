@@ -13,16 +13,11 @@ source "${SCRIPT_DIR}/bash_modules/ai.sh"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0") [--spec] [project_name] [overview]
+Usage: $(basename "$0")
 
-Generates a new PROJECT.md file from an assignment template
+Interactive script to generate a new PROJECT.md file
 
 Options:
-  --spec            Generate a PROJECT.md file from a specifications template
-
-Optional arguments:
-  project_name      The name of the project.
-  overview          A short overview of the project.
   -h, --help        Show this help message and exit
 EOF
 }
@@ -32,6 +27,12 @@ if [[ "${1-}" == "-h" || "${1-}" == "--help" ]]; then
   exit 0
 fi
 
+if [[ $# -gt 0 ]]; then
+  log_error "This script does not accept arguments. Run without arguments for interactive mode."
+  print_usage
+  exit 1
+fi
+
 function ctrlc_trap() {
   log_newline
   log_warning "Script interrupted. Exiting."
@@ -39,61 +40,48 @@ function ctrlc_trap() {
 }
 trap ctrlc_trap SIGINT
 
-# Parse arguments
+# Interactive prompts
 # -----------------------------------------------------------------------------
 declare use_spec_template=false
 declare project_name=""
 declare project_overview=""
 
-while [[ $# -gt 0 ]]; do
-  case "${1}" in
-    --spec)
-      use_spec_template=true
-      shift
-      ;;
-    -h|--help)
-      print_usage
-      exit 0
-      ;;
-    --*|-*)
-      log_error "Unknown option: '${1}'"
-      print_usage
-      exit 1
-      ;;
-    *)
-      if [[ -z "${project_name}" ]]; then
-        project_name="${1}"
-      elif [[ -z "${project_overview}" ]]; then
-        project_overview="${1}"
-      else
-        log_error "Too many arguments provided"
-        print_usage
-        exit 1
-      fi
-      shift
-      ;;
-  esac
+log_title "New AI Project Generator"
+
+# Interactive prompts
+# -----------------------------------------------------------------------------
+log_heading "Project Type Selection"
+log_message "1) Assignment"
+log_message "2) Specification"
+read -r -p "Select project type (1-2): " project_type_choice
+
+while [[ "${project_type_choice}" != "1" && "${project_type_choice}" != "2" ]]; do
+  log_warning "Invalid selection '${project_type_choice}'. Please enter 1 or 2."
+  read -r -p "Select project type (1-2): " project_type_choice
 done
 
-# Title and Dependency Checks
-# -----------------------------------------------------------------------------
-if [[ "${use_spec_template}" == true ]]; then
-  log_title "New Project Specification"
-else
-  log_title "New Project Assignment"
-fi
+case "${project_type_choice}" in
+  2)
+    use_spec_template=true
+    log_message "Selected: Specification template"
+    ;;
+  1)
+    use_spec_template=false
+    log_message "Selected: Assignment template"
+    ;;
+esac
 
-# Arguments
-# -----------------------------------------------------------------------------
-if [[ -z "${project_name}" ]]; then
+log_heading "Project Details"
+read -r -p "Enter project name: " project_name
+while [[ -z "${project_name}" ]]; do
+  log_warning "Project name cannot be empty"
   read -r -p "Enter project name: " project_name
-fi
+done
 
+read -r -p "Enter project overview: " project_overview
 if [[ -z "${project_overview}" ]]; then
-  read -r -p "Enter project overview: " project_overview
-  if [[ -z "${project_overview}" ]]; then
-    project_overview="A brief overview of the project."
-  fi
+  project_overview="A brief overview of the project."
+  log_message "Using default overview: '${project_overview}'"
 fi
 
 # Dependency Checks
@@ -176,4 +164,4 @@ mo "${mo_template_file}" > "${output_file}"
 
 log_success "Successfully created '${output_file}'"
 
-eval "$(ai_get_command alpha mid "${SCRIPT_DIR}/new-aiproject-design-prompt.md" "Help me design the new project.")"
+eval "$(ai_get_command alpha mid "${SCRIPT_DIR}/new-aiproject-design-prompt.md" "Read the @PROJECT.md file and help me design the new project document.")"

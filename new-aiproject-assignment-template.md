@@ -6,21 +6,19 @@
 
 ## Sequence of Tasks
 
-- List of tasks to perform
+- {list-of-tasks}
 
 ## Required Information & Inputs
 
-- Input file
-- API endpoint
-- Credentials
+- {input-files-or-api-endpoints-or-credentials-etc}
 
 ## Constraints
 
-- List of rules that the AI must obey
+- {list-of-rules-that-the-ai-must-obey}
 
 ## Final Deliverable & Success Criteria
 
-- List of deliverables
+- {list-of-deliverables}
 
 ## Execution Environment
 
