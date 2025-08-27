@@ -4,7 +4,7 @@ source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
 log_tf_title "[t]ofu [p]lan [s]how"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -gt 0 ]] && exit 1
 
 LATEST_PLAN="$(get_latest_tf_plan_file)"
 

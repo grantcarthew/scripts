@@ -4,7 +4,7 @@ source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
 log_tf_title "[t]ofu [s]tate [m]o[v]e <source> <dest>"
 
-[[ "${#}" -ne 2 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+[[ $# -ne 2 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 log_message "❯ tofu state mv ${1} ${2}"
 tofu state mv "${1}" "${2}"

@@ -6,11 +6,9 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [a]dd [file-path]"
 
-if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
-  exit 1
-fi
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-if [[ ${#} -eq 0 ]]; then
+if [[ $# -eq 0 ]]; then
   log_message "❯ git add ."
   git add .
   log_message "❯ git status"

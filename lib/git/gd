@@ -4,11 +4,11 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-log_title "[g]it [d]iff [file-path]"
+log_title "[g]it [d]iff [path]"
 
-[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-if [[ -z "${1}" ]]; then
+if [[ $# -lt 1 ]]; then
   log_message "❯ git diff"
   if git diff --quiet; then
     log_message "No unstaged changes found. Checking staged changes..."
@@ -20,11 +20,11 @@ if [[ -z "${1}" ]]; then
   exit 0
 fi
 
-log_message "❯ git diff ${1}"
-if git diff --quiet -- "${1}"; then
-  log_message "No unstaged changes found for '${1}'. Checking staged changes..."
-  log_message "❯ git diff --staged ${1}"
-  git diff --staged -- "${1}"
+log_message "❯ git diff ${*}"
+if git diff --quiet -- "${@}"; then
+  log_message "No unstaged changes found for '${*}'. Checking staged changes..."
+  log_message "❯ git diff --staged ${*}"
+  git diff --staged -- "${@}"
 else
-  git diff -- "${1}"
+  git diff -- "${@}"
 fi

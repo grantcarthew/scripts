@@ -6,7 +6,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [c]ommit --message [message]"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -lt 1 ]] && log_error "Commit message is required." && exit 1
 
-log_message "❯ git commit --message \"${1}\""
-git commit --message "$1"
+log_message "❯ git commit --message \"${*}\""
+git commit --message "${*}"

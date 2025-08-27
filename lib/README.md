@@ -36,7 +36,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [f]etch --all --prune"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -gt 0 ]] && exit 1
 
 log_message "❯ git fetch --all --prune"
 git fetch --all --prune
@@ -54,7 +54,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [s]tatus [path]"
 
-[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+[[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ -z "${1}" ]]; then
   log_message "❯ git status"

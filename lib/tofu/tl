@@ -4,7 +4,7 @@ source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
 log_tf_title "[t]ofu [l]int"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -gt 0 ]] && exit 1
 
 log_message "Running tofu formatting and linting tools"
 

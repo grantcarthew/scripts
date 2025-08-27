@@ -6,7 +6,7 @@ log_tf_title "[t]erraform [w]atch"
 log_message "This command will run 'terraform fmt -recursive' and 'terraform validate'"
 log_message "on every file change in the current directory."
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -gt 0 ]] && exit 1
 
 log_message "❯ rg -l '.' | entr -c bash -c \"echo \\\"-- \$(date +%T) --\\\" && terraform fmt -recursive && terraform validate\""
 log_pressanykey
