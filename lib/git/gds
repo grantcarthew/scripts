@@ -6,13 +6,13 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [d]iff --[s]taged [path]"
 
-[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-if [[ -z "${1}" ]]; then
+if [[ $# -lt 1 ]]; then
   log_message "❯ git diff --staged"
   git diff --staged
   exit 0
 fi
 
-log_message "❯ git diff --staged ${1}"
-git diff --staged "${1}"
+log_message "❯ git diff --staged ${*}"
+git diff --staged "${@}"

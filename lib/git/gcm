@@ -37,10 +37,10 @@ if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
   exit 0
 fi
 
-if [[ $# -eq 0 ]]; then
+if [[ $# -lt 1 ]]; then
   special_instructions="None"
 else
-  special_instructions="$*"
+  special_instructions="${*}"
 fi
 
 function ctrlc_trap() {

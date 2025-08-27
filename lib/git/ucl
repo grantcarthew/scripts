@@ -42,7 +42,7 @@ fi
 if [[ $# -eq 0 ]]; then
   special_instructions="None"
 else
-  special_instructions="$*"
+  special_instructions="${*}"
 fi
 
 function ctrlc_trap() {
@@ -93,7 +93,7 @@ if [[ "${current_branch}" == "${default_branch}" ]]; then
   exit 1
 fi
 
-log_message " Special Instructions: ${special_instructions}"
+log_message " Special Instructions: '${special_instructions}'"
 
 # Generate diff between default and current branch
 # -----------------------------------------------------------------------------

@@ -6,7 +6,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[d]ocker [l]ist <multiple-resources>"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -gt 0 ]] && exit 1
 
 log_subheading "command: docker container list --all"
 docker container list --all

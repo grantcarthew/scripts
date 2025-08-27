@@ -31,9 +31,15 @@ This script will:
 EOF
 }
 
-if [[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+if [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
   print_usage
   exit 0
+fi
+
+if [[ $# -lt 1 ]]; then
+  special_instructions="None"
+else
+  special_instructions="${*}"
 fi
 
 function ctrlc_trap() {
@@ -75,7 +81,7 @@ $(cat "${SCRIPT_DIR}/gdr-prompt.md")
 
 ## Special Instructions
 
-${1:-"None"}
+${special_instructions}
 
 ## Git Diff
 

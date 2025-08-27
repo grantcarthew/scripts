@@ -6,7 +6,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[d]ocker [s]ystem [p]rune [clean]"
 
-[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+[[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ "$1" == "clean" ]]; then
   log_subheading "command: docker stop \$(docker ps -aq)"

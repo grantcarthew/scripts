@@ -6,7 +6,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "sudo [d]ocker [c]ontainer [l]ist"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -gt 0 ]] && exit 1
 
 log_subheading "command: sudo docker container list --all"
 sudo docker container list --all

@@ -6,7 +6,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [sync] pull then push current branch"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -gt 0 ]] && log_error "Arguments not allowed" && exit 1
 
 branch_name="$(git branch --show-current 2>/dev/null)"
 if [[ -z "${branch_name}" ]]; then

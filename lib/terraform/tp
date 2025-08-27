@@ -4,7 +4,7 @@ source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
 log_tf_title "[t]erraform [p]lan [target-module]"
 
-[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+[[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 MODULE_NAME="${1:-}"
 PLAN_FILE="$(new_tf_plan_file)"

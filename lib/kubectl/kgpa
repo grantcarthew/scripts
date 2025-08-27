@@ -6,7 +6,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[k]ubectl [g]et [p]od [a]ll namespaces"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -gt 0 ]] && exit 1
 
 log_message "❯ kubectl get pod --all-namespaces"
 kubectl get pod --all-namespaces

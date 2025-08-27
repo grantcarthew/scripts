@@ -6,7 +6,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[k]ubectl [l]ogs [d]eployment [deployment-name]"
 
-[[ "${#}" -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+[[ $# -ne 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 log_message "❯ kubectl logs -f deployment/${1}"
 kubectl logs -f deployment/"${1}"

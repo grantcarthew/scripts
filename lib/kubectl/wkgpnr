@@ -6,7 +6,7 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[w]atch [k]ubectl [g]et [p]od [n]ot [r]unning"
 
-[[ "${#}" -gt 0 ]] && exit 1
+[[ $# -gt 0 ]] && exit 1
 
 log_message "❯ watch kubectl get pod --all-namespaces --field-selector=status.phase!=Running"
 watch kubectl get pod --all-namespaces --field-selector=status.phase!=Running

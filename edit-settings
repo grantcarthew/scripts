@@ -18,7 +18,7 @@ Optional arguments:
   -h, --help         Show this help message and exit
 EOF
 }
-if [[ "${#}" -gt 2 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+if [[ $# -gt 2 || "${1}" == "-h" || "${1}" == "--help" ]]; then
   print_usage
   exit 1
 fi
@@ -30,7 +30,7 @@ if ! command -v nvim >/dev/null; then
   exit 1
 fi
 
-if [[ "${#}" -ge 1 ]]; then
+if [[ $# -ge 1 ]]; then
   key="${1}"
   value="${2:-}"
   log_message "Setting '${key}' = '${value}'"

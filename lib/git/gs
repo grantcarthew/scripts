@@ -6,13 +6,13 @@ source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [s]tatus [path]"
 
-[[ "${#}" -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
-if [[ -z "${1}" ]]; then
+if [[ $# -lt 1 ]]; then
   log_message "❯ git status"
   git status
   exit 0
 fi
 
-log_message "❯ git status ${1}"
-git status "${1}"
+log_message "❯ git status ${*}"
+git status "${@}"

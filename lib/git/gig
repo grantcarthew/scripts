@@ -14,7 +14,7 @@ source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0") <request>
+Usage: $(basename "$0") request
 
 Generate a .gitignore file using AI for the specified request.
 
@@ -34,9 +34,9 @@ This script will:
 EOF
 }
 
-if [[ $# -eq 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
   print_usage
-  [[ $# -eq 0 ]] && exit 1 || exit 0
+  exit 1
 fi
 
 function ctrlc_trap() {
