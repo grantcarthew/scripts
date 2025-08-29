@@ -52,7 +52,7 @@ function dependency_check() {
     # dependency_check command command command
     for cmd in "$@"; do
         if ! command -v "${cmd}" >/dev/null 2>&1; then
-            echo "Error: ${cmd} is not installed" >&2
+            echo "ERROR: '${cmd}' is not installed" >&2
             exit 1
         fi
     done
@@ -62,27 +62,27 @@ function environment_variable_check() {
     # environment_variable_check ENV_NAME ENV_NAME ENV_NAME
     for envar in "$@"; do
         if [[ -z "${!envar}" ]]; then
-            echo "Error: ${envar} environment variable is not set" >&2
+            echo "ERROR: '${envar}' environment variable is not set" >&2
             exit 1
         fi
     done
 }
 
 function file_check() {
-    # environment_variable_check path path
-    for envar in "$@"; do
-        if ! [[ -f "${envar}" ]]; then
-            echo "Error: ${envar} file is missing" >&2
+    # file_check path path
+    for filevar in "$@"; do
+        if ! [[ -f "${filevar}" ]]; then
+            echo "ERROR: '${filevar}' file is missing" >&2
             exit 1
         fi
     done
 }
 
 function dir_check() {
-    # environment_variable_check path path
-    for envar in "$@"; do
-        if [[ -d "${envar}" ]]; then
-            echo "Error: ${envar} directory is missing" >&2
+    # dir_check path path
+    for dirvar in "$@"; do
+        if ! [[ -d "${dirvar}" ]]; then
+            echo "ERROR: '${dirvar}' directory is missing" >&2
             exit 1
         fi
     done
@@ -203,7 +203,7 @@ function is_bash_script() {
     # is_bash_script <file-path>
     local file="${1}"
 
-    if head --lines=1 "${file}" | rg -Pq '^#!.*bash'; then
+    if head --lines=1 "${file}" | grep -Pq '^#!.*bash'; then
         echo "File is a Bash script: '${file}'"
         return 0
     else

@@ -89,11 +89,30 @@ trap ctrlc_trap SIGINT
 log_title "Starting AI Agent"
 
 # Determine AI service class - default to alpha (claude) for interactive work
-declare service_class
+declare service_class="alpha"
 if [[ -n "${ai_service_class}" ]]; then
   service_class="${ai_service_class}"
-else
-  service_class="alpha"  # Default to claude for interactive sessions
+fi
+
+declare model_tier
+case "${service_class}" in
+  alpha)
+    model_tier="mid"
+    ;;
+    beta)
+    model_tier="pro"
+    ;;
+  gamma)
+    model_tier="pro"
+    ;;
+  *)
+    model_tier="fast"
+    ;;
+esac
+
+declare model_tier="mid"
+if [[ "${service_class}" == "beta" ]];then
+  model_tier="pro"
 fi
 
 log_message "Using AI service class: '${service_class}'"
@@ -124,13 +143,13 @@ fi
 # Get AI command using new ai module
 declare ai_command
 if [[ -f "ROLE.md" && -n "${prompt}" ]]; then
-  ai_command=$(ai_get_command "${service_class}" mid ROLE.md "${prompt}")
+  ai_command=$(ai_get_command "${service_class}" "${model_tier}" ROLE.md "${prompt}")
 elif [[ -f "ROLE.md" && -z "${prompt}" ]]; then
-  ai_command=$(ai_get_command "${service_class}" mid ROLE.md)
+  ai_command=$(ai_get_command "${service_class}" "${model_tier}" ROLE.md)
 elif [[ -n "${prompt}" ]]; then
-  ai_command=$(ai_get_command "${service_class}" mid "" "${prompt}")
+  ai_command=$(ai_get_command "${service_class}" "${model_tier}" "" "${prompt}")
 else
-  ai_command=$(ai_get_command "${service_class}" mid)
+  ai_command=$(ai_get_command "${service_class}" "${model_tier}")
 fi
 
 log_message "Executing AI command..."

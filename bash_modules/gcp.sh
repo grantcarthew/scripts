@@ -9,14 +9,9 @@
 set -o pipefail
 
 function is_gcloud_authenticated() {
-  local output
-  output="$(gcloud auth list 2>&1)"
-  
-  if [[ "${output}" == *"No credentialed accounts"* ]]; then
-    echo "No credentialed accounts found." >&2
-    return 1
+  if command -v gcloud >/dev/null && \
+     gcloud auth print-access-token --quiet &>/dev/null; then
+    return 0
   fi
-  
-  echo "Credentialed accounts found." >&2
-  return 0
+  return 1
 }
