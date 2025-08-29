@@ -11,9 +11,12 @@ MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 declare CLAUDE_MODEL_FAST="claude-3-5-haiku-latest"
 declare CLAUDE_MODEL_MID="claude-sonnet-4@20250514"
 declare CLAUDE_MODEL_PRO="claude-opus-4-1"
-declare GEMINI_MODEL_FAST="vertexai:gemini-2.5-flash-lite"
-declare GEMINI_MODEL_MID="vertexai:gemini-2.5-flash"
-declare GEMINI_MODEL_PRO="vertexai:gemini-2.5-pro"
+declare GEMINI_MODEL_FAST="gemini-2.5-flash-lite"
+declare GEMINI_MODEL_MID="gemini-2.5-flash"
+declare GEMINI_MODEL_PRO="gemini-2.5-pro"
+declare AICHAT_GEMINI_MODEL_FAST="vertexai:gemini-2.5-flash-lite"
+declare AICHAT_GEMINI_MODEL_MID="vertexai:gemini-2.5-flash"
+declare AICHAT_GEMINI_MODEL_PRO="vertexai:gemini-2.5-pro"
 
 
 function ai_get_command() {
@@ -54,9 +57,9 @@ function ai_get_command() {
     gamma) # aichat
       actual_service="aichat"
       case "${model_tier}" in
-        fast) model="${GEMINI_MODEL_FAST}" ;;
-        mid) model="${GEMINI_MODEL_MID}" ;;
-        pro) model="${GEMINI_MODEL_PRO}" ;;
+        fast) model="${AICHAT_GEMINI_MODEL_FAST}" ;;
+        mid) model="${AICHAT_GEMINI_MODEL_MID}" ;;
+        pro) model="${AICHAT_GEMINI_MODEL_PRO}" ;;
         *) echo "ERROR: Invalid model_tier '${model_tier}' for gamma" >&2; return 1 ;;
       esac
       ;;

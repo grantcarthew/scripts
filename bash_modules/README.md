@@ -6,4 +6,4 @@ See the `templates/bash-template` file for usage.
 
 ## Unit Tests
 
-Unit tests are available within files named *_test.sh
+Unit tests are available within files named *-test.sh

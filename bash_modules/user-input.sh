@@ -111,3 +111,32 @@ function press_enter_to_continue() {
   fi
   return 0
 }
+
+# Function: press_any_key
+#
+# Purpose: Prompts the user to press any key to continue execution.
+# This function displays a customizable message and waits for the user to press
+# any single key. It provides a simple pause mechanism for scripts that need
+# user acknowledgment before proceeding.
+#
+# Parameters:
+#   $1 - Optional message to display (default: "Press any key to continue...")
+#
+# Usage:
+#   press_any_key
+#   press_any_key "Press any key when ready..."
+#   press_any_key "Review the output above, then press any key to continue..."
+#
+# Notes:
+#   - Uses silent read (-s) so the pressed key is not echoed to the terminal
+#   - Reads only one character (-n 1) and doesn't wait for Enter
+#   - Output is sent to stderr (&2) for proper logging practices
+#   - New line after input to ensure proper formatting
+#
+# Supports: Bash 3.2.57
+function press_any_key() {
+  local message="${1:-Press any key to continue...}"
+  printf "${NORMAL}%s" "${message}" >&2
+  read -n 1 -s -r
+  echo "" >&2
+}

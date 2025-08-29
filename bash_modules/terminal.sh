@@ -178,6 +178,26 @@ function log_json() {
   echo "${1}" | jq '.' >&2
 }
 
+function log_filecontents() {
+  if [[ $# -lt 1 ]]; then
+    log_warning "WARNING: log_filecontents requires a file path which was not provided" >&2
+    log_warning "Usage: log_filecontents <file_path>" >&2
+    return 0
+  fi
+
+  local file_path="${1}"
+
+  if [[ ! -f "${file_path}" ]]; then
+    log_warning "WARNING: File '${file_path}' does not exist" >&2
+    return 0
+  fi
+
+  log_heading "File Contents: '${file_path}'"
+  echo "--- start of file ---" >&2
+  cat "${file_path}" >&2
+  echo "--- end of file ---" >&2
+}
+
 # Progress
 # -----------------------------------------------------------------------------
 function log_percent() {

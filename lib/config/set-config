@@ -37,8 +37,8 @@ try:
             rprint(content)
         os.remove(BIN_CONFIG_PATH)
         rprint(f"[yellow]{BIN_CONFIG_PATH} was deleted.[/]")
-except FileNotFoundError:
-    rprint(f"[red]Error: When working with {BIN_CONFIG_PATH}'[/]")
+except FileNotFoundERROR:
+    rprint(f"[red]ERROR: When working with {BIN_CONFIG_PATH}'[/]")
 
 try:
     config_json = config.load_config()

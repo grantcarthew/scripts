@@ -19,7 +19,7 @@ if curl -sSL --fail -o "${temp_file}" "${source_url}"; then
   mv "${temp_file}" "${dest_file}"
   echo "✅ Successfully updated .bashrc."
 else
-  echo "❌ Error: Download failed. Your original .bashrc is untouched." >&2
+  echo "❌ ERROR: Download failed. Your original .bashrc is untouched." >&2
   rm -f "${temp_file}"
   exit 1
 fi

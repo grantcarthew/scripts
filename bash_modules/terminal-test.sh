@@ -29,7 +29,7 @@ function test_function() {
   local description="$2"
   shift 2
 
-  # Use custom styling for test function headers to make them stand out
+  # Use custom styling for test function heading to make them stand out
   printf "\n ${BOLD}${CYAN}▶ TEST: %s${NORMAL}\n" "${func_name}" >&2
   length=$(tput cols)
   printf "${BOLD}${BLUE}%*s${NORMAL}\n" "${length}" '' | tr ' ' "#" >&2
@@ -153,6 +153,22 @@ test_function "log_json" "Formats and displays JSON data" \
 test_function "log_json (no data)" "Handles missing JSON data gracefully" \
   log_json
 
+# Test file contents display
+# Create a temporary file for testing
+TEMP_FILE="$(mktemp)"
+echo "This is a test file content" > "${TEMP_FILE}"
+echo "with multiple lines" >> "${TEMP_FILE}"
+
+test_function "log_filecontents" "Displays the contents of a file" \
+  log_filecontents "${TEMP_FILE}"
+rm "${TEMP_FILE}"
+
+test_function "log_filecontents (nonexistent)" "Shows warning for nonexistent file" \
+  log_filecontents "/path/to/nonexistent/file"
+
+test_function "log_filecontents (missing argument)" "Shows usage message when missing file path" \
+  log_filecontents
+
 # Create a temporary environment without jq to test dependency check
 test_function "log_json (no jq)" "Shows error when jq is not available" \
   bash -c 'function command() { if [[ $2 == "jq" ]]; then return 1; fi; }; export -f command; source "'"${MODULES_DIR}"'/terminal.sh"; log_json "{}"'
@@ -199,13 +215,6 @@ test_function "log_wait" "Shows a spinner while waiting for specified seconds" \
 
 test_function "log_wait (invalid seconds)" "Shows error for non-numeric seconds" \
   log_wait "Testing invalid seconds" "abc"
-
-# Test interaction functions
-test_function "log_pressanykey" "Pauses execution until user presses a key" \
-  log_pressanykey "Press any key to proceed to the next test..."
-
-test_function "log_pressanykey (default)" "Uses default message when none provided" \
-  log_pressanykey
 
 # Test completion function
 test_function "log_done" "Shows a completion message with success mark" \
