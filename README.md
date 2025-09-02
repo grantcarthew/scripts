@@ -13,6 +13,8 @@ My scripts for all kinds of automation and workflows.
     - [Task 2 - Clone](#task-2---clone)
     - [Task 3 - PATH](#task-3---path)
     - [Task 4 - Libraries](#task-4---libraries)
+- [AI Prompts Collection](#ai-prompts-collection)
+  - [Quick Access](#quick-access)
 - [AI Enhanced Tools](#ai-enhanced-tools)
 
 ## Dependencies
@@ -107,8 +109,32 @@ This example is for the terraform scripts:
 echo 'export PATH="${PATH}:${HOME}/bin/scripts/lib/terraform"' >> "${HOME}/.bashrc"
 ```
 
+## AI Prompts Collection
+
+The [`ai/`](ai/) directory contains a comprehensive collection of AI prompts, roles, and templates:
+
+- **[AI Roles](ai/roles/)**: Domain-specific expert personas for cloud, development, and analysis
+- **[Commands](ai/commands/)**: Quick task-oriented prompts for immediate use
+- **[Metaprompts](ai/metaprompts/)**: Advanced templates for creating other prompts
+- **[Templates](ai/templates/)**: Customizable frameworks for resumes and cover letters
+
+### Quick Access
+
+Use these scripts to work with AI prompts:
+
+- `get-airole [filter]`: Copy role prompts to clipboard
+- `new-airole [filter]`: Save role prompts to ROLE.md file
+
 ## AI Enhanced Tools
 
+- [get-airole](get-airole): AI Role Prompt Fetcher - copies prompts from the collection to clipboard
+- [get-aiscripts](get-aiscripts): Lists all AI-enhanced scripts in the repository
+- [get-clihelp](get-clihelp): Get CLI command help
+- [get-definition](get-definition): Get word definition with options
+- [new-aiproject](new-aiproject): New AI Project Generator
+- [new-airole](new-airole): AI Role Document Creator - saves prompts directly to ROLE.md
 - [gcm](lib/git/gcm): Git Commit Generator
+- [gdr](lib/git/gdr): Git Diff --staged Review
 - [gig](lib/git/gig): Git Ignore Generator (.gitignore)
+- [tpr](lib/terraform/tpr): Terraform Plan Review
 - [ucl](lib/git/ucl): Update Change Log
