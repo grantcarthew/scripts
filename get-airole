@@ -14,7 +14,7 @@ Usage: $(basename "$0") [file_filter] [-i|--include-initial-response] [-h]
 Copies Grant Carthew's AI role prompts from GitHub into the local
 clipboard or a specified file.
 
-Repository: https://github.com/grantcarthew/notes/tree/main
+Repository: https://github.com/grantcarthew/scripts/tree/main
 
 Dependencies:
   curl                For fetching GitHub API data
@@ -69,8 +69,8 @@ done
 
 log_heading "Fetching Prompts"
 
-repo_url="grantcarthew/notes"
-path="Prompts"
+repo_url="grantcarthew/scripts"
+path="ai/roles"
 api_url="https://api.github.com/repos/${repo_url}/contents/${path}"
 
 log_message "Fetching from: ${api_url}"
