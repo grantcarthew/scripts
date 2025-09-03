@@ -109,7 +109,7 @@ if [[ -z "${comment}" && -z "${template}" && -z "${no_input}" ]]; then
   log_heading "Comment Input"
   log_message "Enter comment text (press Ctrl+D when done):"
   comment=$(cat)
-  
+
   if [[ -z "${comment}" ]]; then
     log_failure "No comment provided"
     exit 1
@@ -160,8 +160,9 @@ if [[ -n "${web_flag}" ]]; then
   cmd+=("${web_flag}")
 fi
 
-if [[ -n "${no_input}" ]]; then
-  cmd+=("${no_input}")
+# Always add --no-input when comment is provided to avoid interactive prompts
+if [[ -n "${no_input}" || -n "${comment}" ]]; then
+  cmd+=("--no-input")
 fi
 
 # Main Logic
