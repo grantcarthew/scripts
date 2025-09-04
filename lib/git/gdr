@@ -15,7 +15,7 @@ function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [special-instructions]
 
-Review staged git changes using AI.
+Review git changes using AI - staged changes or branch diff.
 
 Dependencies:
   git                Git version control
@@ -25,9 +25,10 @@ Optional arguments:
   special-instructions  Special instructions for the AI reviewer
 
 This script will:
-1. Check if there are staged git changes
-2. Get a review of the changes from AI
-3. Report on any findings
+1. Check if there are staged git changes and review them
+2. If no staged changes and not on default branch, review branch diff
+3. Get a review of the changes from AI
+4. Report on any findings
 EOF
 }
 
@@ -51,7 +52,7 @@ trap ctrlc_trap SIGINT
 
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
-log_title "[g]it [d]iff --staged [r]eview"
+log_title "[g]it [d]iff [r]eview"
 
 dependencies=(git aichat)
 for cmd in "${dependencies[@]}"; do
@@ -66,15 +67,54 @@ if ! git rev-parse --is-inside-work-tree &>/dev/null; then
   exit 1
 fi
 
+# Check for changes to review
+# -----------------------------------------------------------------------------
 staged_changes="$(git diff --staged)"
-if [[ -z "${staged_changes}" ]]; then
-  log_error "ERROR: No staged changes found. Use 'git add' to stage changes first."
-  exit 1
+
+if [[ -n "${staged_changes}" ]]; then
+  log_message "Found staged changes - reviewing staged diff..."
+  diff_content="${staged_changes}"
+  diff_type="staged"
+else
+  # Get branch information for fallback
+  if git show-ref --quiet refs/heads/main; then
+    default_branch="main"
+  elif git show-ref --quiet refs/heads/master; then
+    default_branch="master"
+  else
+    log_error "ERROR: Could not determine default branch (neither main nor master found)"
+    exit 1
+  fi
+
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  if [[ $? -ne 0 ]]; then
+    log_error "ERROR: Failed to determine current branch"
+    exit 1
+  fi
+
+  if [[ "${current_branch}" == "${default_branch}" ]]; then
+    log_error "ERROR: No staged changes and currently on default branch '${default_branch}'. Either stage changes or switch to a feature branch."
+    exit 1
+  fi
+
+  log_message "No staged changes - reviewing diff between '${default_branch}' and '${current_branch}'..."
+  diff_content=$(git diff "${default_branch}...${current_branch}")
+  if [[ $? -ne 0 ]]; then
+    log_error "ERROR: Failed to generate diff between branches"
+    exit 1
+  fi
+
+  if [[ -z "${diff_content}" ]]; then
+    log_error "ERROR: No differences found between '${default_branch}' and '${current_branch}'"
+    exit 1
+  fi
+
+  diff_type="branch"
 fi
 
 # AI Review
 # -----------------------------------------------------------------------------
-log_message "Getting AI review of staged changes..."
+log_message "Getting AI review of changes..."
 
 prompt="$(cat <<EOF
 $(cat "${SCRIPT_DIR}/gdr-prompt.md")
@@ -83,10 +123,10 @@ $(cat "${SCRIPT_DIR}/gdr-prompt.md")
 
 ${special_instructions}
 
-## Git Diff
+## Git Diff (${diff_type})
 
 \`\`\`diff
-${staged_changes}
+${diff_content}
 \`\`\`
 
 EOF
