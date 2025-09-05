@@ -7,16 +7,7 @@
 # Model tiers: fast, mid, pro
 
 MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-
-declare CLAUDE_MODEL_FAST="claude-3-5-haiku-latest"
-declare CLAUDE_MODEL_MID="claude-sonnet-4@20250514"
-declare CLAUDE_MODEL_PRO="claude-opus-4-1"
-declare GEMINI_MODEL_FAST="gemini-2.5-flash-lite"
-declare GEMINI_MODEL_MID="gemini-2.5-flash"
-declare GEMINI_MODEL_PRO="gemini-2.5-pro"
-declare AICHAT_GEMINI_MODEL_FAST="vertexai:gemini-2.5-flash-lite"
-declare AICHAT_GEMINI_MODEL_MID="vertexai:gemini-2.5-flash"
-declare AICHAT_GEMINI_MODEL_PRO="vertexai:gemini-2.5-pro"
+source "${MODULES_DIR}/settings.sh"
 
 
 function ai_get_command() {
@@ -31,38 +22,22 @@ function ai_get_command() {
     return 1
   fi
 
-  # Map service classes to actual services and models
-  local actual_service=""
-  local model=""
+  # Get model from settings
+  local model_key="AI_${service_class^^}_${model_tier^^}"
+  local model
+  model="$(settings_get "${model_key}")"
+  
+  if [[ -z "${model}" ]]; then
+    echo "ERROR: No model configured for ${service_class} ${model_tier}. Run 'set-aiconfig' to configure." >&2
+    return 1
+  fi
 
+  # Map service classes to actual services
+  local actual_service=""
   case "${service_class}" in
-    alpha) # claude
-      actual_service="claude"
-      case "${model_tier}" in
-        fast) model="${CLAUDE_MODEL_FAST}" ;;
-        mid) model="${CLAUDE_MODEL_MID}" ;;
-        pro) model="${CLAUDE_MODEL_PRO}" ;;
-        *) echo "ERROR: Invalid model_tier '${model_tier}' for alpha" >&2; return 1 ;;
-      esac
-      ;;
-    beta) # gemini
-      actual_service="gemini"
-      case "${model_tier}" in
-        fast) model="${GEMINI_MODEL_FAST}" ;;
-        mid) model="${GEMINI_MODEL_MID}" ;;
-        pro) model="${GEMINI_MODEL_PRO}" ;;
-        *) echo "ERROR: Invalid model_tier '${model_tier}' for beta" >&2; return 1 ;;
-      esac
-      ;;
-    gamma) # aichat
-      actual_service="aichat"
-      case "${model_tier}" in
-        fast) model="${AICHAT_GEMINI_MODEL_FAST}" ;;
-        mid) model="${AICHAT_GEMINI_MODEL_MID}" ;;
-        pro) model="${AICHAT_GEMINI_MODEL_PRO}" ;;
-        *) echo "ERROR: Invalid model_tier '${model_tier}' for gamma" >&2; return 1 ;;
-      esac
-      ;;
+    alpha) actual_service="claude" ;;
+    beta) actual_service="gemini" ;;
+    gamma) actual_service="aichat" ;;
     *)
       echo "ERROR: Invalid service_class '${service_class}'. Use alpha, beta, or gamma" >&2
       return 1
