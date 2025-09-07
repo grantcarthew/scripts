@@ -51,3 +51,4 @@ desktop.ini
 
 # Terraform
 lib/terraform/.tfplan/
+lib/tofu/.tfplan/
