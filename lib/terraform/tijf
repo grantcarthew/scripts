@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+
+log_tf_title "[t]erraform [i]nit [bucket-name] using JFrog"
+
+token="$(cat "${HOME}"/.jfrog/jfrog-cli.conf.v* 2>/dev/null | jq -r '.servers[0].accessToken // .servers[0].password' 2>/dev/null)"
+
+if [[ -z "${token}" || "${token}" == "null" ]]; then
+  echo "ERROR: Failed to extract JFrog token" >&2
+  exit 1
+fi
+
+export TF_TOKEN_artefacts_autogeneral_com_au="${token}"
+
+ti "$@"
