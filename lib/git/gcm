@@ -22,13 +22,20 @@ Dependencies:
   git                Git version control
   aichat             AI chat tool
 
+Environment Variables:
+  CONFIRM              Set to 'true' to automatically commit and push without user confirmation
+
 Arguments:
   special-instructions  Optional special instructions for the AI prompt
 
 This script will:
 1. Check if there are staged git changes
 2. Generate a commit message using AI
-3. Allow you to confirm and use the generated message
+3. Allow you to confirm and use the generated message (unless CONFIRM=true)
+
+Examples:
+  $(basename "$0")                    # Interactive mode with confirmations
+  CONFIRM=true $(basename "$0")       # Auto-confirm commit and push
 EOF
 }
 
@@ -108,9 +115,13 @@ echo "${commit_message}"
 log_newline
 log_line
 
-if ! press_enter_to_continue "Press Enter to commit, any other key to abort."; then
-  log_warning "Commit aborted"
-  exit 1
+if [[ "${CONFIRM:-false}" == "true" ]]; then
+  log_message "Auto-confirming commit (CONFIRM=true)"
+else
+  if ! press_enter_to_continue "Press Enter to commit, any other key to abort."; then
+    log_warning "Commit aborted"
+    exit 1
+  fi
 fi
 
 log_message "❯ git commit -m '${commit_message}'"
@@ -126,9 +137,13 @@ if ! git remote get-url origin &>/dev/null; then
   exit 0
 fi
 
-if ! press_enter_to_continue "Press Enter to push, any other key to abort."; then
-  log_warning "Push aborted"
-  exit 1
+if [[ "${CONFIRM:-false}" == "true" ]]; then
+  log_message "Auto-confirming push (CONFIRM=true)"
+else
+  if ! press_enter_to_continue "Press Enter to push, any other key to abort."; then
+    log_warning "Push aborted"
+    exit 1
+  fi
 fi
 
 log_message "❯ gpush"
