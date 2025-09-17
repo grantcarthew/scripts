@@ -136,7 +136,7 @@ fi
 
 # All three files (most specific)
 if [[ -f "ROLE.md" && -f "AGENTS.md" && -f "PROJECT.md" ]]; then
-  prompt="Read the AGENTS.md file for general understanding, then read the PROJECT.md file and propose a detailed implementation plan. Discuss it with me."
+  prompt="Read the AGENTS.md file for general understanding, then read the PROJECT.md file and discuss it with me."
   ai_command=$(ai_get_command "${service_class}" "${model_tier}" ROLE.md "${prompt}")
   log_message "Executing AI command..."
   log_message "❯ $(format_ai_command_display "${ai_command}")"
@@ -146,7 +146,7 @@ fi
 
 # Two file combinations
 if [[ -f "ROLE.md" && -f "PROJECT.md" ]]; then
-  prompt="Read the PROJECT.md file then propose a detailed implementation plan. Discuss it with me."
+  prompt="Read the PROJECT.md file and discuss it with me."
   ai_command=$(ai_get_command "${service_class}" "${model_tier}" ROLE.md "${prompt}")
   log_message "Executing AI command..."
   log_message "❯ $(format_ai_command_display "${ai_command}")"
@@ -164,7 +164,7 @@ if [[ -f "ROLE.md" && -f "AGENTS.md" ]]; then
 fi
 
 if [[ -f "AGENTS.md" && -f "PROJECT.md" ]]; then
-  prompt="Read the AGENTS.md file for general understanding, then read the PROJECT.md file and propose a detailed implementation plan. Discuss it with me."
+  prompt="Read the AGENTS.md file for general understanding, then read the PROJECT.md file and discuss it with me."
   ai_command=$(ai_get_command "${service_class}" "${model_tier}" "" "${prompt}")
   log_message "Executing AI command..."
   log_message "❯ $(format_ai_command_display "${ai_command}")"
@@ -182,7 +182,7 @@ if [[ -f "ROLE.md" ]]; then
 fi
 
 if [[ -f "PROJECT.md" ]]; then
-  prompt="Read the PROJECT.md file and propose a detailed implementation plan. Discuss it with me."
+  prompt="Read the PROJECT.md file and discuss it with me."
   ai_command=$(ai_get_command "${service_class}" "${model_tier}" "" "${prompt}")
   log_message "Executing AI command..."
   log_message "❯ $(format_ai_command_display "${ai_command}")"
