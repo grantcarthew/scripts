@@ -141,10 +141,10 @@ esac
 declare output_file="PROJECT.md"
 if [[ "${use_spec_template}" == true ]]; then
   log_heading "Generating PROJECT.md based on the specifications template"
-  mo_template_file="${SCRIPT_DIR}/new-aiproject-spec-template.md"
+  mo_template_file="${SCRIPT_DIR}/templates/new-aiproject-spec-template.md"
 else
   log_heading "Generating PROJECT.md based on the assignment template"
-  mo_template_file="${SCRIPT_DIR}/new-aiproject-assignment-template.md"
+  mo_template_file="${SCRIPT_DIR}/templates/new-aiproject-assignment-template.md"
 fi
 
 export PROJECT_NAME="${project_name}"
@@ -164,4 +164,4 @@ mo "${mo_template_file}" > "${output_file}"
 
 log_success "Successfully created '${output_file}'"
 
-eval "$(ai_get_command alpha mid "${SCRIPT_DIR}/new-aiproject-design-prompt.md" "Read the @PROJECT.md file and help me design the new project document.")"
+nvim "${output_file}"
