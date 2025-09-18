@@ -2,19 +2,29 @@
 
 source "$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/init.sh"
 
-log_tf_title "[t]erraform [p]lan [summary]"
+log_tf_title "[t]erraform [p]lan [summary] [filter]"
 
-[[ $# -gt 0 ]] && exit 1
+declare filter_arg="${1}"
 
 LATEST_PLAN="$(get_latest_tf_plan_file)"
 if [[ -n "${LATEST_PLAN}" ]]; then
   log_message "Latest plan file: '${LATEST_PLAN}'"
-  log_message "❯ terraform show $(basename "${LATEST_PLAN}") | rg '# |Plan:' | rg -v '.data.|# \('"
-  terraform show "${LATEST_PLAN}" | rg '# |Plan:' | rg -v '# \('
+  if [[ -n "${filter_arg}" ]]; then
+    log_message "❯ terraform show $(basename "${LATEST_PLAN}") | rg '# |Plan:' | rg -v '.data.|# \(' | rg '${filter_arg}'"
+    terraform show "${LATEST_PLAN}" | rg '# |Plan:' | rg -v '# \(' | rg "${filter_arg}"
+  else
+    log_message "❯ terraform show $(basename "${LATEST_PLAN}") | rg '# |Plan:' | rg -v '.data.|# \('"
+    terraform show "${LATEST_PLAN}" | rg '# |Plan:' | rg -v '# \('
+  fi
   exit 0
 fi
 
 log_warning "No terraform plan files found in '${TFPLAN_DIR}'"
 log_message "Showing plan from state"
-log_message "❯ terraform show"
-terraform show
+if [[ -n "${filter_arg}" ]]; then
+  log_message "❯ terraform show | rg '${filter_arg}'"
+  terraform show | rg "${filter_arg}"
+else
+  log_message "❯ terraform show"
+  terraform show
+fi
