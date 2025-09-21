@@ -1,30 +1,63 @@
 #!/usr/bin/env bash
-# Creates a new AI role document
+# Generates a new AI role prompt using the role metaprompt
 
-set -o pipefail
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/bash_modules/desktop.sh"
+source "${SCRIPT_DIR}/bash_modules/ai.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0") [file_filter]
+Usage: $(basename "$0") [-c|--clipboard] [-h|--help] [role_request...]
 
-Creates or replaces the contents of ROLE.md by executing get-airole with the
-file filter and redirecting the output to the file.
+Generates a new AI role prompt using the role metaprompt.
+Gets user input for AI role request, sends to AI, saves result or copies to clipboard.
+
+Repository: https://github.com/grantcarthew/scripts/tree/main
 
 Dependencies:
-  get-airole          The get-airole script in the same directory
+  AI service         One of claude, gemini, or aichat (configured via set-aiconfig)
 
 Arguments:
-  file_filter         File name filter passed to get-airole
-  -h, --help          Show this help message and exit
+  role_request       The AI role to create (e.g., 'Python expert', 'DevOps specialist')
+                     If not provided, will prompt for input
+
+Optional arguments:
+  -c, --clipboard    Copy the generated role to clipboard instead of saving to file
+  -h, --help         Show this help message and exit
 EOF
 }
 
-if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
-  print_usage
-  exit 0
-fi
+declare copy_to_clipboard=false
+declare -a role_args=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -c|--clipboard)
+      copy_to_clipboard=true
+      shift
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    -*)
+      log_error "ERROR: Unknown option '${1}'"
+      print_usage
+      exit 1
+      ;;
+    *)
+      role_args+=("$1")
+      shift
+      ;;
+  esac
+done
 
 function ctrlc_trap() {
   log_newline
@@ -33,44 +66,111 @@ function ctrlc_trap() {
 }
 trap ctrlc_trap SIGINT
 
-log_title "New AI Role - Create ROLE.md"
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "New AI Role Prompt Generator"
 
-# Check if get-airole exists
-get_airole_script="${SCRIPT_DIR}/get-airole"
-if [[ ! -f "${get_airole_script}" ]]; then
-  log_error "ERROR: get-airole script not found at '${get_airole_script}'"
+# No external dependencies needed since we're using local files
+
+# Check if AI service is configured
+if ! ai_get_command "alpha" "fast" >/dev/null 2>&1; then
+  log_error "ERROR: No AI service configured. Run 'set-aiconfig' to configure AI services."
   exit 1
 fi
 
-if [[ ! -x "${get_airole_script}" ]]; then
-  log_error "ERROR: get-airole script is not executable"
-  exit 1
-fi
+# Report Operational Values
+# -----------------------------------------------------------------------------
+log_heading "Operational Values"
 
-log_heading "Executing get-airole"
-log_message "Running: get-airole ${1:-}"
+declare local_file_path="${SCRIPT_DIR}/ai/metaprompts/role.md"
+declare output_file="ROLE.md"
 
-role_file="${PWD}/ROLE.md"
+log_message "$(
+  cat <<EOF
+      copy_to_clipboard: '${copy_to_clipboard}'
+         local_file_path: '${local_file_path}'
+            output_file: '${output_file}'
+EOF
+)"
 
-if "${get_airole_script}" "${1:-}" > "${role_file}"; then
-  log_success "ROLE.md created successfully"
-  log_message "File: '${role_file}'"
+# User Input
+# -----------------------------------------------------------------------------
+log_heading "AI Role Request"
 
-  # Show first few lines of the created file
-  if [[ -s "${role_file}" ]]; then
-    log_heading "ROLE.md Content Preview"
-    head -5 "${role_file}" | while IFS= read -r line; do
-      log_message "  ${line}"
-    done
-
-    file_size=$(wc -c < "${role_file}")
-    log_message "Total file size: ${file_size} bytes"
-  else
-    log_warning "ROLE.md file is empty"
-  fi
+if [[ ${#role_args[@]} -gt 0 ]]; then
+  user_role_request="${role_args[*]}"
+  log_message "Using role request from command line: '${user_role_request}'"
 else
-  log_error "ERROR: Failed to execute get-airole or write to ROLE.md"
+  echo "What AI role do you want to create? (e.g., 'Python expert', 'DevOps specialist')" >&2
+  read -r user_role_request
+  while [[ -z "${user_role_request}" ]]; do
+    log_warning "Role request cannot be empty"
+    echo "What AI role do you want to create?" >&2
+    read -r user_role_request
+  done
+  log_message "Creating AI role for: '${user_role_request}'"
+fi
+
+# Load Role Metaprompt
+# -----------------------------------------------------------------------------
+log_heading "Loading Role Metaprompt"
+
+if [[ ! -f "${local_file_path}" ]]; then
+  log_error "ERROR: Metaprompt file not found at '${local_file_path}'"
   exit 1
+fi
+
+log_message "Loading metaprompt from local file"
+metaprompt_content="$(cat "${local_file_path}")"
+
+if [[ -z "${metaprompt_content}" ]]; then
+  log_error "ERROR: Failed to read metaprompt from '${local_file_path}'"
+  exit 1
+fi
+
+log_success "Metaprompt loaded successfully"
+
+# Generate AI Role
+# -----------------------------------------------------------------------------
+log_heading "Generating AI Role"
+
+combined_prompt="${metaprompt_content}
+
+## User Request
+
+Please create an AI role prompt for: ${user_role_request}"
+
+log_message "Sending request to AI service..."
+
+ai_command=$(ai_get_command "alpha" "mid" "" "${combined_prompt}")
+ai_response=$(eval "${ai_command}")
+
+if [[ -z "${ai_response}" ]]; then
+  log_error "ERROR: No response received from AI service"
+  exit 1
+fi
+
+log_success "AI role generated successfully"
+
+# Output Result
+# -----------------------------------------------------------------------------
+log_heading "Output Result"
+
+if [[ "${copy_to_clipboard}" == true ]]; then
+  send_to_clipboard "${ai_response}"
+  log_success "AI role copied to clipboard!"
+else
+  echo "${ai_response}" > "${output_file}"
+  log_success "AI role saved to '${output_file}'"
+
+  # Open the file for editing
+  if command -v nvim >/dev/null; then
+    nvim "${output_file}"
+  elif command -v vim >/dev/null; then
+    vim "${output_file}"
+  elif command -v nano >/dev/null; then
+    nano "${output_file}"
+  fi
 fi
 
 log_done
