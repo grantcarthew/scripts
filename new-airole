@@ -88,7 +88,7 @@ declare output_file="ROLE.md"
 log_message "$(
   cat <<EOF
       copy_to_clipboard: '${copy_to_clipboard}'
-         local_file_path: '${local_file_path}'
+        local_file_path: '${local_file_path}'
             output_file: '${output_file}'
 EOF
 )"
