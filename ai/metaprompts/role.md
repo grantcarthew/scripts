@@ -51,6 +51,7 @@
 - Keep the prompt succinct
 - Follow the formatting instructions
 - Only respond with markdown
+- You MUST NOT wrap the response in a code block
 
 ## Required Sections
 
