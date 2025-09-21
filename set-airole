@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Creates a new AI role document
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [file_filter]
+
+Creates or replaces the contents of ROLE.md by executing get-airole with the
+file filter and redirecting the output to the file.
+
+Dependencies:
+  get-airole          The get-airole script in the same directory
+
+Arguments:
+  file_filter         File name filter passed to get-airole
+  -h, --help          Show this help message and exit
+EOF
+}
+
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+log_title "New AI Role - Create ROLE.md"
+
+# Check if get-airole exists
+get_airole_script="${SCRIPT_DIR}/get-airole"
+if [[ ! -f "${get_airole_script}" ]]; then
+  log_error "ERROR: get-airole script not found at '${get_airole_script}'"
+  exit 1
+fi
+
+if [[ ! -x "${get_airole_script}" ]]; then
+  log_error "ERROR: get-airole script is not executable"
+  exit 1
+fi
+
+log_heading "Executing get-airole"
+log_message "Running: get-airole ${1:-}"
+
+role_file="${PWD}/ROLE.md"
+
+if "${get_airole_script}" "${1:-}" > "${role_file}"; then
+  log_success "ROLE.md created successfully"
+  log_message "File: '${role_file}'"
+
+  # Show first few lines of the created file
+  if [[ -s "${role_file}" ]]; then
+    log_heading "ROLE.md Content Preview"
+    head -5 "${role_file}" | while IFS= read -r line; do
+      log_message "  ${line}"
+    done
+
+    file_size=$(wc -c < "${role_file}")
+    log_message "Total file size: ${file_size} bytes"
+  else
+    log_warning "ROLE.md file is empty"
+  fi
+else
+  log_error "ERROR: Failed to execute get-airole or write to ROLE.md"
+  exit 1
+fi
+
+log_done

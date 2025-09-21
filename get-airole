@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
-# Copies my AI Prompts from GitHub into the local clipboard
+# Copies my AI Prompts from local directory into the clipboard
 
 # Environment setup
-set -o pipefail
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/bash_modules/desktop.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [file_filter] [-i|--include-initial-response] [-h]
 
-Copies Grant Carthew's AI role prompts from GitHub into the local
+Copies Grant Carthew's AI role prompts from local directory into the
 clipboard or a specified file.
 
 Repository: https://github.com/grantcarthew/scripts/tree/main
 
 Dependencies:
-  curl                For fetching GitHub API data
-  jq                  For parsing JSON output
   rg                  For regex matching
   fzf                 For interactive file selection
   OS Dependent:
@@ -57,9 +59,18 @@ for arg in "$@"; do
   esac
 done
 
-log_title "Grant Carthew's GitHub Prompts"
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
 
-dependencies=(curl jq rg fzf)
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "Grant Carthew's Local AI Prompts"
+
+dependencies=(rg fzf)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -67,39 +78,28 @@ for cmd in "${dependencies[@]}"; do
   fi
 done
 
-log_heading "Fetching Prompts"
+# Load Local Prompts
+# -----------------------------------------------------------------------------
+log_heading "Loading Local Prompts"
 
-repo_url="grantcarthew/scripts"
-path="ai/roles"
-api_url="https://api.github.com/repos/${repo_url}/contents/${path}"
+local_path="${SCRIPT_DIR}/ai/roles"
 
-log_message "Fetching from: ${api_url}"
-
-# Check for GitHub token for authentication
-curl_auth_opts=()
-if [[ -n "${GITHUB_TOKEN}" ]]; then
-  log_message "Using GitHub token for authentication"
-  curl_auth_opts=(-H "Authorization: token ${GITHUB_TOKEN}")
-fi
-
-file_list=$(curl -s "${curl_auth_opts[@]}" "${api_url}" || {
-  log_error "ERROR: Failed to fetch contents from ${api_url}"
-  exit 1
-})
-
-if [[ "$file_list" == *"API rate limit exceeded"* ]]; then
-  log_error "ERROR: GitHub API rate limit exceeded."
-  log_error "Please wait a while before trying again or use an authenticated token."
+if [[ ! -d "${local_path}" ]]; then
+  log_error "ERROR: Local AI roles directory not found at '${local_path}'"
   exit 1
 fi
 
-readarray -t files < <(echo "${file_list}" | jq -r '.[] | select(.type == "file" and .name != "README.md") | .name') || exit 1
+log_message "Loading from: ${local_path}"
+
+readarray -t files < <(find "${local_path}" -name "*.md" -not -name "README.md" -exec basename {} \; | sort)
 
 if [[ -n "$file_filter" ]]; then
   log_message "Filtering for: ${file_filter}"
   readarray -t files < <(printf '%s\n' "${files[@]}" | rg -i "$file_filter")
 fi
 
+# File Selection
+# -----------------------------------------------------------------------------
 log_heading "File Selection"
 
 case ${#files[@]} in
@@ -124,15 +124,22 @@ case ${#files[@]} in
   ;;
 esac
 
-log_heading "Downloading Prompt"
+# Load Prompt Content
+# -----------------------------------------------------------------------------
+log_heading "Loading Prompt"
 
-raw_url="https://raw.githubusercontent.com/${repo_url}/main/${path}/${selected_file}"
-log_message "Fetching from: ${raw_url}"
-raw_content="$(curl -s "$raw_url")"
+local_file="${local_path}/${selected_file}"
+log_message "Loading from: ${local_file}"
 
-# Check if curl request was successful
+if [[ ! -f "${local_file}" ]]; then
+  log_error "ERROR: File not found at '${local_file}'"
+  exit 1
+fi
+
+raw_content="$(cat "${local_file}")"
+
 if [[ -z "${raw_content}" ]]; then
-  log_error "ERROR: Failed to fetch content from ${raw_url}"
+  log_error "ERROR: Failed to read content from '${local_file}'"
   exit 1
 fi
 
@@ -152,6 +159,8 @@ EOT
   )"
 fi
 
+# Output Result
+# -----------------------------------------------------------------------------
 # If we are outputting to a terminal, copy to clipboard.
 if [[ -t 1 ]]; then
   send_to_clipboard "${raw_content}"
