@@ -88,7 +88,7 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "Starting AI Agent"
 
-# Determine AI service class - default to alpha (claude) for interactive work
+# Determine AI service class - default to alpha for interactive work
 declare service_class="alpha"
 if [[ -n "${ai_service_class}" ]]; then
   service_class="${ai_service_class}"
@@ -99,10 +99,7 @@ case "${service_class}" in
   alpha)
     model_tier="mid"
     ;;
-    beta)
-    model_tier="pro"
-    ;;
-  gamma)
+  beta|gamma)
     model_tier="pro"
     ;;
   *)
@@ -110,97 +107,63 @@ case "${service_class}" in
     ;;
 esac
 
-declare model_tier="mid"
-if [[ "${service_class}" == "beta" ]];then
-  model_tier="pro"
-fi
-
 log_message "Using AI service class: '${service_class}'"
+
+# Validation Checks
+# -----------------------------------------------------------------------------
+if [[ -n "${ai_service_class}" ]]; then
+  case "${ai_service_class}" in
+    alpha|beta|gamma)
+      # Valid service classes
+      ;;
+    *)
+      log_error "ERROR: Invalid service class '${ai_service_class}'. Valid options: alpha, beta, gamma"
+      exit 1
+      ;;
+  esac
+fi
 
 # Main Logic - Exit Early Pattern
 # -----------------------------------------------------------------------------
 
-# Handle custom prompt override first
+declare role_file="ROLE.md"
+if [[ ! -f "ROLE.md" ]]; then
+  role_file=""
+fi
+
+# Handle custom prompt override - execute immediately and exit
 if [[ -n "${custom_prompt}" ]]; then
   log_message "Using custom prompt"
-  if [[ -f "ROLE.md" ]]; then
-    ai_command=$(ai_get_command "${service_class}" "${model_tier}" ROLE.md "${custom_prompt}")
-  else
-    ai_command=$(ai_get_command "${service_class}" "${model_tier}" "" "${custom_prompt}")
-  fi
+  ai_command=$(ai_get_command "${service_class}" "${model_tier}" "${role_file}" "${custom_prompt}")
   log_message "Executing AI command..."
   log_message "❯ $(format_ai_command_display "${ai_command}")"
   eval "${ai_command}"
   exit 0
 fi
 
-# All three files (most specific)
-if [[ -f "ROLE.md" && -f "AGENTS.md" && -f "PROJECT.md" ]]; then
-  prompt="Read the AGENTS.md file for general understanding, then read the PROJECT.md file and discuss the work with me."
-  ai_command=$(ai_get_command "${service_class}" "${model_tier}" ROLE.md "${prompt}")
-  log_message "Executing AI command..."
-  log_message "❯ $(format_ai_command_display "${ai_command}")"
-  eval "${ai_command}"
-  exit 0
-fi
+declare prompt=""
 
-# Two file combinations
-if [[ -f "ROLE.md" && -f "PROJECT.md" ]]; then
-  prompt="Read the PROJECT.md file and discuss the work with me."
-  ai_command=$(ai_get_command "${service_class}" "${model_tier}" ROLE.md "${prompt}")
-  log_message "Executing AI command..."
-  log_message "❯ $(format_ai_command_display "${ai_command}")"
-  eval "${ai_command}"
-  exit 0
-fi
+# Build pattern based on file existence
+declare pattern=""
+[[ -f "AGENTS.md" ]] && pattern+="A"
+[[ -f "${HOME}/ENVIRONMENT.md" ]] && pattern+="E"
+[[ -f "PROJECT.md" ]] && pattern+="P"
 
-if [[ -f "ROLE.md" && -f "AGENTS.md" ]]; then
-  prompt="Read the AGENTS.md file for general understanding, then ask me how you can help."
-  ai_command=$(ai_get_command "${service_class}" "${model_tier}" ROLE.md "${prompt}")
-  log_message "Executing AI command..."
-  log_message "❯ $(format_ai_command_display "${ai_command}")"
-  eval "${ai_command}"
-  exit 0
-fi
+# Set prompt based on file combination pattern
+case "${pattern}" in
+  "AEP") prompt="Read the AGENTS.md file for general understanding, then read the ${HOME}/ENVIRONMENT.md file for environment context, then read the PROJECT.md file and discuss the work with me." ;;
+  "AP")  prompt="Read the AGENTS.md file for general understanding, then read the PROJECT.md file and discuss the work with me." ;;
+  "AE")  prompt="Read the AGENTS.md file for general understanding, then read the ${HOME}/ENVIRONMENT.md file for environment context, then ask me how you can help." ;;
+  "EP")  prompt="Read the ${HOME}/ENVIRONMENT.md file for environment context, then read the PROJECT.md file and discuss the work with me." ;;
+  "E")   prompt="Read the ${HOME}/ENVIRONMENT.md file for environment context, then ask me how you can help." ;;
+  "P")   prompt="Read the PROJECT.md file and discuss the work with me." ;;
+  "A")   prompt="Read the AGENTS.md file for general understanding, then ask me how you can help." ;;
+  *)     prompt="" ;;
+esac
 
-if [[ -f "AGENTS.md" && -f "PROJECT.md" ]]; then
-  prompt="Read the AGENTS.md file for general understanding, then read the PROJECT.md file and discuss the work with me."
-  ai_command=$(ai_get_command "${service_class}" "${model_tier}" "" "${prompt}")
-  log_message "Executing AI command..."
-  log_message "❯ $(format_ai_command_display "${ai_command}")"
-  eval "${ai_command}"
-  exit 0
-fi
-
-# Single file combinations
-if [[ -f "ROLE.md" ]]; then
-  ai_command=$(ai_get_command "${service_class}" "${model_tier}" ROLE.md)
-  log_message "Executing AI command..."
-  log_message "❯ $(format_ai_command_display "${ai_command}")"
-  eval "${ai_command}"
-  exit 0
-fi
-
-if [[ -f "PROJECT.md" ]]; then
-  prompt="Read the PROJECT.md file and discuss the work with me."
-  ai_command=$(ai_get_command "${service_class}" "${model_tier}" "" "${prompt}")
-  log_message "Executing AI command..."
-  log_message "❯ $(format_ai_command_display "${ai_command}")"
-  eval "${ai_command}"
-  exit 0
-fi
-
-if [[ -f "AGENTS.md" ]]; then
-  prompt="Read the AGENTS.md file for general understanding, then ask me how you can help."
-  ai_command=$(ai_get_command "${service_class}" "${model_tier}" "" "${prompt}")
-  log_message "Executing AI command..."
-  log_message "❯ $(format_ai_command_display "${ai_command}")"
-  eval "${ai_command}"
-  exit 0
-fi
-
-# No special files - default behavior
-ai_command=$(ai_get_command "${service_class}" "${model_tier}")
+# Execute AI command with determined role file and prompt
+# -----------------------------------------------------------------------------
+ai_command=$(ai_get_command "${service_class}" "${model_tier}" "${role_file}" "${prompt}")
 log_message "Executing AI command..."
 log_message "❯ $(format_ai_command_display "${ai_command}")"
 eval "${ai_command}"
