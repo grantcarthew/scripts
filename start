@@ -151,11 +151,11 @@ declare pattern=""
 
 # Set prompt based on file combination pattern
 case "${pattern}" in
-  "AEP") prompt="Read the AGENTS.md file for general understanding, then read the ${HOME}/ENVIRONMENT.md file for environment context, then read the PROJECT.md file and discuss the work with me." ;;
+  "AEP") prompt="Read the AGENTS.md file for general understanding, then read the ~/ENVIRONMENT.md file for environment context, then read the PROJECT.md file and discuss the work with me." ;;
   "AP")  prompt="Read the AGENTS.md file for general understanding, then read the PROJECT.md file and discuss the work with me." ;;
-  "AE")  prompt="Read the AGENTS.md file for general understanding, then read the ${HOME}/ENVIRONMENT.md file for environment context, then ask me how you can help." ;;
-  "EP")  prompt="Read the ${HOME}/ENVIRONMENT.md file for environment context, then read the PROJECT.md file and discuss the work with me." ;;
-  "E")   prompt="Read the ${HOME}/ENVIRONMENT.md file for environment context, then ask me how you can help." ;;
+  "AE")  prompt="Read the AGENTS.md file for general understanding, then read the ~/ENVIRONMENT.md file for environment context, then ask me how you can help." ;;
+  "EP")  prompt="Read the ~/ENVIRONMENT.md file for environment context, then read the PROJECT.md file and discuss the work with me." ;;
+  "E")   prompt="Read the ~/ENVIRONMENT.md file for environment context, then ask me how you can help." ;;
   "P")   prompt="Read the PROJECT.md file and discuss the work with me." ;;
   "A")   prompt="Read the AGENTS.md file for general understanding, then ask me how you can help." ;;
   *)     prompt="" ;;
