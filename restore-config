@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [-h|--help]
+
+Restore configuration files from ai/config/
+
+This script copies:
+  - ai/config/ENVIRONMENT.md to ~/
+  - ai/config/claude-code/settings.json to ~/.claude/
+  - ai/config/claude-code/commands/ to ~/.claude/commands/
+  - ai/config/claude-code/agents/ to ~/.claude/agents/
+
+Non-existent files or directories are skipped without error.
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+if [[ "${1-}" == "-h" || "${1-}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Title and Setup
+# -----------------------------------------------------------------------------
+log_title "Configuration Restore"
+
+declare -r CLAUDE_SOURCE_DIR="${SCRIPT_DIR}/ai/config/claude-code"
+declare -r CLAUDE_TARGET_DIR="${HOME}/.claude"
+declare -r CONFIG_SOURCE_DIR="${SCRIPT_DIR}/ai/config"
+
+# Create target directory if it doesn't exist
+if ! mkdir -p "${CLAUDE_TARGET_DIR}"; then
+  log_error "Failed to create target directory: '${CLAUDE_TARGET_DIR}'"
+  exit 1
+fi
+
+log_heading "Restore Configuration"
+log_message "Config Source: '${CONFIG_SOURCE_DIR}'"
+log_message "Claude Source: '${CLAUDE_SOURCE_DIR}'"
+log_message "Claude Target: '${CLAUDE_TARGET_DIR}'"
+
+# Restore ENVIRONMENT.md
+# -----------------------------------------------------------------------------
+log_subheading "Environment File"
+if [[ -f "${CONFIG_SOURCE_DIR}/ENVIRONMENT.md" ]]; then
+  if rsync -a "${CONFIG_SOURCE_DIR}/ENVIRONMENT.md" "${HOME}/"; then
+    log_success "ENVIRONMENT.md restored"
+  else
+    log_failure "Failed to restore ENVIRONMENT.md"
+    exit 1
+  fi
+else
+  log_warning "ENVIRONMENT.md not found in backup, skipping"
+fi
+
+# Restore settings.json
+# -----------------------------------------------------------------------------
+log_subheading "Settings File"
+if [[ -f "${CLAUDE_SOURCE_DIR}/settings.json" ]]; then
+  if rsync -a "${CLAUDE_SOURCE_DIR}/settings.json" "${CLAUDE_TARGET_DIR}/"; then
+    log_success "settings.json restored"
+  else
+    log_failure "Failed to restore settings.json"
+    exit 1
+  fi
+else
+  log_warning "settings.json not found in backup, skipping"
+fi
+
+# Restore commands directory
+# -----------------------------------------------------------------------------
+log_subheading "Commands Directory"
+if [[ -d "${CLAUDE_SOURCE_DIR}/commands" ]]; then
+  if rsync -a --delete "${CLAUDE_SOURCE_DIR}/commands/" "${CLAUDE_TARGET_DIR}/commands/"; then
+    log_success "commands directory restored"
+  else
+    log_failure "Failed to restore commands directory"
+    exit 1
+  fi
+else
+  log_warning "commands directory not found in backup, skipping"
+fi
+
+# Restore agents directory
+# -----------------------------------------------------------------------------
+log_subheading "Agents Directory"
+if [[ -d "${CLAUDE_SOURCE_DIR}/agents" ]]; then
+  if rsync -a --delete "${CLAUDE_SOURCE_DIR}/agents/" "${CLAUDE_TARGET_DIR}/agents/"; then
+    log_success "agents directory restored"
+  else
+    log_failure "Failed to restore agents directory"
+    exit 1
+  fi
+else
+  log_warning "agents directory not found in backup, skipping"
+fi
+
+log_done "Configuration restore completed"
