@@ -10,3 +10,4 @@ Please review the $ARGUMENTS Bash script.
 - Avoid subjective opinions on naming unless it significantly impacts readability
 - Base your review only on the code provided, without making assumptions about the larger system
 - Avoid reporting on the positive aspects
+
