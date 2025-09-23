@@ -39,10 +39,33 @@ function ctrlc_trap() {
 }
 trap ctrlc_trap SIGINT
 
+# OS Detection
+# -----------------------------------------------------------------------------
+function get_os_name() {
+  if command -v fastfetch >/dev/null 2>&1; then
+    local os_name
+    os_name="$(fastfetch -l none -s OS | cut -d':' -f2 | xargs | cut -d' ' -f1)"
+    echo "${os_name}"
+  else
+    case "$(uname -s)" in
+      Linux)
+        echo "Linux"
+        ;;
+      Darwin)
+        echo "macOS"
+        ;;
+      *)
+        echo "Unknown"
+        ;;
+    esac
+  fi
+}
+
 # Title and Setup
 # -----------------------------------------------------------------------------
 log_title "Configuration Backup"
 
+declare -r OS_NAME="$(get_os_name)"
 declare -r CLAUDE_SOURCE_DIR="${HOME}/.claude"
 declare -r CLAUDE_TARGET_DIR="${SCRIPT_DIR}/ai/config/claude-code"
 declare -r CONFIG_TARGET_DIR="${SCRIPT_DIR}/ai/config"
@@ -54,6 +77,7 @@ if ! mkdir -p "${CLAUDE_TARGET_DIR}" "${CONFIG_TARGET_DIR}"; then
 fi
 
 log_heading "Backup Configuration"
+log_message "OS Detected: '${OS_NAME}'"
 log_message "Config Target: '${CONFIG_TARGET_DIR}'"
 log_message "Claude Source: '${CLAUDE_SOURCE_DIR}'"
 log_message "Claude Target: '${CLAUDE_TARGET_DIR}'"
@@ -62,8 +86,9 @@ log_message "Claude Target: '${CLAUDE_TARGET_DIR}'"
 # -----------------------------------------------------------------------------
 log_subheading "Environment File"
 if [[ -f "${HOME}/ENVIRONMENT.md" ]]; then
-  if rsync -a "${HOME}/ENVIRONMENT.md" "${CONFIG_TARGET_DIR}/"; then
-    log_success "ENVIRONMENT.md backed up"
+  declare -r ENV_BACKUP_NAME="${OS_NAME}-ENVIRONMENT.md"
+  if rsync -a "${HOME}/ENVIRONMENT.md" "${CONFIG_TARGET_DIR}/${ENV_BACKUP_NAME}"; then
+    log_success "ENVIRONMENT.md backed up as '${ENV_BACKUP_NAME}'"
   else
     log_failure "Failed to backup ENVIRONMENT.md"
     exit 1
