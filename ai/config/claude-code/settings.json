@@ -1,0 +1,28 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "permissions": {
+    "deny": [
+      "WebFetch"
+    ],
+    "allow": [
+      "Read(~/ENVIRONMENT.md)",
+      "Read(PROJECT.md)",
+      "Write(PROJECT.md)",
+      "Read(AGENTS.md)",
+      "Write(AGENTS.md)",
+      "Bash(rg:*)",
+      "Bash(curl:*)",
+      "Bash(git diff)",
+      "Bash(git diff --staged)",
+      "Bash(fd:*)",
+      "Bash(find:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
+  }
+}
