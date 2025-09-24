@@ -51,7 +51,7 @@ log_title "New AI Project Generator"
 # Interactive prompts
 # -----------------------------------------------------------------------------
 log_heading "Project Type Selection"
-log_message "1) Assignment"
+log_message "1) Project"
 log_message "2) Specification"
 read -r -p "Select project type (1-2): " project_type_choice
 
@@ -67,7 +67,7 @@ case "${project_type_choice}" in
     ;;
   1)
     use_spec_template=false
-    log_message "Selected: Assignment template"
+    log_message "Selected: Project template"
     ;;
 esac
 
