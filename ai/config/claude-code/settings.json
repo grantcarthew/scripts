@@ -19,7 +19,10 @@
       "Bash(git diff)",
       "Bash(git diff --staged)",
       "Bash(fd:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(glab ci lint)",
+      "Bash(yamllint:*)",
+      "Bash(kagi:*)"
     ],
     "ask": [
       "Bash(git push:*)",

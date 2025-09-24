@@ -111,48 +111,17 @@ function get_terminal_type() {
 # -----------------------------------------------------------------------------
 log_heading "Gathering System Information"
 
-declare operating_system
-operating_system=$(uname -s)
-declare package_manager
-declare cli_tools
-declare terminal_type
-terminal_type=$(get_terminal_type)
-
-case "${operating_system}" in
-  Darwin)
-    package_manager="brew"
-    log_message "Detected macOS. Using 'brew' for package management."
-    cli_tools_leaves=$(brew leaves | paste -sd, | fold -w 80)
-    cli_tools_cask=$(brew list --cask | paste -sd, | fold -w 80)
-    cli_tools="${cli_tools_leaves}
-${cli_tools_cask}"
-    ;;
-  Linux)
-    package_manager="pacman or apt"
-    log_message "Detected Linux. Using placeholder values."
-    cli_tools="Placeholder for Linux CLI tools"
-    ;;
-  *)
-    log_error "Unsupported operating system: '${operating_system}'"
-    exit 1
-    ;;
-esac
-
 declare output_file="PROJECT.md"
 if [[ "${use_spec_template}" == true ]]; then
   log_heading "Generating PROJECT.md based on the specifications template"
   mo_template_file="${SCRIPT_DIR}/templates/new-aiproject-spec-template.md"
 else
-  log_heading "Generating PROJECT.md based on the assignment template"
-  mo_template_file="${SCRIPT_DIR}/templates/new-aiproject-assignment-template.md"
+  log_heading "Generating PROJECT.md based on the template"
+  mo_template_file="${SCRIPT_DIR}/templates/new-aiproject-template.md"
 fi
 
 export PROJECT_NAME="${project_name}"
 export PROJECT_OVERVIEW="${project_overview}"
-export OPERATING_SYSTEM="${operating_system}"
-export TERMINAL_TYPE="${terminal_type}"
-export PACKAGE_MANAGER="${package_manager}"
-export CLI_TOOLS="${cli_tools}"
 
 if [[ ! -f "${mo_template_file}" ]]; then
     log_error "Template file not found: '${mo_template_file}'"
