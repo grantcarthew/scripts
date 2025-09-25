@@ -23,7 +23,7 @@ This script copies:
 
 SAFETY FEATURE:
 Before overwriting any existing files or directories, this script creates
-a backup in ~/Backup/<yy-mm-dd>-restore-config/ to prevent data loss.
+a backup in ~/Backup/<yyyy-mm-dd>-restore-config/ to prevent data loss.
 
 Non-existent files or directories are skipped without error.
 
@@ -115,7 +115,7 @@ declare -r CLAUDE_SOURCE_DIR="${SCRIPT_DIR}/ai/config/claude-code"
 declare -r CLAUDE_TARGET_DIR="${HOME}/.claude"
 declare -r CONFIG_SOURCE_DIR="${SCRIPT_DIR}/ai/config"
 declare BACKUP_DATE
-BACKUP_DATE="$(date +%y-%m-%d)"
+BACKUP_DATE="$(date +%Y-%m-%d)"
 declare -r BACKUP_DATE
 declare -r SAFETY_BACKUP_DIR="${HOME}/Backup/${BACKUP_DATE}-restore-config"
 
