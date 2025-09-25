@@ -115,7 +115,7 @@ fi
 # -----------------------------------------------------------------------------
 log_subheading "Commands Directory"
 if [[ -d "${CLAUDE_SOURCE_DIR}/commands" ]]; then
-  if rsync -a "${CLAUDE_SOURCE_DIR}/commands/" "${CLAUDE_TARGET_DIR}/commands/"; then
+  if rsync -a --delete "${CLAUDE_SOURCE_DIR}/commands/" "${CLAUDE_TARGET_DIR}/commands/"; then
     log_success "commands directory backed up"
   else
     log_failure "Failed to backup commands directory"
@@ -129,7 +129,7 @@ fi
 # -----------------------------------------------------------------------------
 log_subheading "Agents Directory"
 if [[ -d "${CLAUDE_SOURCE_DIR}/agents" ]]; then
-  if rsync -a "${CLAUDE_SOURCE_DIR}/agents/" "${CLAUDE_TARGET_DIR}/agents/"; then
+  if rsync -a --delete "${CLAUDE_SOURCE_DIR}/agents/" "${CLAUDE_TARGET_DIR}/agents/"; then
     log_success "agents directory backed up"
   else
     log_failure "Failed to backup agents directory"

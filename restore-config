@@ -21,6 +21,10 @@ This script copies:
   - ai/config/claude-code/commands/ to ~/.claude/commands/
   - ai/config/claude-code/agents/ to ~/.claude/agents/
 
+SAFETY FEATURE:
+Before overwriting any existing files or directories, this script creates
+a backup in ~/Backup/<yy-mm-dd>-restore-config/ to prevent data loss.
+
 Non-existent files or directories are skipped without error.
 
 Optional arguments:
@@ -61,18 +65,63 @@ function get_os_name() {
   fi
 }
 
+# Safety Backup Function
+# -----------------------------------------------------------------------------
+function safety_backup() {
+  local source_path="$1"
+  local backup_name="$2"
+
+  if [[ -e "${source_path}" ]]; then
+    local backup_path="${SAFETY_BACKUP_DIR}/${backup_name}"
+    local backup_dir
+    backup_dir="$(dirname "${backup_path}")"
+
+    if ! mkdir -p "${backup_dir}"; then
+      log_error "Failed to create backup directory: '${backup_dir}'"
+      return 1
+    fi
+
+    if [[ -d "${source_path}" ]]; then
+      # Directory - use rsync without --delete for additive backup
+      if rsync -a "${source_path}/" "${backup_path}/"; then
+        log_message "  Backed up directory '${source_path}' to '${backup_path}'"
+        return 0
+      else
+        log_error "Failed to backup directory '${source_path}'"
+        return 1
+      fi
+    else
+      # File - use rsync
+      if rsync -a "${source_path}" "${backup_path}"; then
+        log_message "  Backed up file '${source_path}' to '${backup_path}'"
+        return 0
+      else
+        log_error "Failed to backup file '${source_path}'"
+        return 1
+      fi
+    fi
+  fi
+  return 0
+}
+
 # Title and Setup
 # -----------------------------------------------------------------------------
 log_title "Configuration Restore"
 
-declare -r OS_NAME="$(get_os_name)"
+declare OS_NAME
+OS_NAME="$(get_os_name)"
+declare -r OS_NAME
 declare -r CLAUDE_SOURCE_DIR="${SCRIPT_DIR}/ai/config/claude-code"
 declare -r CLAUDE_TARGET_DIR="${HOME}/.claude"
 declare -r CONFIG_SOURCE_DIR="${SCRIPT_DIR}/ai/config"
+declare BACKUP_DATE
+BACKUP_DATE="$(date +%y-%m-%d)"
+declare -r BACKUP_DATE
+declare -r SAFETY_BACKUP_DIR="${HOME}/Backup/${BACKUP_DATE}-restore-config"
 
-# Create target directory if it doesn't exist
-if ! mkdir -p "${CLAUDE_TARGET_DIR}"; then
-  log_error "Failed to create target directory: '${CLAUDE_TARGET_DIR}'"
+# Create target directories if they don't exist
+if ! mkdir -p "${CLAUDE_TARGET_DIR}" "${SAFETY_BACKUP_DIR}"; then
+  log_error "Failed to create target directories"
   exit 1
 fi
 
@@ -81,12 +130,16 @@ log_message "OS Detected: '${OS_NAME}'"
 log_message "Config Source: '${CONFIG_SOURCE_DIR}'"
 log_message "Claude Source: '${CLAUDE_SOURCE_DIR}'"
 log_message "Claude Target: '${CLAUDE_TARGET_DIR}'"
+log_message "Safety Backup: '${SAFETY_BACKUP_DIR}'"
 
 # Restore ENVIRONMENT.md
 # -----------------------------------------------------------------------------
 log_subheading "Environment File"
 declare -r ENV_BACKUP_NAME="${OS_NAME}-ENVIRONMENT.md"
 if [[ -f "${CONFIG_SOURCE_DIR}/${ENV_BACKUP_NAME}" ]]; then
+  # Safety backup existing file
+  safety_backup "${HOME}/ENVIRONMENT.md" "ENVIRONMENT.md"
+
   if rsync -a "${CONFIG_SOURCE_DIR}/${ENV_BACKUP_NAME}" "${HOME}/ENVIRONMENT.md"; then
     log_success "ENVIRONMENT.md restored from '${ENV_BACKUP_NAME}'"
   else
@@ -101,6 +154,9 @@ fi
 # -----------------------------------------------------------------------------
 log_subheading "Settings File"
 if [[ -f "${CLAUDE_SOURCE_DIR}/settings.json" ]]; then
+  # Safety backup existing file
+  safety_backup "${CLAUDE_TARGET_DIR}/settings.json" "claude-code/settings.json"
+
   if rsync -a "${CLAUDE_SOURCE_DIR}/settings.json" "${CLAUDE_TARGET_DIR}/"; then
     log_success "settings.json restored"
   else
@@ -115,6 +171,9 @@ fi
 # -----------------------------------------------------------------------------
 log_subheading "Commands Directory"
 if [[ -d "${CLAUDE_SOURCE_DIR}/commands" ]]; then
+  # Safety backup existing directory
+  safety_backup "${CLAUDE_TARGET_DIR}/commands" "claude-code/commands"
+
   if rsync -a --delete "${CLAUDE_SOURCE_DIR}/commands/" "${CLAUDE_TARGET_DIR}/commands/"; then
     log_success "commands directory restored"
   else
@@ -129,6 +188,9 @@ fi
 # -----------------------------------------------------------------------------
 log_subheading "Agents Directory"
 if [[ -d "${CLAUDE_SOURCE_DIR}/agents" ]]; then
+  # Safety backup existing directory
+  safety_backup "${CLAUDE_TARGET_DIR}/agents" "claude-code/agents"
+
   if rsync -a --delete "${CLAUDE_SOURCE_DIR}/agents/" "${CLAUDE_TARGET_DIR}/agents/"; then
     log_success "agents directory restored"
   else
