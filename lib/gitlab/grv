@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[g]lab [r]epo [v]iew --web"
+
+[[ $# -gt 0 ]] && exit 1
+
+log_message "❯ glab repo view --web"
+glab repo view --web
