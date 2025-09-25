@@ -7,9 +7,10 @@ The following information is for AI Agents to learn specifics of the user and en
 - Name: Grant Carthew
 - Skills: Expert in IT and a number of programming languages
 
-## Special Instructions
+## Command Restrictions
 
-- For a directory tree, run `lsd --tree [dir]`
+- Use RipGrep `rg` instead of grep
+- Use `lsd --tree [dir]` for a directory tree
 
 ## Operating System
 

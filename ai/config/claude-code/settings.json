@@ -9,6 +9,8 @@
       "WebFetch"
     ],
     "allow": [
+      "fetch_markdown",
+      "Read(/Users/gcarthew/ENVIRONMENT.md)",
       "Read(~/ENVIRONMENT.md)",
       "Read(PROJECT.md)",
       "Write(PROJECT.md)",
