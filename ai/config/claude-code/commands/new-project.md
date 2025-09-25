@@ -30,6 +30,7 @@ Specify project details explicitly:
 ### 1. Context Analysis
 
 Analyze the current session for:
+
 - **Project objectives** and goals mentioned
 - **Technologies** and frameworks discussed
 - **Architecture decisions** made
@@ -39,6 +40,7 @@ Analyze the current session for:
 ### 2. Codebase Scanning
 
 Use available tools to discover:
+
 - **File structure** and organization
 - **Configuration files** (package.json, Cargo.toml, etc.)
 - **Documentation** already present
@@ -50,18 +52,21 @@ Use available tools to discover:
 Generate PROJECT.md with these sections:
 
 #### Core Information
+
 - **Project Overview**: Name, description, and purpose
 - **Technology Stack**: Languages, frameworks, and tools
 - **Getting Started**: Setup and installation instructions
 - **Project Structure**: Directory layout and organization
 
 #### Development Context
+
 - **Current Status**: What's been accomplished
 - **Active Development**: What's currently being worked on
 - **Next Steps**: Planned features and improvements
 - **Architecture**: Key design decisions and patterns
 
 #### Reference Materials
+
 - **Dependencies**: External libraries and tools
 - **Configuration**: Important config files and settings
 - **Commands**: Key development and build commands
@@ -86,6 +91,7 @@ Generate PROJECT.md with these sections:
 ### Template Selection
 
 Choose appropriate PROJECT.md template based on:
+
 - **Web Applications**: Frontend/backend structure
 - **CLI Tools**: Installation, usage, and commands
 - **Libraries**: API documentation and examples
