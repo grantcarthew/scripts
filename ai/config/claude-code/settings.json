@@ -10,8 +10,9 @@
     ],
     "allow": [
       "fetch_markdown",
-      "Read(/Users/gcarthew/ENVIRONMENT.md)",
       "Read(~/ENVIRONMENT.md)",
+      "Read(/Users/gcarthew/ENVIRONMENT.md)",
+      "Read(/home/grant/ENVIRONMENT.md)",
       "Read(PROJECT.md)",
       "Write(PROJECT.md)",
       "Read(AGENTS.md)",
