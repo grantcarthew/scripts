@@ -6,13 +6,13 @@
   },
   "permissions": {
     "deny": [
-      "WebFetch"
+      "WebFetch",
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)"
     ],
     "allow": [
       "fetch_markdown",
       "Read(~/ENVIRONMENT.md)",
-      "Read(/Users/gcarthew/ENVIRONMENT.md)",
-      "Read(/home/grant/ENVIRONMENT.md)",
       "Read(PROJECT.md)",
       "Write(PROJECT.md)",
       "Read(AGENTS.md)",
