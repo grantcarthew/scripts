@@ -11,6 +11,7 @@ The following information is for AI Agents to learn specifics of the user and en
 
 - Use RipGrep `rg` instead of grep
 - Use `lsd --tree [dir]` for a directory tree
+- Use `fd` for finding files
 
 ## Operating System
 
