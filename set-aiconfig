@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Configure AI model settings for alpha/beta/gamma service classes
 
 # AI Model Configuration Script
 # -----------------------------------------------------------------------------
