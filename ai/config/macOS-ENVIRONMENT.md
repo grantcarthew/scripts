@@ -9,12 +9,6 @@ The following information is for AI Agents to learn specifics of the user and en
 - Language: Australian English
 - Location: Brisbane, Queensland, Australia
 
-## Command Restrictions
-
-- Use RipGrep `rg` instead of grep
-- Use `lsd --tree [dir]` for a directory tree
-- Use `fd` for finding files
-
 ## Operating System
 
 - OS: macOS Tahoe 26.0 arm64
@@ -105,3 +99,15 @@ Prefer these tools over other Bash built-in tools. A good example is RipGrep vs 
 - watch: Execute a program periodically, showing output fullscreen
 - yamllint: Linter for YAML files
 - yq: YAML, JSON, XML, CSV, TOML and properties processor
+
+## Sepcial Commands
+
+- `kagi <search-terms>`: Search the internet returning clean search results for AI agent use
+- `ff <search-terms>`: Open a new tab in Firefox searching Kagi for the search terms for the user to view
+
+## Command Restrictions
+
+- Use RipGrep `rg` instead of grep
+- Use `lsd --tree [dir]` for a directory tree
+- Use `fd` for finding files
+
