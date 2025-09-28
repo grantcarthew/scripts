@@ -6,6 +6,8 @@ The following information is for AI Agents to learn specifics of the user and en
 
 - Name: Grant Carthew
 - Skills: Expert in IT and a number of programming languages
+- Language: Australian English
+- Location: Brisbane, Queensland, Australia
 
 ## Command Restrictions
 
@@ -67,6 +69,7 @@ Prefer these tools over other Bash built-in tools. A good example is RipGrep vs 
 - fd: A simple, fast and user-friendly alternative to 'find'
 - git-delta: A syntax-highlighting pager for git and diff output
 - glab: GitLab CLI tool
+- glow: Render markdown on the CLI, with pizzazz!
 - gnupg: GNU Pretty Good Privacy (PGP) package
 - gron: Make JSON greppable!
 - helm: The Kubernetes Package Manager
