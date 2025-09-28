@@ -19,7 +19,7 @@ Restore AI configuration files from ai/config/
 This script copies:
   - ai/config/ENVIRONMENT.md to ~/
   - ai/config/claude-code/settings.json to ~/.claude/
-  - ai/config/claude-code/commands/ to ~/.claude/commands/
+  - ai/commands/ to ~/.claude/commands/
   - ai/config/claude-code/agents/ to ~/.claude/agents/
 
 SAFETY FEATURE:
@@ -113,6 +113,7 @@ declare OS_NAME
 OS_NAME="$(get_os_name)"
 declare -r OS_NAME
 declare -r CLAUDE_SOURCE_DIR="${SCRIPT_DIR}/ai/config/claude-code"
+declare -r COMMANDS_SOURCE_DIR="${SCRIPT_DIR}/ai/commands"
 declare -r CLAUDE_TARGET_DIR="${HOME}/.claude"
 declare -r CONFIG_SOURCE_DIR="${SCRIPT_DIR}/ai/config"
 declare BACKUP_DATE
@@ -130,6 +131,7 @@ log_heading "Restore Configuration"
 log_message "OS Detected: '${OS_NAME}'"
 log_message "Config Source: '${CONFIG_SOURCE_DIR}'"
 log_message "Claude Source: '${CLAUDE_SOURCE_DIR}'"
+log_message "Commands Source: '${COMMANDS_SOURCE_DIR}'"
 log_message "Claude Target: '${CLAUDE_TARGET_DIR}'"
 log_message "Safety Backup: '${SAFETY_BACKUP_DIR}'"
 
@@ -171,11 +173,11 @@ fi
 # Restore commands directory
 # -----------------------------------------------------------------------------
 log_subheading "Commands Directory"
-if [[ -d "${CLAUDE_SOURCE_DIR}/commands" ]]; then
+if [[ -d "${COMMANDS_SOURCE_DIR}" ]]; then
   # Safety backup existing directory
   safety_backup "${CLAUDE_TARGET_DIR}/commands" "claude-code/commands"
 
-  if rsync -a --delete "${CLAUDE_SOURCE_DIR}/commands/" "${CLAUDE_TARGET_DIR}/commands/"; then
+  if rsync -a --delete "${COMMANDS_SOURCE_DIR}/" "${CLAUDE_TARGET_DIR}/commands/"; then
     log_success "commands directory restored"
   else
     log_failure "Failed to restore commands directory"

@@ -19,7 +19,7 @@ Backup AI configuration files to ai/config/
 This script copies:
   - ~/ENVIRONMENT.md to ai/config/
   - ~/.claude/settings.json to ai/config/claude-code/
-  - ~/.claude/commands/ to ai/config/claude-code/commands/
+  - ~/.claude/commands/ to ai/commands/
   - ~/.claude/agents/ to ai/config/claude-code/agents/
 
 Non-existent files or directories are skipped without error.
@@ -69,10 +69,11 @@ log_title "Configuration Backup"
 declare -r OS_NAME="$(get_os_name)"
 declare -r CLAUDE_SOURCE_DIR="${HOME}/.claude"
 declare -r CLAUDE_TARGET_DIR="${SCRIPT_DIR}/ai/config/claude-code"
+declare -r COMMANDS_TARGET_DIR="${SCRIPT_DIR}/ai/commands"
 declare -r CONFIG_TARGET_DIR="${SCRIPT_DIR}/ai/config"
 
 # Create target directories if they don't exist
-if ! mkdir -p "${CLAUDE_TARGET_DIR}" "${CONFIG_TARGET_DIR}"; then
+if ! mkdir -p "${CLAUDE_TARGET_DIR}" "${COMMANDS_TARGET_DIR}" "${CONFIG_TARGET_DIR}"; then
   log_error "Failed to create target directories"
   exit 1
 fi
@@ -82,6 +83,7 @@ log_message "OS Detected: '${OS_NAME}'"
 log_message "Config Target: '${CONFIG_TARGET_DIR}'"
 log_message "Claude Source: '${CLAUDE_SOURCE_DIR}'"
 log_message "Claude Target: '${CLAUDE_TARGET_DIR}'"
+log_message "Commands Target: '${COMMANDS_TARGET_DIR}'"
 
 # Backup ENVIRONMENT.md
 # -----------------------------------------------------------------------------
@@ -116,7 +118,7 @@ fi
 # -----------------------------------------------------------------------------
 log_subheading "Commands Directory"
 if [[ -d "${CLAUDE_SOURCE_DIR}/commands" ]]; then
-  if rsync -a --delete "${CLAUDE_SOURCE_DIR}/commands/" "${CLAUDE_TARGET_DIR}/commands/"; then
+  if rsync -a --delete "${CLAUDE_SOURCE_DIR}/commands/" "${COMMANDS_TARGET_DIR}/"; then
     log_success "commands directory backed up"
   else
     log_failure "Failed to backup commands directory"
