@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Launches Firefox with a Kagi search
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+
+log_title "[f]ire[f]ox Kagi search"
+
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+if [[ $# -eq 0 ]]; then
+  log_message "❯ firefox --new-tab https://kagi.com"
+  firefox --new-tab "https://kagi.com"
+  exit 0
+fi
+
+search_query="${*}"
+log_message "❯ firefox --new-tab \"https://kagi.com/search?q=${search_query}\""
+firefox --new-tab "https://kagi.com/search?q=${search_query}"
