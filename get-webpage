@@ -13,33 +13,39 @@ function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") <url> [options]
 
-Seamlessly fetches HTML content from webpages using intelligent Chromium automation
+Seamlessly fetches webpage content and converts to Markdown using intelligent Chromium automation
 
 Required arguments:
-  url                    The URL to fetch (must include http:// or https://)
+  url                    The URL to fetch (auto-detects protocol if omitted)
 
 Optional arguments:
   --timeout <seconds>    Page load timeout in seconds (default: 30)
-  --output <file>        Save HTML to file instead of stdout
-  --wait-for <selector>  Wait for CSS selector before extracting HTML
+  --output <file>        Save output to file instead of stdout
+  --wait-for <selector>  Wait for CSS selector before extracting content
+  --html                 Return raw HTML instead of Markdown (default: false)
   --debug                Enable debug output
   --port <port>          Chrome remote debugging port (default: 9222)
   --force-headless       Force headless mode even if Chromium is running
   --force-visible        Force visible mode for authentication
   -h, --help             Show this help message and exit
 
+Dependencies:
+  - node (Node.js runtime)
+  - html2markdown (brew install JohannesKaufmann/tap/html2markdown)
+
 Workflow:
 - If Chromium is running: Uses existing session (preserves authentication)
 - If Chromium not running: Launches headless mode for quick fetching
 - If authentication required: Automatically launches visible Chromium
+- Converts HTML to clean Markdown by default
 
 Examples:
   $(basename "$0") example.com
-  $(basename "$0") https://example.com --timeout 60 --output page.html
-  $(basename "$0") app.example.com/api --wait-for ".content-loaded"
+  $(basename "$0") https://example.com --output page.md
+  $(basename "$0") app.example.com/docs --wait-for ".content-loaded"
   $(basename "$0") private.example.com --force-visible
-  $(basename "$0") localhost:3000
-  $(basename "$0") 192.168.1.100:8080
+  $(basename "$0") localhost:3000 --html
+  $(basename "$0") 192.168.1.100:8080 --timeout 60
 EOF
 }
 
@@ -57,6 +63,7 @@ declare wait_for_selector=""
 declare debug_mode=""
 declare chrome_debug_port="9222"
 declare force_mode=""
+declare html_output=""
 
 shift
 while [[ $# -gt 0 ]]; do
@@ -72,6 +79,10 @@ while [[ $# -gt 0 ]]; do
     --wait-for)
       wait_for_selector="$2"
       shift 2
+      ;;
+    --html)
+      html_output="true"
+      shift
       ;;
     --debug)
       debug_mode="true"
@@ -103,9 +114,17 @@ log_title "Seamless Webpage Fetcher"
 
 # Check for required tools
 dependencies=(node)
+if [[ "${html_output}" != "true" ]]; then
+  dependencies+=(html2markdown)
+fi
+
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "Missing dependency - '${cmd}'"
+    if [[ "${cmd}" == "html2markdown" ]]; then
+      log_error "Install with: brew install JohannesKaufmann/tap/html2markdown"
+      log_error "Or use --html flag to get raw HTML output"
+    fi
     exit 1
   fi
 done
@@ -208,6 +227,7 @@ log_message "$(
        Timeout: '${timeout}' seconds
    Output file: '${output_file:-stdout}'
       Wait for: '${wait_for_selector:-none}'
+   Output format: '$(if [[ "${html_output}" == "true" ]]; then echo "HTML"; else echo "Markdown"; fi)'
     Debug mode: '${debug_mode:-false}'
   Chrome port: '${chrome_debug_port}'
 Operation mode: '${operation_mode}'
@@ -315,12 +335,29 @@ fi
 # -----------------------------------------------------------------------------
 log_heading "Output"
 
-if [[ -n "${output_file}" ]]; then
-  echo "${html_content}" > "${output_file}"
-  log_success "HTML saved to: '${output_file}'"
-  log_message "Content size: $(echo "${html_content}" | wc -c | tr -d ' ') characters"
+# Convert HTML to Markdown unless --html flag is set
+if [[ "${html_output}" == "true" ]]; then
+  final_content="${html_content}"
+  content_type="HTML"
 else
-  echo "${html_content}"
+  log_message "Converting HTML to Markdown..."
+  if final_content=$(echo "${html_content}" | html2markdown); then
+    content_type="Markdown"
+    log_success "HTML converted to Markdown successfully"
+  else
+    log_warning "Failed to convert HTML to Markdown, falling back to raw HTML"
+    final_content="${html_content}"
+    content_type="HTML (fallback)"
+  fi
 fi
 
-log_done "Webpage fetched successfully"
+# Output to file or stdout
+if [[ -n "${output_file}" ]]; then
+  echo "${final_content}" > "${output_file}"
+  log_success "${content_type} saved to: '${output_file}'"
+  log_message "Content size: $(echo "${final_content}" | wc -c | tr -d ' ') characters"
+else
+  echo "${final_content}"
+fi
+
+log_done "Webpage content fetched and converted successfully"
