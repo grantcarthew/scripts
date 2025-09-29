@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [--api-key <key>] <query...>
+
+A CLI for querying the Kagi search engine with their FastGPT API
+
+Dependencies:
+  curlie             HTTP client for API requests
+  jq                 Command-line JSON processor
+
+Arguments:
+  query...           The search query (multiple words will be joined)
+
+Options:
+  --api-key <key>    API key for Kagi FastGPT (overrides KAGI_API_KEY env var)
+  -h, --help         Show this help message and exit
+
+Environment Variables:
+  KAGI_API_KEY       Your Kagi FastGPT API key (required if --api-key not used)
+
+Examples:
+  $(basename "$0") bash script best practices
+  $(basename "$0") --api-key abc123 "best practices for bash scripting"
+  KAGI_API_KEY=abc123 $(basename "$0") machine learning tutorials
+EOF
+}
+
+# Parse arguments
+api_key=""
+query_args=()
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --api-key)
+      api_key="$2"
+      shift 2
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    *)
+      query_args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ ${#query_args[@]} -eq 0 ]]; then
+  print_usage
+  exit 1
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+[[ ${DEBUG-} ]] && log_title "Kagi FastGPT CLI"
+
+if [[ -z "${api_key}" ]]; then
+  api_key="${KAGI_API_KEY}"
+  if [[ -z "${api_key}" ]]; then
+    log_error "ERROR: No API key provided. Use --api-key flag or set KAGI_API_KEY environment variable"
+    exit 1
+  fi
+fi
+
+for cmd in curlie jq; do
+    if ! command -v "${cmd}" >/dev/null; then
+        log_error "ERROR: Missing dependency - '${cmd}'"
+        exit 1
+    fi
+done
+
+# Report Operational Values
+# -----------------------------------------------------------------------------
+query="${query_args[*]}"
+
+# Validate query is not empty or whitespace-only
+if [[ -z "${query// /}" ]]; then
+  log_error "ERROR: Query cannot be empty or contain only whitespace"
+  exit 1
+fi
+
+[[ ${DEBUG-} ]] && log_heading "Operational Values"
+[[ ${DEBUG-} ]] && log_message "query: '${query}' | api_key: ${#api_key} characters"
+
+# API Request
+# -----------------------------------------------------------------------------
+[[ ${DEBUG-} ]] && log_heading "Querying Kagi FastGPT API"
+[[ ${DEBUG-} ]] && log_message "Sending request to Kagi FastGPT API..."
+
+json_request=$(jq -n --arg query "${query}" '{query: $query, web_search: true, cache: true}')
+response=$(curlie -s \
+  --fail-with-body \
+  POST "https://kagi.com/api/v0/fastgpt" \
+  "Authorization: Bot ${api_key}" \
+  "Content-Type: application/json" \
+  --data "${json_request}")
+curl_exit_code=$?
+
+if [[ ${curl_exit_code} -ne 0 ]]; then
+  log_error "ERROR: HTTP request failed with exit code ${curl_exit_code}"
+  log_error "ERROR: Response: ${response}"
+  exit 1
+fi
+
+[[ ${DEBUG-} ]] && log_heading "Processing Response"
+
+# Check for API errors first
+error_msg=$(echo "${response}" | jq -r '.error[]? | "[\(.code // "unknown")]: \(.msg // "unknown error")"' 2>/dev/null)
+if [[ -n "${error_msg}" ]]; then
+  log_error "ERROR: API returned error ${error_msg}"
+  exit 1
+fi
+
+output=$(echo "${response}" | jq -r '.data.output // empty')
+
+if [[ -z "${output}" ]]; then
+  log_error "ERROR: No output received from API"
+  exit 1
+fi
+
+[[ ${DEBUG-} ]] && log_success "Response received successfully"
+
+# Format Output
+# -----------------------------------------------------------------------------
+[[ ${DEBUG-} ]] && log_heading "Formatting Output"
+
+printf "# %s\n\n%s\n" "${query}" "${output}"
+
+# Add references if they exist
+references=$(echo "${response}" | jq -r '.data.references[]? | "\(.title) - \(.url) - \(.snippet)"' 2>/dev/null)
+if [[ -n "${references}" ]]; then
+  printf "\n# References\n\n"
+  echo "${references}" | nl -w1 -s'. '
+elif [[ "${output}" =~ 【[0-9]+】 ]]; then
+  printf "\n# References\n\n"
+  printf "*(References cited in text but not provided by API)*\n"
+fi
+
+if [[ ${DEBUG-} ]]; then
+  log_success "Output formatted and displayed"
+fi
