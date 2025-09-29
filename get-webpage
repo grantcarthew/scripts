@@ -49,14 +49,9 @@ Examples:
 EOF
 }
 
-if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
-  print_usage
-  exit 1
-fi
-
 # Parse arguments
 # -----------------------------------------------------------------------------
-declare url="${1}"
+declare url=""
 declare timeout="30"
 declare output_file=""
 declare wait_for_selector=""
@@ -65,7 +60,23 @@ declare chrome_debug_port="9222"
 declare force_mode=""
 declare html_output=""
 
+# Check for help first
+if [[ $# -eq 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# First argument should be URL (unless it starts with --)
+if [[ "${1}" =~ ^-- ]]; then
+  log_error "Missing URL argument"
+  log_error "URL must be the first argument"
+  print_usage
+  exit 1
+fi
+
+url="${1}"
 shift
+
 while [[ $# -gt 0 ]]; do
   case $1 in
     --timeout)
@@ -295,18 +306,26 @@ elif [[ ${fetch_exit_code} -eq 2 ]]; then
     log_warning "Authentication required - launching visible Chromium for user authentication"
     log_message "Please authenticate in the browser window that opens"
 
-    html_content=$(attempt_fetch "visible" "Retrying with visible Chromium for authentication...")
+    html_content=$(attempt_fetch "visible" "Opening visible browser for authentication...")
     fetch_exit_code=$?
 
     if [[ ${fetch_exit_code} -eq 0 ]]; then
       log_success "HTML content retrieved successfully after authentication"
+    elif [[ ${fetch_exit_code} -eq 3 ]]; then
+      log_success "Browser opened for authentication"
+      log_message "Please sign in to the page in the browser window"
+      log_message "Once authenticated, run the command again to fetch the content"
+      log_message "The browser window has been left open for your convenience"
+      exit 0
     else
-      log_error "Failed to fetch content even with visible browser"
+      log_error "Failed to open browser for authentication"
       exit 1
     fi
   else
     log_error "Authentication required but already in visible mode"
-    exit 1
+    log_message "Please sign in to the page in the browser window"
+    log_message "Once authenticated, run the command again to fetch the content"
+    exit 3
   fi
 else
   # Other error
