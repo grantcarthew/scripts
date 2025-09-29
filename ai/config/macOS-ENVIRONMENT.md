@@ -100,10 +100,48 @@ Prefer these tools over other Bash built-in tools. A good example is RipGrep vs 
 - yamllint: Linter for YAML files
 - yq: YAML, JSON, XML, CSV, TOML and properties processor
 
-## Sepcial Commands
+## Special Commands
 
 - `kagi <search-terms>`: Search the internet returning clean search results for AI agent use
 - `ff <search-terms>`: Open a new tab in Firefox searching Kagi for the search terms for the user to view
+
+## get-webpage
+
+This is a special CLI tool designed for AI agents to get web pages as Markdown.
+
+This tool will enable the ability to access pages authenticated by the user.
+
+Usage: get-webpage <url> [options]
+
+Seamlessly fetches webpage content and converts to Markdown using intelligent Chromium automation
+
+Optional arguments:
+
+- --timeout <seconds>    Page load timeout in seconds (default: 30)
+- --output <file>        Save output to file instead of stdout
+- --wait-for <selector>  Wait for CSS selector before extracting content
+- --html                 Return raw HTML instead of Markdown (default: false)
+- --debug                Enable debug output
+- --port <port>          Chrome remote debugging port (default: 9222)
+- --force-headless       Force headless mode even if Chromium is running
+- --force-visible        Force visible mode for authentication
+- -h, --help             Show this help message and exit
+
+Workflow:
+
+- If Chromium is running: Uses existing session (preserves authentication)
+- If Chromium not running: Launches headless mode for quick fetching
+- If authentication required: Automatically launches visible Chromium
+- Converts HTML to clean Markdown by default
+
+Examples:
+
+- get-webpage example.com
+- get-webpage https://example.com --output page.md
+- get-webpage app.example.com/docs --wait-for ".content-loaded"
+- get-webpage private.example.com --force-visible
+- get-webpage localhost:3000 --html
+- get-webpage 192.168.1.100:8080 --timeout 60
 
 ## Command Restrictions
 
