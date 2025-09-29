@@ -52,3 +52,7 @@ desktop.ini
 # Terraform
 lib/terraform/.tfplan/
 lib/tofu/.tfplan/
+
+# Nodejs
+node_modules/
+package-lock.json

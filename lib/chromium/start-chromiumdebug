@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [options]
+
+Starts Chromium with remote debugging enabled for automation scripts
+
+Optional arguments:
+  --port <port>          Remote debugging port (default: 9222)
+  --user-data-dir <path> Custom user data directory
+  --restore-session     Restore previous session tabs (default: true)
+  -h, --help            Show this help message and exit
+
+Examples:
+  $(basename "$0")
+  $(basename "$0") --port 9222 --no-restore-session
+EOF
+}
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Parse arguments
+# -----------------------------------------------------------------------------
+declare debug_port="9222"
+declare user_data_dir=""
+declare restore_session="true"
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --port)
+      debug_port="$2"
+      shift 2
+      ;;
+    --user-data-dir)
+      user_data_dir="$2"
+      shift 2
+      ;;
+    --no-restore-session)
+      restore_session=""
+      shift
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    *)
+      log_error "Unknown option: $1"
+      print_usage
+      exit 1
+      ;;
+  esac
+done
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "Chromium Debug Mode Startup"
+
+# Check if Chromium is already running
+if pgrep -f "Chromium" >/dev/null; then
+  log_error "Chromium is already running. Please quit Chromium first and try again."
+  exit 1
+fi
+
+# Check if the port is available
+if lsof -i :"${debug_port}" >/dev/null 2>&1; then
+  log_error "Port ${debug_port} is already in use"
+  exit 1
+fi
+
+# Report Operational Values
+# -----------------------------------------------------------------------------
+log_heading "Operational Values"
+log_message "$(
+  cat <<EOF
+    Debug port: '${debug_port}'
+User data dir: '${user_data_dir:-default}'
+Restore session: '${restore_session:-false}'
+EOF
+)"
+
+# Main Logic
+# -----------------------------------------------------------------------------
+log_heading "Starting Chromium with Remote Debugging"
+
+# Build Chromium command
+chromium_cmd=("/Applications/Chromium.app/Contents/MacOS/Chromium")
+chromium_cmd+=("--remote-debugging-port=${debug_port}")
+chromium_cmd+=("--remote-allow-origins=*")
+
+# Add user data directory if specified
+if [[ -n "${user_data_dir}" ]]; then
+  chromium_cmd+=("--user-data-dir=${user_data_dir}")
+fi
+
+# Add session restore if requested
+if [[ "${restore_session}" == "true" ]]; then
+  chromium_cmd+=("--restore-last-session")
+fi
+
+log_message "Starting Chromium with command:"
+log_message "${chromium_cmd[*]}"
+
+# Start Chromium in background
+"${chromium_cmd[@]}" &
+chromium_pid=$!
+
+log_message "Chromium started with PID: ${chromium_pid}"
+log_message "Remote debugging enabled on port: ${debug_port}"
+
+# Wait for remote debugging to be ready
+log_message "Waiting for remote debugging interface..."
+for i in {1..30}; do
+  if curlie -s "http://localhost:${debug_port}/json/version" >/dev/null 2>&1; then
+    break
+  fi
+  if [[ $i -eq 30 ]]; then
+    log_error "Remote debugging interface failed to start"
+    exit 1
+  fi
+  sleep 1
+done
+
+log_success "Chromium remote debugging is ready on http://localhost:${debug_port}"
+log_message "You can now use automation scripts with this Chromium instance"
+
+# Show available tabs
+log_heading "Available Tabs"
+if tab_list=$(curlie -s "http://localhost:${debug_port}/json/list" | jq -r '.[] | select(.type=="page") | "\(.id): \(.title)"' 2>/dev/null); then
+  if [[ -n "${tab_list}" ]]; then
+    echo "${tab_list}"
+  else
+    log_message "No tabs currently open"
+  fi
+else
+  log_warning "Could not retrieve tab list"
+fi
+
+log_done "Chromium is ready for automation"
