@@ -12,6 +12,7 @@ source "${SCRIPT_DIR}/bash_modules/terminal.sh"
 function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") <url> [options]
+       $(basename "$0") --open-browser [options]
 
 Seamlessly fetches webpage content and converts to Markdown using intelligent Chromium automation
 
@@ -19,15 +20,16 @@ Required arguments:
   url                    The URL to fetch (auto-detects protocol if omitted)
 
 Optional arguments:
-  --timeout <seconds>    Page load timeout in seconds (default: 30)
-  --output <file>        Save output to file instead of stdout
-  --wait-for <selector>  Wait for CSS selector before extracting content
-  --html                 Return raw HTML instead of Markdown (default: false)
-  --debug                Enable debug output
-  --port <port>          Chrome remote debugging port (default: 9222)
-  --force-headless       Force headless mode even if Chromium is running
-  --force-visible        Force visible mode for authentication
-  -h, --help             Show this help message and exit
+  -t, --timeout <seconds>    Page load timeout in seconds (default: 30)
+  -o, --output <file>        Save output to file instead of stdout
+  -w, --wait-for <selector>  Wait for CSS selector before extracting content
+  --html                     Return raw HTML instead of Markdown (default: false)
+  --debug                    Enable debug output
+  -p, --port <port>          Chrome remote debugging port (default: 9222)
+  -fh, --force-headless      Force headless mode even if Chromium is running
+  -fv, --force-visible       Force visible mode for authentication
+  -ob, --open-browser        Open Chromium browser in visible state for authentication
+  -h, --help                 Show this help message and exit
 
 Dependencies:
   - node (Node.js runtime)
@@ -41,11 +43,13 @@ Workflow:
 
 Examples:
   $(basename "$0") example.com
-  $(basename "$0") https://example.com --output page.md
-  $(basename "$0") app.example.com/docs --wait-for ".content-loaded"
-  $(basename "$0") private.example.com --force-visible
+  $(basename "$0") https://example.com -o page.md
+  $(basename "$0") app.example.com/docs -w ".content-loaded"
+  $(basename "$0") private.example.com -fv
   $(basename "$0") localhost:3000 --html
-  $(basename "$0") 192.168.1.100:8080 --timeout 60
+  $(basename "$0") 192.168.1.100:8080 -t 60
+  $(basename "$0") -ob
+  $(basename "$0") -ob -p 9223
 EOF
 }
 
@@ -59,6 +63,7 @@ declare debug_mode=""
 declare chrome_debug_port="9222"
 declare force_mode=""
 declare html_output=""
+declare open_browser_mode=""
 
 # Check for help first
 if [[ $# -eq 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
@@ -66,28 +71,34 @@ if [[ $# -eq 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
   exit 1
 fi
 
-# First argument should be URL (unless it starts with --)
-if [[ "${1}" =~ ^-- ]]; then
-  log_error "Missing URL argument"
-  log_error "URL must be the first argument"
-  print_usage
-  exit 1
-fi
+# Check for open browser mode first
+if [[ "${1}" == "--open-browser" || "${1}" == "-ob" ]]; then
+  open_browser_mode="true"
+  shift
+else
+  # First argument should be URL (unless it starts with --)
+  if [[ "${1}" =~ ^-- ]]; then
+    log_error "Missing URL argument"
+    log_error "URL must be the first argument"
+    print_usage
+    exit 1
+  fi
 
-url="${1}"
-shift
+  url="${1}"
+  shift
+fi
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --timeout)
+    -t|--timeout)
       timeout="$2"
       shift 2
       ;;
-    --output)
+    -o|--output)
       output_file="$2"
       shift 2
       ;;
-    --wait-for)
+    -w|--wait-for)
       wait_for_selector="$2"
       shift 2
       ;;
@@ -99,16 +110,20 @@ while [[ $# -gt 0 ]]; do
       debug_mode="true"
       shift
       ;;
-    --port)
+    -p|--port)
       chrome_debug_port="$2"
       shift 2
       ;;
-    --force-headless)
+    -fh|--force-headless)
       force_mode="headless"
       shift
       ;;
-    --force-visible)
+    -fv|--force-visible)
       force_mode="visible"
+      shift
+      ;;
+    -ob|--open-browser)
+      open_browser_mode="true"
       shift
       ;;
     *)
@@ -118,6 +133,37 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# Handle Open Browser Mode
+# -----------------------------------------------------------------------------
+if [[ "${open_browser_mode}" == "true" ]]; then
+  [[ ${DEBUG-} ]] && log_title "Chromium Browser Startup"
+
+  # Build chromium startup command
+  chromium_cmd=("${SCRIPT_DIR}/lib/chromium/start-chromiumdebug")
+  chromium_cmd+=("--port" "${chrome_debug_port}")
+
+  if [[ "${debug_mode}" == "true" ]]; then
+    [[ ${DEBUG-} ]] && log_message "Starting Chromium with command: ${chromium_cmd[*]}"
+  fi
+
+  # Execute the chromium startup script in background
+  "${chromium_cmd[@]}" >/dev/null 2>&1 &
+
+  # Give it a moment to start
+  sleep 2
+
+  # Check if it started successfully
+  if pgrep -f "Chromium" >/dev/null; then
+    log_success "Chromium browser started successfully on port ${chrome_debug_port}"
+    log_message "Browser is ready for get-webpage commands"
+  else
+    log_error "Failed to start Chromium browser"
+    exit 1
+  fi
+
+  exit 0
+fi
 
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
@@ -160,6 +206,7 @@ fi
 
 # URL Normalization and Validation
 # -----------------------------------------------------------------------------
+
 [[ ${DEBUG-} ]] && log_heading "URL Validation"
 
 function normalize_url() {
