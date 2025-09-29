@@ -1,0 +1,326 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <url> [options]
+
+Seamlessly fetches HTML content from webpages using intelligent Chromium automation
+
+Required arguments:
+  url                    The URL to fetch (must include http:// or https://)
+
+Optional arguments:
+  --timeout <seconds>    Page load timeout in seconds (default: 30)
+  --output <file>        Save HTML to file instead of stdout
+  --wait-for <selector>  Wait for CSS selector before extracting HTML
+  --debug                Enable debug output
+  --port <port>          Chrome remote debugging port (default: 9222)
+  --force-headless       Force headless mode even if Chromium is running
+  --force-visible        Force visible mode for authentication
+  -h, --help             Show this help message and exit
+
+Workflow:
+- If Chromium is running: Uses existing session (preserves authentication)
+- If Chromium not running: Launches headless mode for quick fetching
+- If authentication required: Automatically launches visible Chromium
+
+Examples:
+  $(basename "$0") example.com
+  $(basename "$0") https://example.com --timeout 60 --output page.html
+  $(basename "$0") app.example.com/api --wait-for ".content-loaded"
+  $(basename "$0") private.example.com --force-visible
+  $(basename "$0") localhost:3000
+  $(basename "$0") 192.168.1.100:8080
+EOF
+}
+
+if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+# Parse arguments
+# -----------------------------------------------------------------------------
+declare url="${1}"
+declare timeout="30"
+declare output_file=""
+declare wait_for_selector=""
+declare debug_mode=""
+declare chrome_debug_port="9222"
+declare force_mode=""
+
+shift
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --timeout)
+      timeout="$2"
+      shift 2
+      ;;
+    --output)
+      output_file="$2"
+      shift 2
+      ;;
+    --wait-for)
+      wait_for_selector="$2"
+      shift 2
+      ;;
+    --debug)
+      debug_mode="true"
+      shift
+      ;;
+    --port)
+      chrome_debug_port="$2"
+      shift 2
+      ;;
+    --force-headless)
+      force_mode="headless"
+      shift
+      ;;
+    --force-visible)
+      force_mode="visible"
+      shift
+      ;;
+    *)
+      log_error "Unknown option: $1"
+      print_usage
+      exit 1
+      ;;
+  esac
+done
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "Seamless Webpage Fetcher"
+
+# Check for required tools
+dependencies=(node)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "Missing dependency - '${cmd}'"
+    exit 1
+  fi
+done
+
+# Check if Node.js environment is set up
+if [[ ! -f "${SCRIPT_DIR}/lib/chromium/fetch-html.js" ]]; then
+  log_error "Puppeteer helper script not found"
+  log_error "Expected: ${SCRIPT_DIR}/lib/chromium/fetch-html.js"
+  exit 1
+fi
+
+if [[ ! -d "${SCRIPT_DIR}/lib/chromium/node_modules" ]]; then
+  log_error "Node.js dependencies not installed"
+  log_error "Run: cd ${SCRIPT_DIR}/lib/chromium && npm install"
+  exit 1
+fi
+
+# URL Normalization and Validation
+# -----------------------------------------------------------------------------
+log_heading "URL Validation"
+
+function normalize_url() {
+  local input_url="$1"
+
+  # If already has protocol, use as-is
+  if [[ "${input_url}" =~ ^https?:// ]]; then
+    echo "${input_url}"
+    return 0
+  fi
+
+  # If it looks like a domain name or path, add https://
+  if [[ "${input_url}" =~ ^[a-zA-Z0-9.-]+(\.[a-zA-Z]{2,})?(/.*)?$ ]]; then
+    echo "https://${input_url}"
+    return 0
+  fi
+
+  # If it starts with localhost or an IP, add http://
+  if [[ "${input_url}" =~ ^(localhost|[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}) ]]; then
+    echo "http://${input_url}"
+    return 0
+  fi
+
+  # Otherwise, assume https://
+  echo "https://${input_url}"
+}
+
+# Normalize the URL
+original_url="${url}"
+url=$(normalize_url "${url}")
+
+if [[ "${url}" != "${original_url}" ]]; then
+  log_message "Normalized URL: '${original_url}' → '${url}'"
+fi
+
+# Validate final URL format
+if [[ ! "${url}" =~ ^https?://[^[:space:]]+$ ]]; then
+  log_error "Invalid URL format: '${url}'"
+  log_error "URL must be a valid web address"
+  exit 1
+fi
+
+# Validate timeout is a number
+if ! [[ "${timeout}" =~ ^[0-9]+$ ]]; then
+  log_error "Timeout must be a positive integer"
+  exit 1
+fi
+
+log_success "URL validation passed"
+
+# Determine Operation Mode
+# -----------------------------------------------------------------------------
+log_heading "Determining Operation Mode"
+
+function is_chromium_running() {
+  if command -v curlie >/dev/null; then
+    curlie -s "http://localhost:${chrome_debug_port}/json/version" >/dev/null 2>&1
+  else
+    curl -s "http://localhost:${chrome_debug_port}/json/version" >/dev/null 2>&1
+  fi
+}
+
+# Determine the best mode to use
+if [[ -n "${force_mode}" ]]; then
+  operation_mode="${force_mode}"
+  log_message "Using forced mode: '${operation_mode}'"
+elif is_chromium_running; then
+  operation_mode="connect"
+  log_message "Chromium detected on port ${chrome_debug_port}, using existing session"
+else
+  operation_mode="headless"
+  log_message "No Chromium detected, will launch headless mode"
+fi
+
+# Report Operational Values
+# -----------------------------------------------------------------------------
+log_heading "Operational Values"
+log_message "$(
+  cat <<EOF
+           URL: '${url}'
+       Timeout: '${timeout}' seconds
+   Output file: '${output_file:-stdout}'
+      Wait for: '${wait_for_selector:-none}'
+    Debug mode: '${debug_mode:-false}'
+  Chrome port: '${chrome_debug_port}'
+Operation mode: '${operation_mode}'
+EOF
+)"
+
+# Execute Fetch Operation
+# -----------------------------------------------------------------------------
+log_heading "Fetching Webpage Content"
+
+# Change to the chromium directory to ensure proper module resolution
+cd "${SCRIPT_DIR}/lib/chromium" || {
+  log_error "Failed to change to chromium directory"
+  exit 1
+}
+
+function attempt_fetch() {
+  local mode="$1"
+  local attempt_msg="$2"
+
+  log_message "${attempt_msg}"
+
+  # Build Node.js command arguments array
+  declare -a node_cmd_args
+  node_cmd_args=("fetch-html.js" "${url}")
+  node_cmd_args+=("--timeout" "$((timeout * 1000))")  # Convert to milliseconds
+  node_cmd_args+=("--debug-port" "${chrome_debug_port}")
+  node_cmd_args+=("--mode" "${mode}")
+
+  if [[ -n "${wait_for_selector}" ]]; then
+    node_cmd_args+=("--wait-for" "${wait_for_selector}")
+  fi
+
+  if [[ "${debug_mode}" == "true" ]]; then
+    node_cmd_args+=("--verbose")
+  fi
+
+  # Execute Node.js script and capture both output and exit code
+  local html_content
+  local exit_code
+
+  if [[ "${debug_mode}" == "true" ]]; then
+    html_content=$(node "${node_cmd_args[@]}")
+    exit_code=$?
+  else
+    html_content=$(node "${node_cmd_args[@]}" 2>/dev/null)
+    exit_code=$?
+  fi
+
+  # Return the results
+  echo "${html_content}"
+  return ${exit_code}
+}
+
+# First attempt with the determined mode
+html_content=$(attempt_fetch "${operation_mode}" "Attempting fetch in ${operation_mode} mode...")
+fetch_exit_code=$?
+
+# Handle the result
+if [[ ${fetch_exit_code} -eq 0 ]]; then
+  log_success "HTML content retrieved successfully"
+elif [[ ${fetch_exit_code} -eq 2 ]]; then
+  # Authentication required - try visible mode if not already tried
+  if [[ "${operation_mode}" != "visible" ]]; then
+    log_warning "Authentication required - launching visible Chromium for user authentication"
+    log_message "Please authenticate in the browser window that opens"
+
+    html_content=$(attempt_fetch "visible" "Retrying with visible Chromium for authentication...")
+    fetch_exit_code=$?
+
+    if [[ ${fetch_exit_code} -eq 0 ]]; then
+      log_success "HTML content retrieved successfully after authentication"
+    else
+      log_error "Failed to fetch content even with visible browser"
+      exit 1
+    fi
+  else
+    log_error "Authentication required but already in visible mode"
+    exit 1
+  fi
+else
+  # Other error
+  if [[ "${debug_mode}" != "true" ]]; then
+    # Get error details by re-running the command
+    declare -a node_debug_args
+    node_debug_args=("fetch-html.js" "${url}")
+    node_debug_args+=("--timeout" "$((timeout * 1000))")
+    node_debug_args+=("--debug-port" "${chrome_debug_port}")
+    node_debug_args+=("--mode" "${operation_mode}")
+
+    if [[ -n "${wait_for_selector}" ]]; then
+      node_debug_args+=("--wait-for" "${wait_for_selector}")
+    fi
+
+    error_output=$(node "${node_debug_args[@]}" 2>&1 >/dev/null || true)
+    if [[ -n "${error_output}" ]]; then
+      log_error "Error: ${error_output}"
+    fi
+  fi
+  log_error "Failed to fetch HTML content"
+  exit 1
+fi
+
+# Output Results
+# -----------------------------------------------------------------------------
+log_heading "Output"
+
+if [[ -n "${output_file}" ]]; then
+  echo "${html_content}" > "${output_file}"
+  log_success "HTML saved to: '${output_file}'"
+  log_message "Content size: $(echo "${html_content}" | wc -c | tr -d ' ') characters"
+else
+  echo "${html_content}"
+fi
+
+log_done "Webpage fetched successfully"
