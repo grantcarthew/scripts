@@ -23,6 +23,7 @@ Optional arguments:
   -t, --timeout <seconds>    Page load timeout in seconds (default: 30)
   -o, --output <file>        Save output to file instead of stdout
   -w, --wait-for <selector>  Wait for CSS selector before extracting content
+  -c, --close-tab            Close the browser tab after fetching content
   --html                     Return raw HTML instead of Markdown (default: false)
   --debug                    Enable debug output
   -p, --port <port>          Chrome remote debugging port (default: 9222)
@@ -39,6 +40,7 @@ Workflow:
 - If Chromium is running: Uses existing session (preserves authentication)
 - If Chromium not running: Launches headless mode for quick fetching
 - If authentication required: Automatically launches visible Chromium
+- Tab management: Keeps tabs open in visible/connect mode unless --close-tab used
 - Converts HTML to clean Markdown by default
 
 Examples:
@@ -47,7 +49,7 @@ Examples:
   $(basename "$0") app.example.com/docs -w ".content-loaded"
   $(basename "$0") private.example.com -fv
   $(basename "$0") localhost:3000 --html
-  $(basename "$0") 192.168.1.100:8080 -t 60
+  $(basename "$0") 192.168.1.100:8080 -t 60 -c
   $(basename "$0") -ob
   $(basename "$0") -ob -p 9223
 EOF
@@ -64,6 +66,7 @@ declare chrome_debug_port="9222"
 declare force_mode=""
 declare html_output=""
 declare open_browser_mode=""
+declare close_tab=""
 
 # Check for help first
 if [[ $# -eq 0 || "${1}" == "-h" || "${1}" == "--help" ]]; then
@@ -101,6 +104,10 @@ while [[ $# -gt 0 ]]; do
     -w|--wait-for)
       wait_for_selector="$2"
       shift 2
+      ;;
+    -c|--close-tab)
+      close_tab="true"
+      shift
       ;;
     --html)
       html_output="true"
@@ -292,6 +299,7 @@ fi
       Wait for: '${wait_for_selector:-none}'
    Output format: '$(if [[ "${html_output}" == "true" ]]; then echo "HTML"; else echo "Markdown"; fi)'
     Debug mode: '${debug_mode:-false}'
+    Close tab: '${close_tab:-false}'
   Chrome port: '${chrome_debug_port}'
 Operation mode: '${operation_mode}'
 EOF
@@ -326,6 +334,20 @@ function attempt_fetch() {
 
   if [[ "${debug_mode}" == "true" ]]; then
     node_cmd_args+=("--verbose")
+  fi
+
+  # Determine if we should close the tab based on mode and close_tab flag
+  local should_close_tab="false"
+  if [[ "${mode}" == "headless" ]]; then
+    # Always close tabs in headless mode
+    should_close_tab="true"
+  elif [[ "${mode}" == "visible" || "${mode}" == "connect" ]] && [[ "${close_tab}" == "true" ]]; then
+    # For visible/connect modes, only close if explicitly requested
+    should_close_tab="true"
+  fi
+
+  if [[ "${should_close_tab}" == "true" ]]; then
+    node_cmd_args+=("--close-tab")
   fi
 
   # Execute Node.js script and capture both output and exit code
@@ -391,6 +413,18 @@ else
 
     if [[ -n "${wait_for_selector}" ]]; then
       node_debug_args+=("--wait-for" "${wait_for_selector}")
+    fi
+
+    # Apply the same close-tab logic for error debugging
+    local should_close_tab_debug="false"
+    if [[ "${operation_mode}" == "headless" ]]; then
+      should_close_tab_debug="true"
+    elif [[ "${operation_mode}" == "visible" || "${operation_mode}" == "connect" ]] && [[ "${close_tab}" == "true" ]]; then
+      should_close_tab_debug="true"
+    fi
+
+    if [[ "${should_close_tab_debug}" == "true" ]]; then
+      node_debug_args+=("--close-tab")
     fi
 
     error_output=$(node "${node_debug_args[@]}" 2>&1 >/dev/null || true)
