@@ -185,7 +185,7 @@ fi
 
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
-$verbose && log_title "Seamless Webpage Fetcher"
+$verbose && log_title "Get Webpage"
 
 # Check for required tools
 dependencies=(node)
@@ -305,15 +305,15 @@ $verbose && log_heading "Operational Values"
 $verbose && log_message "$(
   cat <<EOF
            URL: '${url}'
+        Format: '$(if [[ "${html_output}" == "true" ]]; then echo "HTML"; else echo "Markdown"; fi)'
+        Output: '${output_file:-stdout}'
+     Close Tab: '${close_tab:-false}'
        Timeout: '${timeout}' seconds
-   Output file: '${output_file:-stdout}'
-      Wait for: '${wait_for_selector:-none}'
-   Output format: '$(if [[ "${html_output}" == "true" ]]; then echo "HTML"; else echo "Markdown"; fi)'
-    Debug mode: '${debug_mode:-false}'
-   Verbose mode: '${verbose_mode:-false}'
-    Close tab: '${close_tab:-false}'
-  Chrome port: '${chrome_debug_port}'
-Operation mode: '${operation_mode}'
+ Wait Selector: '${wait_for_selector:-none}'
+     Operation: '${operation_mode}'
+       Verbose: '${verbose_mode:-false}'
+         Debug: '${debug_mode:-false}'
+ Chromium Port: '${chrome_debug_port}'
 EOF
 )"
 
@@ -448,10 +448,8 @@ else
   exit 1
 fi
 
-# Output Results
+# Convert HTML to Markdown
 # -----------------------------------------------------------------------------
-$verbose && log_heading "Output"
-
 # Convert HTML to Markdown unless --html flag is set
 if [[ "${html_output}" == "true" ]]; then
   final_content="${html_content}"
@@ -467,6 +465,10 @@ else
     content_type="HTML (fallback)"
   fi
 fi
+
+# Output Results
+# -----------------------------------------------------------------------------
+$verbose && log_heading "Output"
 
 # Output to file or stdout
 if [[ -n "${output_file}" ]]; then
