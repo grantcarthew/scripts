@@ -98,7 +98,7 @@ EOF
 log_heading "Starting Chromium with Remote Debugging"
 
 # Build Chromium command
-chromium_cmd=("/Applications/Chromium.app/Contents/MacOS/Chromium")
+chromium_cmd=("chromium")
 chromium_cmd+=("--remote-debugging-port=${debug_port}")
 chromium_cmd+=("--remote-allow-origins=*")
 
