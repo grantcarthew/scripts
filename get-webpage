@@ -26,6 +26,7 @@ Optional arguments:
   -c, --close-tab            Close the browser tab after fetching content
   --html                     Return raw HTML instead of Markdown (default: false)
   --debug                    Enable debug output
+  -v, --verbose              Enable verbose logging output
   -p, --port <port>          Chrome remote debugging port (default: 9222)
   -fh, --force-headless      Force headless mode even if Chromium is running
   -fv, --force-visible       Force visible mode for authentication
@@ -62,6 +63,7 @@ declare timeout="30"
 declare output_file=""
 declare wait_for_selector=""
 declare debug_mode=""
+declare verbose_mode=""
 declare chrome_debug_port="9222"
 declare force_mode=""
 declare html_output=""
@@ -117,6 +119,10 @@ while [[ $# -gt 0 ]]; do
       debug_mode="true"
       shift
       ;;
+    -v|--verbose)
+      verbose_mode="true"
+      shift
+      ;;
     -p|--port)
       chrome_debug_port="$2"
       shift 2
@@ -141,17 +147,22 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Set up logging control
+# -----------------------------------------------------------------------------
+# Combine DEBUG environment variable and verbose flag for log control
+[[ ${DEBUG-} ]] || [[ "${verbose_mode}" == "true" ]] && should_log="true" || should_log="false"
+
 # Handle Open Browser Mode
 # -----------------------------------------------------------------------------
 if [[ "${open_browser_mode}" == "true" ]]; then
-  [[ ${DEBUG-} ]] && log_title "Chromium Browser Startup"
+  [[ "${should_log}" == "true" ]] && log_title "Chromium Browser Startup"
 
   # Build chromium startup command
   chromium_cmd=("${SCRIPT_DIR}/lib/chromium/start-chromiumdebug")
   chromium_cmd+=("--port" "${chrome_debug_port}")
 
   if [[ "${debug_mode}" == "true" ]]; then
-    [[ ${DEBUG-} ]] && log_message "Starting Chromium with command: ${chromium_cmd[*]}"
+    [[ "${should_log}" == "true" ]] && log_message "Starting Chromium with command: ${chromium_cmd[*]}"
   fi
 
   # Execute the chromium startup script in background
@@ -174,7 +185,7 @@ fi
 
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
-[[ ${DEBUG-} ]] && log_title "Seamless Webpage Fetcher"
+[[ "${should_log}" == "true" ]] && log_title "Seamless Webpage Fetcher"
 
 # Check for required tools
 dependencies=(node)
@@ -201,9 +212,9 @@ if [[ ! -f "${SCRIPT_DIR}/lib/chromium/fetch-html.js" ]]; then
 fi
 
 if [[ ! -d "${SCRIPT_DIR}/lib/chromium/node_modules" ]]; then
-  [[ ${DEBUG-} ]] && log_message "Node.js dependencies not found, installing..."
+  [[ "${should_log}" == "true" ]] && log_message "Node.js dependencies not found, installing..."
   if cd "${SCRIPT_DIR}/lib/chromium" && npm install --silent >/dev/null 2>&1; then
-    [[ ${DEBUG-} ]] && log_success "Node.js dependencies installed successfully"
+    [[ "${should_log}" == "true" ]] && log_success "Node.js dependencies installed successfully"
   else
     log_error "Failed to install Node.js dependencies"
     log_error "Run manually: cd ${SCRIPT_DIR}/lib/chromium && npm install"
@@ -214,7 +225,7 @@ fi
 # URL Normalization and Validation
 # -----------------------------------------------------------------------------
 
-[[ ${DEBUG-} ]] && log_heading "URL Validation"
+[[ "${should_log}" == "true" ]] && log_heading "URL Validation"
 
 function normalize_url() {
   local input_url="$1"
@@ -246,7 +257,7 @@ original_url="${url}"
 url=$(normalize_url "${url}")
 
 if [[ "${url}" != "${original_url}" ]]; then
-  [[ ${DEBUG-} ]] && log_message "Normalized URL: '${original_url}' → '${url}'"
+  [[ "${should_log}" == "true" ]] && log_message "Normalized URL: '${original_url}' → '${url}'"
 fi
 
 # Validate final URL format
@@ -262,11 +273,11 @@ if ! [[ "${timeout}" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
-[[ ${DEBUG-} ]] && log_success "URL validation passed"
+[[ "${should_log}" == "true" ]] && log_success "URL validation passed"
 
 # Determine Operation Mode
 # -----------------------------------------------------------------------------
-[[ ${DEBUG-} ]] && log_heading "Determining Operation Mode"
+[[ "${should_log}" == "true" ]] && log_heading "Determining Operation Mode"
 
 function is_chromium_running() {
   if command -v curlie >/dev/null; then
@@ -279,19 +290,19 @@ function is_chromium_running() {
 # Determine the best mode to use
 if [[ -n "${force_mode}" ]]; then
   operation_mode="${force_mode}"
-  [[ ${DEBUG-} ]] && log_message "Using forced mode: '${operation_mode}'"
+  [[ "${should_log}" == "true" ]] && log_message "Using forced mode: '${operation_mode}'"
 elif is_chromium_running; then
   operation_mode="connect"
-  [[ ${DEBUG-} ]] && log_message "Chromium detected on port ${chrome_debug_port}, using existing session"
+  [[ "${should_log}" == "true" ]] && log_message "Chromium detected on port ${chrome_debug_port}, using existing session"
 else
   operation_mode="headless"
-  [[ ${DEBUG-} ]] && log_message "No Chromium detected, will launch headless mode"
+  [[ "${should_log}" == "true" ]] && log_message "No Chromium detected, will launch headless mode"
 fi
 
 # Report Operational Values
 # -----------------------------------------------------------------------------
-[[ ${DEBUG-} ]] && log_heading "Operational Values"
-[[ ${DEBUG-} ]] && log_message "$(
+[[ "${should_log}" == "true" ]] && log_heading "Operational Values"
+[[ "${should_log}" == "true" ]] && log_message "$(
   cat <<EOF
            URL: '${url}'
        Timeout: '${timeout}' seconds
@@ -299,6 +310,7 @@ fi
       Wait for: '${wait_for_selector:-none}'
    Output format: '$(if [[ "${html_output}" == "true" ]]; then echo "HTML"; else echo "Markdown"; fi)'
     Debug mode: '${debug_mode:-false}'
+   Verbose mode: '${verbose_mode:-false}'
     Close tab: '${close_tab:-false}'
   Chrome port: '${chrome_debug_port}'
 Operation mode: '${operation_mode}'
@@ -307,7 +319,7 @@ EOF
 
 # Execute Fetch Operation
 # -----------------------------------------------------------------------------
-[[ ${DEBUG-} ]] && log_heading "Fetching Webpage Content"
+[[ "${should_log}" == "true" ]] && log_heading "Fetching Webpage Content"
 
 # Change to the chromium directory to ensure proper module resolution
 cd "${SCRIPT_DIR}/lib/chromium" || {
@@ -319,7 +331,7 @@ function attempt_fetch() {
   local mode="$1"
   local attempt_msg="$2"
 
-  [[ ${DEBUG-} ]] && log_message "${attempt_msg}"
+  [[ "${should_log}" == "true" ]] && log_message "${attempt_msg}"
 
   # Build Node.js command arguments array
   declare -a node_cmd_args
@@ -332,7 +344,7 @@ function attempt_fetch() {
     node_cmd_args+=("--wait-for" "${wait_for_selector}")
   fi
 
-  if [[ "${debug_mode}" == "true" ]]; then
+  if [[ "${verbose_mode}" == "true" ]]; then
     node_cmd_args+=("--verbose")
   fi
 
@@ -373,7 +385,7 @@ fetch_exit_code=$?
 
 # Handle the result
 if [[ ${fetch_exit_code} -eq 0 ]]; then
-  [[ ${DEBUG-} ]] && log_success "HTML content retrieved successfully"
+  [[ "${should_log}" == "true" ]] && log_success "HTML content retrieved successfully"
 elif [[ ${fetch_exit_code} -eq 2 ]]; then
   # Authentication required - try visible mode if not already tried
   if [[ "${operation_mode}" != "visible" ]]; then
@@ -384,7 +396,7 @@ elif [[ ${fetch_exit_code} -eq 2 ]]; then
     fetch_exit_code=$?
 
     if [[ ${fetch_exit_code} -eq 0 ]]; then
-      [[ ${DEBUG-} ]] && log_success "HTML content retrieved successfully after authentication"
+      [[ "${should_log}" == "true" ]] && log_success "HTML content retrieved successfully after authentication"
     elif [[ ${fetch_exit_code} -eq 3 ]]; then
       log_success "Browser opened for authentication"
       log_message "Please sign in to the page in the browser window"
@@ -438,17 +450,17 @@ fi
 
 # Output Results
 # -----------------------------------------------------------------------------
-[[ ${DEBUG-} ]] && log_heading "Output"
+[[ "${should_log}" == "true" ]] && log_heading "Output"
 
 # Convert HTML to Markdown unless --html flag is set
 if [[ "${html_output}" == "true" ]]; then
   final_content="${html_content}"
   content_type="HTML"
 else
-  [[ ${DEBUG-} ]] && log_message "Converting HTML to Markdown..."
+  [[ "${should_log}" == "true" ]] && log_message "Converting HTML to Markdown..."
   if final_content=$(echo "${html_content}" | html2markdown); then
     content_type="Markdown"
-    [[ ${DEBUG-} ]] && log_success "HTML converted to Markdown successfully"
+    [[ "${should_log}" == "true" ]] && log_success "HTML converted to Markdown successfully"
   else
     log_warning "Failed to convert HTML to Markdown, falling back to raw HTML"
     final_content="${html_content}"
@@ -459,12 +471,12 @@ fi
 # Output to file or stdout
 if [[ -n "${output_file}" ]]; then
   echo "${final_content}" > "${output_file}"
-  [[ ${DEBUG-} ]] && log_success "${content_type} saved to: '${output_file}'"
-  [[ ${DEBUG-} ]] && log_message "Content size: $(echo "${final_content}" | wc -c | tr -d ' ') characters"
+  [[ "${should_log}" == "true" ]] && log_success "${content_type} saved to: '${output_file}'"
+  [[ "${should_log}" == "true" ]] && log_message "Content size: $(echo "${final_content}" | wc -c | tr -d ' ') characters"
 else
   echo "${final_content}"
 fi
 
-if [[ ${DEBUG-} ]]; then
+if [[ "${should_log}" == "true" ]]; then
   log_done "Webpage content fetched and converted successfully"
 fi
