@@ -8,6 +8,8 @@ The following information is for AI Agents to learn specifics of the user and en
 - Skills: Expert in IT and a number of programming languages
 - Language: Australian English
 - Location: Brisbane, Queensland, Australia
+- Company: Auto & General Insurance
+- Document Style: CommonMark
 
 ## Operating System
 
@@ -28,15 +30,10 @@ The following information is for AI Agents to learn specifics of the user and en
 
 ## CLI Tools
 
-The following extra command-line tools are installed and at your disposal.
+Run `--help` argument for syntax.
 
-Please use them. If you need, run a --help argument with them to ensure you have the right syntax.
+Prefer these tools over other Bash built-in tools.
 
-Prefer these tools over other Bash built-in tools. A good example is RipGrep vs grep.
-
-- aichat: All-in-one AI CLI tool
-- bash: Bourne-Again shell
-- bat: A cat clone with syntax highlighting and Git integration
 - checkov: Static code analysis tool for infrastructure-as-code
 - coreutils: GNU File, Shell, and Text utilities
 - csvkit: Suite of command-line tools for converting to and working with CSV
@@ -54,14 +51,9 @@ Prefer these tools over other Bash built-in tools. A good example is RipGrep vs 
   - csvpy: Load a CSV file into a CSV reader and then drop into a Python shell
   - csvsql: Generate SQL statements for one or more CSV files, or execute those statements directly on a database, and execute one or more SQL queries
   - csvstat: Print descriptive statistics for each column in a CSV file
-- curlie: The power of curl, the ease of use of httpie
 - difft: difftastic - A structural diff that understands syntax
-- diskus: A minimal, fast alternative to 'du -sh'
-- dua: dua-cli - View disk space usage and delete unwanted data, fast
-- dust: A more intuitive version of du in rust
 - entr: Run arbitrary commands when files change
 - fd: A simple, fast and user-friendly alternative to 'find'
-- git-delta: A syntax-highlighting pager for git and diff output
 - glab: GitLab CLI tool
 - glow: Render markdown on the CLI, with pizzazz!
 - gnupg: GNU Pretty Good Privacy (PGP) package
@@ -80,9 +72,7 @@ Prefer these tools over other Bash built-in tools. A good example is RipGrep vs 
 - newrelic-cli: Command line interface for New Relic
 - ngrep: GNU grep applied to the network layer
 - oha: HTTP load generator
-- ouch: Painless compression and decompression in the terminal
 - pandoc: Swiss-army knife of markup format conversion
-- pastel: A command-line tool to generate, analyze, convert and manipulate colors
 - prettier: Code formatter for JavaScript, CSS, JSON, GraphQL, Markdown, YAML
 - procs: A modern replacement for ps written in Rust
 - psql: postgresql - Object-relational database system
@@ -90,13 +80,9 @@ Prefer these tools over other Bash built-in tools. A good example is RipGrep vs 
 - rsync: Efficiently transferring and synchronizing files
 - sd: Intuitive find & replace CLI (sed alternative)
 - shellcheck: Finds bugs in your shell scripts
-- stylua: Code formatter for Lua
 - terraform-docs: Generate documentation from Terraform modules
 - tflint: Terraform linter
 - trivy: Scanner for vulnerabilities in container images, file systems, and Git repositories
-- vale: A markup-aware linter for prose built with speed and extensibility in mind
-- vegeta: HTTP load testing tool and library. It's over 9000!
-- watch: Execute a program periodically, showing output fullscreen
 - yamllint: Linter for YAML files
 - yq: YAML, JSON, XML, CSV, TOML and properties processor
 
@@ -113,27 +99,6 @@ This tool will enable the ability to access pages authenticated by the user.
 
 Usage: get-webpage <url> [options]
 
-Seamlessly fetches webpage content and converts to Markdown using intelligent Chromium automation
-
-Optional arguments:
-
-- --timeout <seconds>    Page load timeout in seconds (default: 30)
-- --output <file>        Save output to file instead of stdout
-- --wait-for <selector>  Wait for CSS selector before extracting content
-- --html                 Return raw HTML instead of Markdown (default: false)
-- --debug                Enable debug output
-- --port <port>          Chrome remote debugging port (default: 9222)
-- --force-headless       Force headless mode even if Chromium is running
-- --force-visible        Force visible mode for authentication
-- -h, --help             Show this help message and exit
-
-Workflow:
-
-- If Chromium is running: Uses existing session (preserves authentication)
-- If Chromium not running: Launches headless mode for quick fetching
-- If authentication required: Automatically launches visible Chromium
-- Converts HTML to clean Markdown by default
-
 Examples:
 
 - get-webpage example.com
@@ -142,6 +107,27 @@ Examples:
 - get-webpage private.example.com --force-visible
 - get-webpage localhost:3000 --html
 - get-webpage 192.168.1.100:8080 --timeout 60
+
+## Atlassian Configuration
+
+### Atlassian Cloud Instance
+
+- **Cloud ID**: `fcd4dd07-1eac-4c63-b213-3f8c02d7ad61`
+- **Site URL**: `https://autogeneral-au.atlassian.net`
+- **Organization**: Auto General
+
+### Jira
+
+- **Primary Project**: GCP (Project Key: `GCP`)
+- **Board URL**: https://autogeneral-au.atlassian.net/jira/software/c/projects/GCP/boards/1342?assignee=712020%3Af0aa8349-1860-4d9d-bf31-d12e26b85d84
+- **User Account ID**: `712020:f0aa8349-1860-4d9d-bf31-d12e26b85d84`
+
+_Note: When I say "ticket" I am talking about Jira Issues._
+
+### Confluence
+
+- **Primary Space**: Cloud Security Architecture (Space Key: `CSA1`)
+- **Space URL**: https://autogeneral-au.atlassian.net/wiki/spaces/CSA1/overview?homepageId=988841763
 
 ## Command Restrictions
 

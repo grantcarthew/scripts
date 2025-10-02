@@ -1,15 +1,14 @@
 {
-  "statusLine": {
-    "type": "command",
-    "command": "npx -y ccstatusline@latest",
-    "padding": 0
-  },
   "permissions": {
     "deny": [
-      "WebFetch"
+      "WebFetch",
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)"
     ],
     "allow": [
       "fetch_markdown",
+      "Read(/Users/gcarthew/ENVIRONMENT.md)",
+      "Read(/home/grant/ENVIRONMENT.md)",
       "Read(~/ENVIRONMENT.md)",
       "Read(PROJECT.md)",
       "Write(PROJECT.md)",
@@ -23,12 +22,13 @@
       "Bash(find:*)",
       "Bash(glab ci lint)",
       "Bash(yamllint:*)",
-      "Bash(lsd:*)",
       "Bash(kagi:*)"
     ],
     "ask": [
       "Bash(git push:*)",
       "Bash(git commit:*)"
     ]
-  }
+  },
+  "alwaysThinkingEnabled": true,
+  "model": "claude-sonnet-4-5@20250929"
 }
