@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[g]it [b]ranch [d]elete [branch-name]"
+
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+if [[ $# -lt 1 ]]; then
+  log_message "❯ git branch -d <branch-name>"
+  exit 1
+fi
+
+log_message "❯ git branch -d ${*}"
+git branch -d "${@}"
