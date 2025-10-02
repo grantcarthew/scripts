@@ -16,7 +16,7 @@ Usage: $(basename "$0") [--api-key <key>] <query...>
 A CLI for querying the Kagi search engine with their FastGPT API
 
 Dependencies:
-  curlie             HTTP client for API requests
+  curl               HTTP client for API requests
   jq                 Command-line JSON processor
 
 Arguments:
@@ -81,7 +81,7 @@ if [[ -z "${api_key}" ]]; then
   fi
 fi
 
-for cmd in curlie jq; do
+for cmd in curl jq; do
     if ! command -v "${cmd}" >/dev/null; then
         log_error "ERROR: Missing dependency - '${cmd}'"
         exit 1
@@ -106,13 +106,13 @@ fi
 [[ ${DEBUG-} ]] && log_heading "Querying Kagi FastGPT API"
 [[ ${DEBUG-} ]] && log_message "Sending request to Kagi FastGPT API..."
 
-json_request=$(jq -n --arg query "${query}" '{query: $query, web_search: true, cache: true}')
-response=$(curlie -s \
+json_request=$(jq -n --arg query "${query}" '{query: $query, web_search: true}')
+response=$(curl -s \
   --fail-with-body \
-  POST "https://kagi.com/api/v0/fastgpt" \
-  "Authorization: Bot ${api_key}" \
-  "Content-Type: application/json" \
-  --data "${json_request}")
+  -X POST "https://kagi.com/api/v0/fastgpt" \
+  -H "Authorization: Bot ${api_key}" \
+  -H "Content-Type: application/json" \
+  -d "${json_request}")
 curl_exit_code=$?
 
 if [[ ${curl_exit_code} -ne 0 ]]; then
