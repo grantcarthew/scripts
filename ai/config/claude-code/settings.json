@@ -6,7 +6,7 @@
       "Bash(terraform destroy:*)"
     ],
     "allow": [
-      "fetch_markdown",
+      "Fetch_markdown",
       "Read(/Users/gcarthew/ENVIRONMENT.md)",
       "Read(/home/grant/ENVIRONMENT.md)",
       "Read(~/ENVIRONMENT.md)",
@@ -14,15 +14,16 @@
       "Write(PROJECT.md)",
       "Read(AGENTS.md)",
       "Write(AGENTS.md)",
-      "Bash(rg:*)",
-      "Bash(curl:*)",
+      "Bash(rg :*)",
+      "Bash(curl :*)",
       "Bash(git diff)",
       "Bash(git diff --staged)",
-      "Bash(fd:*)",
-      "Bash(find:*)",
-      "Bash(glab ci lint)",
-      "Bash(yamllint:*)",
-      "Bash(kagi:*)"
+      "Bash(fd :*)",
+      "Bash(find :*)",
+      "Bash(glab ci lint :*)",
+      "Bash(glab ci trace :*)",
+      "Bash(yamllint :*)",
+      "Bash(kagi :*)"
     ],
     "ask": [
       "Bash(git push:*)",
@@ -30,5 +31,5 @@
     ]
   },
   "alwaysThinkingEnabled": true,
-  "model": "claude-sonnet-4-5@20250929"
+  "model": "sonnet[1m]"
 }
