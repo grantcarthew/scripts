@@ -90,6 +90,7 @@ Prefer these tools over other Bash built-in tools.
 
 - `kagi <search-terms>`: Search the internet returning clean search results for AI agent use
 - `ff <search-terms>`: Open a new tab in Firefox searching Kagi for the search terms for the user to view
+- `curl https://raw.githubusercontent.com/{{repo-and-path}}`: Use curl when getting content from GitHub raw URLs
 
 ## get-webpage
 
