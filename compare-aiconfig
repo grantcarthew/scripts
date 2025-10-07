@@ -1,0 +1,293 @@
+#!/usr/bin/env bash
+# Compare AI configuration files between user config and repository backup
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [--test] [-h|--help]
+
+Compare AI configuration files between user config and repository backup.
+
+This script compares:
+  - ~/ENVIRONMENT.md vs ai/config/
+  - ~/.claude/settings.json vs ai/config/claude-code/
+  - ~/.claude/commands/ vs ai/commands/
+  - ~/.claude/agents/ vs ai/config/claude-code/agents/
+
+The user configuration is considered authoritative. Differences are shown
+as what has changed in the user config compared to the backup.
+
+Dependencies:
+  difft              difftastic - structural diff tool
+
+Optional arguments:
+  --test             Non-interactive mode, exit 0 if identical, 1 if different
+  -h, --help         Show this help message and exit
+EOF
+}
+if [[ "${1-}" == "-h" || "${1-}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# OS Detection
+# -----------------------------------------------------------------------------
+function get_os_name() {
+  if command -v fastfetch >/dev/null 2>&1; then
+    local os_name
+    os_name="$(fastfetch -l none -s OS | cut -d':' -f2 | xargs | cut -d' ' -f1)"
+    echo "${os_name}"
+  else
+    case "$(uname -s)" in
+      Linux)
+        echo "Linux"
+        ;;
+      Darwin)
+        echo "macOS"
+        ;;
+      *)
+        echo "Unknown"
+        ;;
+    esac
+  fi
+}
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+declare TEST_MODE=false
+if [[ "${1-}" == "--test" ]]; then
+  TEST_MODE=true
+fi
+
+if [[ "${TEST_MODE}" == false ]]; then
+  log_title "Configuration Comparison"
+fi
+
+if ! command -v difft >/dev/null; then
+  log_error "Missing dependency - 'difft'"
+  exit 1
+fi
+
+declare -r OS_NAME="$(get_os_name)"
+declare -r USER_CLAUDE_DIR="${HOME}/.claude"
+declare -r REPO_CLAUDE_DIR="${SCRIPT_DIR}/ai/config/claude-code"
+declare -r USER_COMMANDS_DIR="${USER_CLAUDE_DIR}/commands"
+declare -r REPO_COMMANDS_DIR="${SCRIPT_DIR}/ai/commands"
+declare -r REPO_CONFIG_DIR="${SCRIPT_DIR}/ai/config"
+declare -r ENV_BACKUP_NAME="${OS_NAME}-ENVIRONMENT.md"
+
+declare -i DIFFERENCES_FOUND=0
+
+if [[ "${TEST_MODE}" == false ]]; then
+  log_heading "Configuration Paths"
+  log_message "OS Detected: '${OS_NAME}'"
+  log_message "User Config: '${HOME}'"
+  log_message "User Claude: '${USER_CLAUDE_DIR}'"
+  log_message "Repo Config: '${REPO_CONFIG_DIR}'"
+  log_message "Repo Claude: '${REPO_CLAUDE_DIR}'"
+fi
+
+# Helper Functions
+# -----------------------------------------------------------------------------
+function compare_file() {
+  local user_file="$1"
+  local repo_file="$2"
+  local description="$3"
+
+  if [[ ! -f "${user_file}" && ! -f "${repo_file}" ]]; then
+    [[ "${TEST_MODE}" == false ]] && log_warning "Neither file exists, skipping"
+    return 0
+  fi
+
+  if [[ ! -f "${user_file}" ]]; then
+    [[ "${TEST_MODE}" == false ]] && log_warning "User file missing: '${user_file}'"
+    DIFFERENCES_FOUND=$((DIFFERENCES_FOUND + 1))
+    return 1
+  fi
+
+  if [[ ! -f "${repo_file}" ]]; then
+    [[ "${TEST_MODE}" == false ]] && log_warning "Backup file missing: '${repo_file}'"
+    DIFFERENCES_FOUND=$((DIFFERENCES_FOUND + 1))
+    return 1
+  fi
+
+  if diff -q "${user_file}" "${repo_file}" >/dev/null 2>&1; then
+    [[ "${TEST_MODE}" == false ]] && log_success "${description} - identical"
+    return 0
+  else
+    [[ "${TEST_MODE}" == false ]] && log_failure "${description} - differs"
+    DIFFERENCES_FOUND=$((DIFFERENCES_FOUND + 1))
+
+    if [[ "${TEST_MODE}" == false ]]; then
+      read -r -p "Show detailed diff? (y/N): " response
+      if [[ "${response}" =~ ^[Yy]$ ]]; then
+        log_newline
+        local difft_output
+        difft_output="$(difft --color always "${repo_file}" "${user_file}")"
+        if [[ "${difft_output}" == *"No changes."* ]]; then
+          log_message "Structural diff shows no changes. Showing traditional diff:"
+          log_newline
+          diff -u "${repo_file}" "${user_file}" || true
+        else
+          echo "${difft_output}"
+        fi
+        log_newline
+      fi
+    fi
+    return 1
+  fi
+}
+
+function compare_directory() {
+  local user_dir="$1"
+  local repo_dir="$2"
+  local description="$3"
+
+  if [[ ! -d "${user_dir}" && ! -d "${repo_dir}" ]]; then
+    [[ "${TEST_MODE}" == false ]] && log_warning "Neither directory exists, skipping"
+    return 0
+  fi
+
+  if [[ ! -d "${user_dir}" ]]; then
+    [[ "${TEST_MODE}" == false ]] && log_warning "User directory missing: '${user_dir}'"
+    DIFFERENCES_FOUND=$((DIFFERENCES_FOUND + 1))
+    return 1
+  fi
+
+  if [[ ! -d "${repo_dir}" ]]; then
+    [[ "${TEST_MODE}" == false ]] && log_warning "Backup directory missing: '${repo_dir}'"
+    DIFFERENCES_FOUND=$((DIFFERENCES_FOUND + 1))
+    return 1
+  fi
+
+  local -a only_in_user=()
+  local -a only_in_repo=()
+  local -a different_files=()
+
+  while IFS= read -r -d '' file; do
+    local rel_path="${file#"${user_dir}/"}"
+    if [[ ! -f "${repo_dir}/${rel_path}" ]]; then
+      only_in_user+=("${rel_path}")
+    elif ! diff -q "${file}" "${repo_dir}/${rel_path}" >/dev/null 2>&1; then
+      different_files+=("${rel_path}")
+    fi
+  done < <(find "${user_dir}" -type f -print0)
+
+  while IFS= read -r -d '' file; do
+    local rel_path="${file#"${repo_dir}/"}"
+    if [[ ! -f "${user_dir}/${rel_path}" ]]; then
+      only_in_repo+=("${rel_path}")
+    fi
+  done < <(find "${repo_dir}" -type f -print0)
+
+  if [[ ${#only_in_user[@]} -eq 0 && ${#only_in_repo[@]} -eq 0 && ${#different_files[@]} -eq 0 ]]; then
+    [[ "${TEST_MODE}" == false ]] && log_success "${description} - identical"
+    return 0
+  fi
+
+  [[ "${TEST_MODE}" == false ]] && log_failure "${description} - differs"
+  DIFFERENCES_FOUND=$((DIFFERENCES_FOUND + 1))
+
+  if [[ "${TEST_MODE}" == false ]]; then
+    if [[ ${#only_in_user[@]} -gt 0 ]]; then
+      log_newline
+      log_message "Files only in user config:"
+      for file in "${only_in_user[@]}"; do
+        log_message "  + ${file}"
+      done
+    fi
+
+    if [[ ${#only_in_repo[@]} -gt 0 ]]; then
+      log_newline
+      log_message "Files only in backup:"
+      for file in "${only_in_repo[@]}"; do
+        log_message "  - ${file}"
+      done
+    fi
+
+    if [[ ${#different_files[@]} -gt 0 ]]; then
+      log_newline
+      log_message "Files with differences:"
+      for file in "${different_files[@]}"; do
+        log_message "  * ${file}"
+      done
+
+      log_newline
+      read -r -p "Show detailed diffs? (y/N): " response
+      if [[ "${response}" =~ ^[Yy]$ ]]; then
+        for file in "${different_files[@]}"; do
+          log_newline
+          log_subheading "${file}"
+          local difft_output
+          difft_output="$(difft --color always "${repo_dir}/${file}" "${user_dir}/${file}")"
+          if [[ "${difft_output}" == *"No changes."* ]]; then
+            log_message "Structural diff shows no changes. Showing traditional diff:"
+            log_newline
+            diff -u "${repo_dir}/${file}" "${user_dir}/${file}" || true
+          else
+            echo "${difft_output}"
+          fi
+        done
+        log_newline
+      fi
+    fi
+  fi
+
+  return 1
+}
+
+# Compare ENVIRONMENT.md
+# -----------------------------------------------------------------------------
+if [[ "${TEST_MODE}" == false ]]; then
+  log_subheading "Environment File"
+fi
+compare_file "${HOME}/ENVIRONMENT.md" "${REPO_CONFIG_DIR}/${ENV_BACKUP_NAME}" "ENVIRONMENT.md"
+
+# Compare settings.json
+# -----------------------------------------------------------------------------
+if [[ "${TEST_MODE}" == false ]]; then
+  log_subheading "Settings File"
+fi
+compare_file "${USER_CLAUDE_DIR}/settings.json" "${REPO_CLAUDE_DIR}/settings.json" "settings.json"
+
+# Compare commands directory
+# -----------------------------------------------------------------------------
+if [[ "${TEST_MODE}" == false ]]; then
+  log_subheading "Commands Directory"
+fi
+compare_directory "${USER_COMMANDS_DIR}" "${REPO_COMMANDS_DIR}" "commands directory"
+
+# Compare agents directory
+# -----------------------------------------------------------------------------
+if [[ "${TEST_MODE}" == false ]]; then
+  log_subheading "Agents Directory"
+fi
+compare_directory "${USER_CLAUDE_DIR}/agents" "${REPO_CLAUDE_DIR}/agents" "agents directory"
+
+# Summary
+# -----------------------------------------------------------------------------
+if [[ "${TEST_MODE}" == false ]]; then
+  log_newline
+  if [[ ${DIFFERENCES_FOUND} -eq 0 ]]; then
+    log_done "Configuration is identical to backup"
+  else
+    log_warning "Found ${DIFFERENCES_FOUND} difference(s) between user config and backup"
+  fi
+fi
+
+exit "${DIFFERENCES_FOUND}"
