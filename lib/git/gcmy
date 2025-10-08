@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[g]it [c]ommit [m]essage - [y]es"
+
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && exec "${SCRIPT_DIR}/gcm" --help
+
+exec "${SCRIPT_DIR}/gcm" -y "$@"
