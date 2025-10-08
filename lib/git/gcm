@@ -14,13 +14,16 @@ source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0") [special-instructions]
+Usage: $(basename "$0") [-y|--yes] [special-instructions]
 
 Generate a commit message using AI for the currently staged changes.
 
 Dependencies:
   git                Git version control
   aichat             AI chat tool
+
+Options:
+  -y, --yes            Skip confirmation prompts and auto-commit/push
 
 Environment Variables:
   CONFIRM              Set to 'true' to automatically commit and push without user confirmation
@@ -31,11 +34,13 @@ Arguments:
 This script will:
 1. Check if there are staged git changes
 2. Generate a commit message using AI
-3. Allow you to confirm and use the generated message (unless CONFIRM=true)
+3. Allow you to confirm and use the generated message (unless -y or CONFIRM=true)
 
 Examples:
   $(basename "$0")                    # Interactive mode with confirmations
-  CONFIRM=true $(basename "$0")       # Auto-confirm commit and push
+  $(basename "$0") -y                 # Auto-confirm commit and push
+  $(basename "$0") -y fix typo        # Auto-confirm with special instructions
+  CONFIRM=true $(basename "$0")       # Auto-confirm using environment variable
 EOF
 }
 
@@ -44,10 +49,21 @@ if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
   exit 0
 fi
 
-if [[ $# -lt 1 ]]; then
+# Parse arguments for -y/--yes flag
+auto_confirm=false
+args=()
+for arg in "$@"; do
+  if [[ "${arg}" == "-y" || "${arg}" == "--yes" ]]; then
+    auto_confirm=true
+  else
+    args+=("${arg}")
+  fi
+done
+
+if [[ ${#args[@]} -eq 0 ]]; then
   special_instructions="None"
 else
-  special_instructions="${*}"
+  special_instructions="${args[*]}"
 fi
 
 function ctrlc_trap() {
@@ -115,8 +131,8 @@ echo "${commit_message}"
 log_newline
 log_line
 
-if [[ "${CONFIRM:-false}" == "true" ]]; then
-  log_message "Auto-confirming commit (CONFIRM=true)"
+if [[ "${auto_confirm}" == "true" || "${CONFIRM:-false}" == "true" ]]; then
+  log_message "Auto-confirming commit"
 else
   if ! press_enter_to_continue "Press Enter to commit, any other key to abort."; then
     log_warning "Commit aborted"
@@ -137,8 +153,8 @@ if ! git remote get-url origin &>/dev/null; then
   exit 0
 fi
 
-if [[ "${CONFIRM:-false}" == "true" ]]; then
-  log_message "Auto-confirming push (CONFIRM=true)"
+if [[ "${auto_confirm}" == "true" || "${CONFIRM:-false}" == "true" ]]; then
+  log_message "Auto-confirming push"
 else
   if ! press_enter_to_continue "Press Enter to push, any other key to abort."; then
     log_warning "Push aborted"
