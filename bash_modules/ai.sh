@@ -26,7 +26,7 @@ function ai_get_command() {
   local model_key="AI_${service_class^^}_${model_tier^^}"
   local model
   model="$(settings_get "${model_key}")"
-  
+
   if [[ -z "${model}" ]]; then
     echo "ERROR: No model configured for ${service_class} ${model_tier}. Run 'set-aiconfig' to configure." >&2
     return 1
@@ -59,10 +59,10 @@ function ai_get_command() {
       claude)
         command="${command} --append-system-prompt '${system_prompt_content}'"
         # Add permission mode for interactive usage
-        command="${command} --permission-mode acceptEdits"
+        command="${command} --permission-mode default"
         ;;
       gemini)
-        command="GEMINI_SYSTEM_MD=\"${system_prompt_file}\" ${command} --approval-mode auto_edit --prompt-interactive"
+        command="GEMINI_SYSTEM_MD=\"${system_prompt_file}\" ${command} --approval-mode default --prompt-interactive"
         ;;
       aichat)
         command="${command} --prompt '${system_prompt_content}'"
