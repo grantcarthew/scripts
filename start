@@ -142,28 +142,32 @@ if [[ -n "${custom_prompt}" ]]; then
 fi
 
 declare prompt=""
+declare env_prompt="Read the ${HOME}/ENVIRONMENT.md file for environment context."
+declare agents_prompt="Read the AGENTS.md file for general understanding."
+declare agents_suffix="Respond with concise bullet points of the AGENTS.md content."
+declare project_prompt="Read the PROJECT.md document. Respond with a summary of completed work and the remaining tasks as a numbered list."
+declare greeting_prompt="Respond with a simple greeting."
 
 # Build pattern based on file existence
 declare pattern=""
-[[ -f "AGENTS.md" ]] && pattern+="A"
 [[ -f "${HOME}/ENVIRONMENT.md" ]] && pattern+="E"
+[[ -f "AGENTS.md" ]] && pattern+="A"
 [[ -f "PROJECT.md" ]] && pattern+="P"
 
 # Set prompt based on file combination pattern
 case "${pattern}" in
-  "AEP") prompt="Read the AGENTS.md file for general understanding, then read the ${HOME}/ENVIRONMENT.md file for environment context, then read the PROJECT.md file." ;;
-  "AP")  prompt="Read the AGENTS.md file for general understanding, then read the PROJECT.md file." ;;
-  "AE")  prompt="Read the AGENTS.md file for general understanding, then read the ${HOME}/ENVIRONMENT.md file for environment context." ;;
-  "EP")  prompt="Read the ${HOME}/ENVIRONMENT.md file for environment context, then read the PROJECT.md file." ;;
-  "E")   prompt="Read the ${HOME}/ENVIRONMENT.md file for environment context." ;;
-  "P")   prompt="Read the PROJECT.md file." ;;
-  "A")   prompt="Read the AGENTS.md file for general understanding." ;;
-  *)     prompt="" ;;
+  "EAP") prompt="${env_prompt} ${agents_prompt} ${project_prompt}" ;;
+  "AP")  prompt="${agents_prompt} ${project_prompt}" ;;
+  "EA")  prompt="${env_prompt} ${agents_prompt} ${agents_suffix}" ;;
+  "EP")  prompt="${env_prompt} ${project_prompt}" ;;
+  "E")   prompt="${env_prompt} ${greeting_prompt}" ;;
+  "P")   prompt="${project_prompt}" ;;
+  "A")   prompt="${agents_prompt} ${agents_suffix}" ;;
+  *)     prompt="${greeting_prompt}" ;;
 esac
 
 # Execute AI command with determined role file and prompt
 # -----------------------------------------------------------------------------
-prompt+=' Keep your initial response brief. Discuss the work with me.'
 ai_command=$(ai_get_command "${service_class}" "${model_tier}" "${role_file}" "${prompt}")
 log_message "Executing AI command..."
 log_message "❯ $(format_ai_command_display "${ai_command}")"
