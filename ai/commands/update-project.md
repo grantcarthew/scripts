@@ -6,24 +6,9 @@ allowed-tools: Read, Write, Edit
 
 # PROJECT.md Documentation Manager
 
-Maintain project continuity through intelligent documentation: $ARGUMENTS
+Update the PROJECT.md document following the Documentation Process defined.
 
-## Smart Documentation Actions
-
-### Auto-Detection Mode
-
-If no specific action provided, analyze the current conversation and suggest updates:
-
-1. **Session Analysis**: Extract key accomplishments and decisions
-2. **Content Synthesis**: Organize information into logical sections
-3. **Update Recommendations**: Suggest specific PROJECT.md updates
-
-### Specific Actions
-
-- **update** - Comprehensive PROJECT.md update based on session
-- **add [section] [content]** - Add content to specific section
-- **review** - Review and clean up existing PROJECT.md
-- **status** - Show current PROJECT.md status and suggest improvements
+Focus on creating a valuable resource for future sessions.
 
 ## Documentation Processing
 
@@ -45,8 +30,6 @@ If no specific action provided, analyze the current conversation and suggest upd
 - **Command Log**: Critical commands and successful results
 - **Future Review**: Items flagged for later discussion
 
-## Intelligent Features
-
 ### Content Quality
 
 - **Synthesis over Transcription**: Clean, organized summaries
@@ -61,32 +44,11 @@ If no specific action provided, analyze the current conversation and suggest upd
 - **Progress Updates**: Mark completed items as done
 - **Relevance Assessment**: Evaluate information utility
 
-## Usage Examples
+## Response
 
-```bash
-# Auto-analyze and update
-/project
-
-# Comprehensive session update
-/project update
-
-# Add specific content
-/project add "Completed Work" "Implemented user authentication"
-
-# Review and clean up
-/project review
-
-# Check current status
-/project status
-```
-
-## Output Format
-
-Provide clear recommendations for PROJECT.md updates, including:
+After updating the document, provide clear summary of PROJECT.md updates, including:
 
 - **Section-by-section changes**
-- **New content to add**
-- **Obsolete content to remove**
+- **New content added**
+- **Obsolete content removed**
 - **Structural improvements**
-
-Focus on creating a valuable resource for future sessions.
