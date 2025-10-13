@@ -17,7 +17,6 @@ Usage: $(basename "$0") [-h|--help]
 Restore AI configuration files from ai/config/
 
 This script copies:
-  - ai/config/ENVIRONMENT.md to ~/
   - ai/config/claude-code/settings.json to ~/.claude/
   - ai/commands/ to ~/.claude/commands/
   - ai/config/claude-code/agents/ to ~/.claude/agents/
@@ -134,24 +133,6 @@ log_message "Claude Source: '${CLAUDE_SOURCE_DIR}'"
 log_message "Commands Source: '${COMMANDS_SOURCE_DIR}'"
 log_message "Claude Target: '${CLAUDE_TARGET_DIR}'"
 log_message "Safety Backup: '${SAFETY_BACKUP_DIR}'"
-
-# Restore ENVIRONMENT.md
-# -----------------------------------------------------------------------------
-log_subheading "Environment File"
-declare -r ENV_BACKUP_NAME="${OS_NAME}-ENVIRONMENT.md"
-if [[ -f "${CONFIG_SOURCE_DIR}/${ENV_BACKUP_NAME}" ]]; then
-  # Safety backup existing file
-  safety_backup "${HOME}/ENVIRONMENT.md" "ENVIRONMENT.md"
-
-  if rsync -a "${CONFIG_SOURCE_DIR}/${ENV_BACKUP_NAME}" "${HOME}/ENVIRONMENT.md"; then
-    log_success "ENVIRONMENT.md restored from '${ENV_BACKUP_NAME}'"
-  else
-    log_failure "Failed to restore ENVIRONMENT.md"
-    exit 1
-  fi
-else
-  log_warning "OS-specific environment file '${ENV_BACKUP_NAME}' not found in backup, skipping"
-fi
 
 # Restore settings.json
 # -----------------------------------------------------------------------------

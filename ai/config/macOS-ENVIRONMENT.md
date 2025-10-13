@@ -28,6 +28,20 @@ The following information is for AI Agents to learn specifics of the user and en
   - Font engine: CoreText (macOS native)
   - Renderer: Metal (GPU-accelerated)
 
+## Reference Documentations
+
+- Commonly used documentation has been cloned to the local system for easy reference
+- Path: /Users/gcarthew/Reference
+- Index:
+  - Main Index: /Users/gcarthew/Reference/INDEX.csv
+  - Child Index: Each documentation directory contains an INDEX.csv file
+
+Querying indexes:
+
+- Read CSV files directly using the Read tool (most token-efficient)
+- Use ripgrep for keyword searches: `rg -i "keyword" ~/Reference/*/INDEX.csv`
+- Example: `rg "yaml" ~/Reference/gitlab/INDEX.csv` to find YAML-related docs
+
 ## CLI Tools
 
 Run `--help` argument for syntax.

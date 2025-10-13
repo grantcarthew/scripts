@@ -17,7 +17,6 @@ Usage: $(basename "$0") [--test] [-h|--help]
 Compare AI configuration files between user config and repository backup.
 
 This script compares:
-  - ~/ENVIRONMENT.md vs ai/config/
   - ~/.claude/settings.json vs ai/config/claude-code/
   - ~/.claude/commands/ vs ai/commands/
   - ~/.claude/agents/ vs ai/config/claude-code/agents/
@@ -89,7 +88,6 @@ declare -r REPO_CLAUDE_DIR="${SCRIPT_DIR}/ai/config/claude-code"
 declare -r USER_COMMANDS_DIR="${USER_CLAUDE_DIR}/commands"
 declare -r REPO_COMMANDS_DIR="${SCRIPT_DIR}/ai/commands"
 declare -r REPO_CONFIG_DIR="${SCRIPT_DIR}/ai/config"
-declare -r ENV_BACKUP_NAME="${OS_NAME}-ENVIRONMENT.md"
 
 declare -i DIFFERENCES_FOUND=0
 
@@ -250,13 +248,6 @@ function compare_directory() {
 
   return 1
 }
-
-# Compare ENVIRONMENT.md
-# -----------------------------------------------------------------------------
-if [[ "${TEST_MODE}" == false ]]; then
-  log_subheading "Environment File"
-fi
-compare_file "${HOME}/ENVIRONMENT.md" "${REPO_CONFIG_DIR}/${ENV_BACKUP_NAME}" "ENVIRONMENT.md"
 
 # Compare settings.json
 # -----------------------------------------------------------------------------
