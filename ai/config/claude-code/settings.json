@@ -2,9 +2,12 @@
   "permissions": {
     "allow": [
       "Fetch_markdown",
-      "Read(/Users/gcarthew/ENVIRONMENT.md)",
-      "Read(/home/grant/ENVIRONMENT.md)",
-      "Read(~/ENVIRONMENT.md)",
+      "Read(~/reference/**)",
+      "Read(/home/grant/reference/**)",
+      "Read(/Users/gcarthew/reference/**)",
+      "Read(~/reference/docs/ENVIRONMENT.md)",
+      "Read(/home/grant/reference/docs/ENVIRONMENT.md)",
+      "Read(/Users/gcarthew/reference/docs/ENVIRONMENT.md)",
       "Read(PROJECT.md)",
       "Write(PROJECT.md)",
       "Read(AGENTS.md)",
@@ -19,7 +22,9 @@
       "Bash(glab ci trace:*)",
       "Bash(yamllint:*)",
       "Bash(kagi:*)",
-      "Bash(get-webpage:*)"
+      "Bash(get-webpage:*)",
+      "Bash(lsd --tree:*)",
+      "Bash(csvlook:*)"
     ],
     "deny": [
       "WebFetch",

@@ -17,7 +17,6 @@ Usage: $(basename "$0") [-h|--help]
 Backup AI configuration files to ai/config/
 
 This script copies:
-  - ~/ENVIRONMENT.md to ai/config/
   - ~/.claude/settings.json to ai/config/claude-code/
   - ~/.claude/commands/ to ai/commands/
   - ~/.claude/agents/ to ai/config/claude-code/agents/
@@ -84,21 +83,6 @@ log_message "Config Target: '${CONFIG_TARGET_DIR}'"
 log_message "Claude Source: '${CLAUDE_SOURCE_DIR}'"
 log_message "Claude Target: '${CLAUDE_TARGET_DIR}'"
 log_message "Commands Target: '${COMMANDS_TARGET_DIR}'"
-
-# Backup ENVIRONMENT.md
-# -----------------------------------------------------------------------------
-log_subheading "Environment File"
-if [[ -f "${HOME}/ENVIRONMENT.md" ]]; then
-  declare -r ENV_BACKUP_NAME="${OS_NAME}-ENVIRONMENT.md"
-  if rsync -a "${HOME}/ENVIRONMENT.md" "${CONFIG_TARGET_DIR}/${ENV_BACKUP_NAME}"; then
-    log_success "ENVIRONMENT.md backed up as '${ENV_BACKUP_NAME}'"
-  else
-    log_failure "Failed to backup ENVIRONMENT.md"
-    exit 1
-  fi
-else
-  log_warning "ENVIRONMENT.md not found, skipping"
-fi
 
 # Backup settings.json
 # -----------------------------------------------------------------------------
