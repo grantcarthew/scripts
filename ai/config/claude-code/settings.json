@@ -36,6 +36,5 @@
       "Bash(git commit:*)"
     ]
   },
-  "model": "sonnet[1m]",
   "alwaysThinkingEnabled": true
 }
