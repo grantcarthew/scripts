@@ -8,6 +8,7 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+source "${SCRIPT_DIR}/bash_modules/colours.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
@@ -132,20 +133,22 @@ function compare_file() {
     DIFFERENCES_FOUND=$((DIFFERENCES_FOUND + 1))
 
     if [[ "${TEST_MODE}" == false ]]; then
-      read -r -p "Show detailed diff? (y/N): " response
-      if [[ "${response}" =~ ^[Yy]$ ]]; then
+      log_newline
+      local term_width
+      term_width=$(tput cols 2>/dev/null || echo 80)
+      local half_width=$((term_width / 2 + 8))
+      printf "%-${half_width}s%s\n" "BACKUP (repository) (${RED}red${NORMAL})" "LIVE (user config) (${GREEN}green${NORMAL})" >&2
+      log_newline
+      local difft_output
+      difft_output="$(difft --color always "${repo_file}" "${user_file}")"
+      if [[ "${difft_output}" == *"No changes."* ]]; then
+        log_message "Structural diff shows no changes. Showing traditional diff:"
         log_newline
-        local difft_output
-        difft_output="$(difft --color always "${repo_file}" "${user_file}")"
-        if [[ "${difft_output}" == *"No changes."* ]]; then
-          log_message "Structural diff shows no changes. Showing traditional diff:"
-          log_newline
-          diff -u "${repo_file}" "${user_file}" || true
-        else
-          echo "${difft_output}"
-        fi
-        log_newline
+        diff -u --label "BACKUP (repository)" --label "LIVE (user config)" "${repo_file}" "${user_file}" || true
+      else
+        echo "${difft_output}"
       fi
+      log_newline
     fi
     return 1
   fi
@@ -226,23 +229,24 @@ function compare_directory() {
       done
 
       log_newline
-      read -r -p "Show detailed diffs? (y/N): " response
-      if [[ "${response}" =~ ^[Yy]$ ]]; then
-        for file in "${different_files[@]}"; do
-          log_newline
-          log_subheading "${file}"
-          local difft_output
-          difft_output="$(difft --color always "${repo_dir}/${file}" "${user_dir}/${file}")"
-          if [[ "${difft_output}" == *"No changes."* ]]; then
-            log_message "Structural diff shows no changes. Showing traditional diff:"
-            log_newline
-            diff -u "${repo_dir}/${file}" "${user_dir}/${file}" || true
-          else
-            echo "${difft_output}"
-          fi
-        done
+      local term_width
+      term_width=$(tput cols 2>/dev/null || echo 80)
+      local half_width=$((term_width / 2 + 8))
+      printf "%-${half_width}s%s\n" "BACKUP (repository) (${RED}red${NORMAL})" "LIVE (user config) (${GREEN}green${NORMAL})" >&2
+      for file in "${different_files[@]}"; do
         log_newline
-      fi
+        log_subheading "${file}"
+        local difft_output
+        difft_output="$(difft --color always "${repo_dir}/${file}" "${user_dir}/${file}")"
+        if [[ "${difft_output}" == *"No changes."* ]]; then
+          log_message "Structural diff shows no changes. Showing traditional diff:"
+          log_newline
+          diff -u --label "BACKUP (repository)" --label "LIVE (user config)" "${repo_dir}/${file}" "${user_dir}/${file}" || true
+        else
+          echo "${difft_output}"
+        fi
+      done
+      log_newline
     fi
   fi
 
