@@ -37,6 +37,5 @@
     "ask": [
     ]
   },
-  "model": "sonnet[1m]",
   "alwaysThinkingEnabled": true
 }
