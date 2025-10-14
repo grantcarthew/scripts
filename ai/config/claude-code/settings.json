@@ -24,17 +24,19 @@
       "Bash(kagi:*)",
       "Bash(get-webpage:*)",
       "Bash(lsd --tree:*)",
-      "Bash(csvlook:*)"
+      "Bash(csvlook:*)",
+      "Bash(ls:*)"
     ],
     "deny": [
       "WebFetch",
       "Bash(terraform apply:*)",
-      "Bash(terraform destroy:*)"
-    ],
-    "ask": [
+      "Bash(terraform destroy:*)",
       "Bash(git push:*)",
       "Bash(git commit:*)"
+    ],
+    "ask": [
     ]
   },
+  "model": "sonnet[1m]",
   "alwaysThinkingEnabled": true
 }
