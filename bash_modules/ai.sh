@@ -46,6 +46,9 @@ function ai_get_command() {
 
   # Build the base command
   local command="${actual_service} --model ${model}"
+  if [[ "${actual_service}" == "gemini" ]]; then
+    command="${command} --include-directories ${HOME}/reference"
+  fi
 
   # Add service-specific system prompt handling if provided
   if [[ -n "${system_prompt_file}" ]]; then
