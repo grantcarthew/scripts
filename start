@@ -142,7 +142,7 @@ if [[ -n "${custom_prompt}" ]]; then
 fi
 
 declare prompt=""
-declare env_prompt="Read the ${HOME}/reference/docs/ENVIRONMENT.md file for environment context. "
+declare env_prompt="Read the ${HOME}/reference/ENVIRONMENT.md file for environment context. "
 env_prompt+="Read the ${HOME}/reference/INDEX.csv for documentation context."
 declare agents_prompt="Read the AGENTS.md file for repository context."
 declare agents_suffix="Respond with concise bullet points of the AGENTS.md content."
@@ -151,7 +151,7 @@ declare greeting_prompt="Respond with a simple greeting."
 
 # Build pattern based on file existence
 declare pattern=""
-[[ -f "${HOME}/reference/docs/ENVIRONMENT.md" ]] && pattern+="E"
+[[ -f "${HOME}/reference/ENVIRONMENT.md" ]] && pattern+="E"
 [[ -f "AGENTS.md" ]] && pattern+="A"
 [[ -f "PROJECT.md" ]] && pattern+="P"
 
