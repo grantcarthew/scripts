@@ -145,8 +145,8 @@ declare prompt=""
 declare env_prompt="Read the ${HOME}/reference/ENVIRONMENT.md file for environment context. "
 env_prompt+="Read the ${HOME}/reference/INDEX.csv for documentation context."
 declare agents_prompt="Read the AGENTS.md file for repository context."
-declare agents_suffix="Respond with concise bullet points of the AGENTS.md content."
-declare project_prompt="Read the PROJECT.md document. Respond with the project title, the shortest possible summary of completed work, and the remaining phases/tasks as a numbered list."
+declare agents_suffix="Respond with the shortest possible summary of the AGENTS.md content."
+declare project_prompt="Read the PROJECT.md document. Respond with the project title, and the shortest possible summary of work required. Include completed tasks. Number the items for ease of reference."
 declare greeting_prompt="Respond with a simple greeting."
 
 # Build pattern based on file existence
