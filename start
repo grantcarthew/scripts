@@ -142,6 +142,7 @@ if [[ -n "${custom_prompt}" ]]; then
 fi
 
 declare prompt=""
+prompt+="$(date "+%Y-%m-%dT%H:%M:%S%:z"): "
 declare env_prompt="Read the ${HOME}/reference/ENVIRONMENT.md file for environment context. "
 env_prompt+="Read the ${HOME}/reference/INDEX.csv for documentation context."
 declare agents_prompt="Read the AGENTS.md file for repository context."
@@ -157,14 +158,14 @@ declare pattern=""
 
 # Set prompt based on file combination pattern
 case "${pattern}" in
-  "EAP") prompt="${env_prompt} ${agents_prompt} ${project_prompt}" ;;
-  "AP")  prompt="${agents_prompt} ${project_prompt}" ;;
-  "EA")  prompt="${env_prompt} ${agents_prompt} ${agents_suffix}" ;;
-  "EP")  prompt="${env_prompt} ${project_prompt}" ;;
-  "E")   prompt="${env_prompt} ${greeting_prompt}" ;;
-  "P")   prompt="${project_prompt}" ;;
-  "A")   prompt="${agents_prompt} ${agents_suffix}" ;;
-  *)     prompt="${greeting_prompt}" ;;
+  "EAP") prompt+="${env_prompt} ${agents_prompt} ${project_prompt}" ;;
+  "AP")  prompt+="${agents_prompt} ${project_prompt}" ;;
+  "EA")  prompt+="${env_prompt} ${agents_prompt} ${agents_suffix}" ;;
+  "EP")  prompt+="${env_prompt} ${project_prompt}" ;;
+  "E")   prompt+="${env_prompt} ${greeting_prompt}" ;;
+  "P")   prompt+="${project_prompt}" ;;
+  "A")   prompt+="${agents_prompt} ${agents_suffix}" ;;
+  *)     prompt+="${greeting_prompt}" ;;
 esac
 
 # Execute AI command with determined role file and prompt
