@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Executes claude --continue
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+
+log_title "[c]laude [c]ode [c]ontinue"
+
+[[ "${1}" -gt 0 ]] && exit 1
+
+log_message "❯ claude --continue"
+claude --continue
