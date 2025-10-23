@@ -25,7 +25,8 @@
       "Bash(get-webpage:*)",
       "Bash(lsd --tree:*)",
       "Bash(csvlook:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(go test:*)"
     ],
     "deny": [
       "WebFetch",
@@ -34,8 +35,7 @@
       "Bash(git push:*)",
       "Bash(git commit:*)"
     ],
-    "ask": [
-    ]
+    "ask": []
   },
   "alwaysThinkingEnabled": true
 }
