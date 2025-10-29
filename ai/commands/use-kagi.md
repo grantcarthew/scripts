@@ -1,66 +1,39 @@
 ---
-argument-hint: <search-query> [options]
+argument-hint: <search-query>
 description: Enhanced internet search using Kagi search engine
 allowed-tools: Bash(kagi:*)
+model: claude-3-5-haiku-20241022
 ---
 
-# Kagi Search Assistant
+# Kagi Search
 
-Perform intelligent web search using Kagi: $ARGUMENTS
+Search the web using Kagi search engine with `$ARGUMENTS`
 
-## Search Strategy
-
-Enhance the search query for better results:
-
-### Query Optimization
-
-- **Technical Topics**: Add relevant technical keywords and version numbers
-- **Documentation**: Include "docs", "documentation", "guide", or "tutorial"
-- **Troubleshooting**: Add "error", "fix", "solution", or "troubleshoot"
-- **Code Examples**: Include "example", "code", "implementation"
-- **Best Practices**: Add "best practices", "patterns", "recommended"
-
-### Search Modifiers
-
-- Use quotes for exact phrases: `"exact phrase"`
-- Exclude terms with minus: `-unwanted`
-- Site-specific search: `site:github.com`
-- File type search: `filetype:pdf`
-- Date ranges: `after:2023`
-
-## Search Processing
-
-1. **Query Analysis**: Understand the search intent
-2. **Query Enhancement**: Optimize search terms for better results
-3. **Result Execution**: Run the Kagi search command
-4. **Result Summary**: Provide key findings and relevant links
-
-## Usage Examples
+## Usage
 
 ```bash
-# Basic search
-/kagi "Claude Code documentation"
-
-# Technical search with modifiers
-/kagi "bash script security best practices 2024"
-
-# Documentation search
-/kagi "Docker compose examples site:github.com"
-
-# Troubleshooting search
-/kagi "GitLab CI pipeline failed error fix"
-
-# Code examples
-/kagi "Python asyncio examples tutorial"
+kagi "search terms"
+kagi "Claude Code documentation"
+kagi "GitLab CI pipeline troubleshooting"
+kagi "Python asyncio examples"
 ```
 
-## Smart Suggestions
+## Search Modifiers
 
-Based on search results, provide:
+- `"exact phrase"` Exact phrase match
+- `-term` Exclude term
+- `site:domain.com` Limit to specific site
+- `filetype:pdf` Limit to file type
+- `after:2023` Date filter
+- `before:2024` Date filter
 
-- **Most Relevant Links**: Top 3-5 most useful results
-- **Quick Summary**: Key points from search results
-- **Related Topics**: Suggest follow-up searches
-- **Actionable Insights**: Next steps based on findings
+## Examples
 
-Execute the search and provide a concise summary of the most valuable results.
+```bash
+kagi "Docker compose examples site:github.com"
+kagi "bash script security -wordpress"
+kagi "GitLab CI YAML reference after:2024"
+kagi "Go concurrency patterns filetype:pdf"
+```
+
+Execute search and summarize key findings with relevant links.

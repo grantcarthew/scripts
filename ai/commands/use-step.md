@@ -1,65 +1,45 @@
 ---
 argument-hint: [task-description]
 description: Enable methodical step-by-step problem solving approach
+model: claude-3-5-haiku-20241022
 ---
 
 # Step-by-Step Problem Solver
 
-Break down the task into manageable steps: $ARGUMENTS
+Break down and solve task methodically: $ARGUMENTS
 
-## Methodical Approach Protocol
+## Process Rules
 
-Apply systematic step-by-step methodology to ensure thorough and organized problem solving.
+1. **Present one step at a time** - Never provide multiple steps in advance
+2. **Wait for confirmation** - User must confirm completion before next step
+3. **Stay focused** - Provide only information needed for current step
+4. **Follow strictly** - Adhere to this methodology throughout
 
-### Process Rules
+## Step Format
 
-1. **Single Step Focus**: Present only one step at a time
-2. **Completion Confirmation**: Wait for user confirmation before proceeding
-3. **Clear Boundaries**: Provide just enough information to complete current step
-4. **Sequential Progress**: Move to next step only after current step completion
-5. **Adherence Requirement**: Strictly follow this step-by-step approach
+```
+Step X of Y: [Title]
 
-### Step Structure
+Objective: What to accomplish
 
-Each step will include:
-
-- **Objective**: What needs to be accomplished
-- **Actions**: Specific tasks to perform
-- **Expected Outcome**: What success looks like
-- **Verification**: How to confirm completion
-
-### Benefits
-
-- **Prevents Overwhelm**: Manageable chunks of work
-- **Ensures Thoroughness**: Nothing gets skipped
-- **Maintains Focus**: Clear current objective
-- **Enables Recovery**: Easy to backtrack if needed
-- **Builds Confidence**: Regular completion milestones
-
-## Task Breakdown Process
-
-1. **Analyze the overall task**: Understand the complete scope
-2. **Identify major phases**: Break into logical sections
-3. **Define sequential steps**: Order tasks by dependencies
-4. **Present first step**: Begin with the initial action
-5. **Await confirmation**: Wait for step completion before continuing
-
-## Step Presentation Format
-
-**Step X of Y: [Step Title]**
-
-**Objective**: Clear description of what to accomplish
-
-**Actions**:
-
+Actions:
 - Specific task 1
 - Specific task 2
 - Specific task 3
 
-**Expected Outcome**: What you should see when complete
+Expected Outcome: What success looks like
 
-**Ready to proceed?** Please confirm completion before I present the next step.
+Ready to proceed? Confirm completion before next step.
+```
+
+## Execution
+
+1. Analyze task and identify major phases
+2. Break into sequential steps with dependencies ordered
+3. Present first step only
+4. After confirmation, present next step
+5. Repeat until task complete
 
 ---
 
-**Let's work this out step by step. I will only provide enough information for each step and wait for your confirmation before proceeding. This methodical approach is important - we'll adhere to it strictly.**
+**Begin step-by-step approach now. Present only Step 1 and wait for confirmation.**
