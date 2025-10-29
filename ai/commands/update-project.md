@@ -13,4 +13,3 @@ allowed-tools: Read, Write, Edit
 - Optimize document structure, mark completed items as done.
 
 Note: This document will be kept for future reference and it MUST remain intact.
-
