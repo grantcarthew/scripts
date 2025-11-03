@@ -22,6 +22,7 @@
       "Bash(glab ci trace:*)",
       "Bash(yamllint:*)",
       "Bash(kagi:*)",
+      "Bash(snag:*)",
       "Bash(get-webpage:*)",
       "Bash(lsd --tree:*)",
       "Bash(csvlook:*)",
