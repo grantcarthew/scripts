@@ -23,7 +23,7 @@
 - Include relevant scope if clear from the changes
 - Start with lowercase letter
 - Do not end with a period
-- If the changed file is the CHANGELOG.md file or similar, the message should reflect the change to the CHANGELOG.md file
+- If the change is only the CHANGELOG.md file, the message should reflect the change to the CHANGELOG.md file
 - Body is optional:
   - Only include if it adds meaningful context
   - For complex changes, provide a brief body paragraph after a blank line
@@ -36,6 +36,7 @@
 - The subject line (the first line) must not exceed 50 characters
 - The body of the message (if needed) should be wrapped at 72 characters
 - Provide only the commit message without any other text, explanation, or formatting.
+- Focus on code changes rather than document changes if both are present
 
 ## Format
 
