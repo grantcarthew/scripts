@@ -125,13 +125,23 @@ current_changelog=$(cat "${changelog_path}" 2>/dev/null)
 # -----------------------------------------------------------------------------
 log_message "Generating updated changelog..."
 
-# Generate prompt using heredoc
-prompt="$(cat <<EOF
-$(cat "${SCRIPT_DIR}/ucl-prompt.md")
+# Build special instructions section if provided
+special_instructions_section=""
+if [[ "${special_instructions}" != "None" ]]; then
+  special_instructions_section="$(cat <<EOF
 
 ## Special Instructions
 
+_If the following instructions tell you to only include a specific directory, ensure you only add information to the CHANGELOG for the given directory._
+
 ${special_instructions}
+EOF
+)"
+fi
+
+# Generate prompt using heredoc
+prompt="$(cat <<EOF
+$(cat "${SCRIPT_DIR}/ucl-prompt.md")${special_instructions_section}
 
 ## Information
 
