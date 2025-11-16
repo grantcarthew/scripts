@@ -120,6 +120,25 @@ Design Records document the **why** behind technical decisions. They capture:
 - Alternatives considered
 - Trade-offs and consequences
 
+## DR Writing Guidelines
+
+**Focus on decisions, not implementation:**
+- DRs capture the reasoning behind choices
+- Implementation details belong in code/docs, not DRs
+- Code-level design decisions (map vs switch) can be included as supporting details
+
+**Structure:**
+- Problem: What constraint drove this decision?
+- Decision: Clear statement of what we chose
+- Why: Core reasoning behind the choice
+- Trade-offs: What we're giving up and gaining
+- Alternatives: Other options considered
+
+**Cross-linking:**
+- Avoid "Related:" sections in individual DRs
+- All relationships managed in this README index
+- Prevents maintenance overhead when DRs change
+
 ## DR Template
 
 Use [dr-001-template.md](dr-001-template.md) as the template for new DRs.
@@ -148,58 +167,33 @@ Use [dr-001-template.md](dr-001-template.md) as the template for new DRs.
 ```markdown
 # DR-001: Design Record Template
 
-**Status:** Example
 **Date:** [Current Date]
+**Status:** Example
+**Category:** Template
 
-## Context
+## Problem
 
-This is the template for creating new Design Records. Replace this section with the context of your decision: What problem are you solving? What constraints exist? What forces are at play?
+This is the template for creating new Design Records. Replace this section with the problem or constraint that drove this decision: What specific issue needs to be resolved? What forces are at play?
 
 ## Decision
 
 State your decision clearly and concisely. This should be specific and actionable.
 
-## Consequences
+## Why
 
-What becomes easier or harder as a result of this decision?
+Explain the core reasoning behind this choice. Why is this the right solution for our context? Include any code-level design decisions as supporting details.
 
-**Positive:**
+## Trade-offs
 
-- Benefit 1
-- Benefit 2
+**Accept:** What costs or limitations are we accepting?
+**Gain:** What benefits do we get from this choice?
 
-**Negative:**
+## Alternatives
 
-- Drawback 1
-- Drawback 2
+What other options were evaluated and why they didn't fit?
 
-**Trade-offs:**
-
-- What are we trading off?
-
-## Alternatives Considered
-
-What other options were evaluated?
-
-### Alternative 1: [Name]
-
-- Description
-- Why rejected
-
-### Alternative 2: [Name]
-
-- Description
-- Why rejected
-
-## Implementation Notes
-
-Practical guidance for implementing this decision.
-
-## Related
-
-- DR-XXX: Related decision
-- Issue #XXX: Relevant discussion
-- [External link]: Reference material
+- **Alternative 1:** Brief description and why rejected
+- **Alternative 2:** Brief description and why rejected
 ```
 
 #### File: `docs/guides/getting-started.md` (if applicable)
