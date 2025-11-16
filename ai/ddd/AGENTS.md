@@ -60,9 +60,10 @@ This project uses Document Driven Development. Design decisions are documented i
 
 **DR workflow:**
 
-1. Check `docs/design/design-records/README.md` for next DR number
+1. Check `docs/design/design-records/README.md` for next DR number and writing guidelines
 2. Create `dr-NNN-title.md` using template from `dr-001-template.md`
-3. Update DR index in `README.md`
+3. Focus on decision reasoning, not implementation details
+4. Update DR index in `README.md`
 
 ### Documentation Rules
 
