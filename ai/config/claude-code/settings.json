@@ -23,7 +23,6 @@
       "Bash(yamllint:*)",
       "Bash(kagi:*)",
       "Bash(snag:*)",
-      "Bash(get-webpage:*)",
       "Bash(lsd --tree:*)",
       "Bash(csvlook:*)",
       "Bash(ls:*)",
@@ -31,6 +30,7 @@
     ],
     "deny": [
       "WebFetch",
+      "WebSearch",
       "Bash(terraform apply:*)",
       "Bash(terraform destroy:*)",
       "Bash(git push:*)",
@@ -38,6 +38,6 @@
     ],
     "ask": []
   },
-  "alwaysThinkingEnabled": true,
-  "model": "sonnet[1m]"
+  "model": "sonnet",
+  "alwaysThinkingEnabled": true
 }
