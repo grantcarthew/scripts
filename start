@@ -145,6 +145,7 @@ declare prompt=""
 prompt+="$(date "+%Y-%m-%dT%H:%M:%S%:z"): "
 declare env_prompt="Read the ${HOME}/reference/ENVIRONMENT.md file for environment context. "
 env_prompt+="Read the ${HOME}/reference/INDEX.csv for documentation context."
+declare cli_prompt="Read the ${HOME}/reference/cli/INDEX.csv for available CLI tool documentation."
 declare agents_prompt="Read the AGENTS.md file for repository context."
 declare agents_suffix="Respond with the shortest possible summary of the AGENTS.md content."
 declare project_prompt="Read the PROJECT.md document. Respond with the project title, and the shortest possible summary of work required. Include completed tasks. Number the items for ease of reference."
@@ -153,19 +154,28 @@ declare greeting_prompt="Respond with a simple greeting."
 # Build pattern based on file existence
 declare pattern=""
 [[ -f "${HOME}/reference/ENVIRONMENT.md" ]] && pattern+="E"
+[[ -f "${HOME}/reference/cli/INDEX.csv" ]] && pattern+="C"
 [[ -f "AGENTS.md" ]] && pattern+="A"
 [[ -f "PROJECT.md" ]] && pattern+="P"
 
 # Set prompt based on file combination pattern
 case "${pattern}" in
-  "EAP") prompt+="${env_prompt} ${agents_prompt} ${project_prompt}" ;;
-  "AP")  prompt+="${agents_prompt} ${project_prompt}" ;;
-  "EA")  prompt+="${env_prompt} ${agents_prompt} ${agents_suffix}" ;;
-  "EP")  prompt+="${env_prompt} ${project_prompt}" ;;
-  "E")   prompt+="${env_prompt} ${greeting_prompt}" ;;
-  "P")   prompt+="${project_prompt}" ;;
-  "A")   prompt+="${agents_prompt} ${agents_suffix}" ;;
-  *)     prompt+="${greeting_prompt}" ;;
+  "ECAP") prompt+="${env_prompt} ${cli_prompt} ${agents_prompt} ${project_prompt}" ;;
+  "ECA")  prompt+="${env_prompt} ${cli_prompt} ${agents_prompt} ${agents_suffix}" ;;
+  "ECP")  prompt+="${env_prompt} ${cli_prompt} ${project_prompt}" ;;
+  "EC")   prompt+="${env_prompt} ${cli_prompt} ${greeting_prompt}" ;;
+  "EAP")  prompt+="${env_prompt} ${agents_prompt} ${project_prompt}" ;;
+  "CAP")  prompt+="${cli_prompt} ${agents_prompt} ${project_prompt}" ;;
+  "CA")   prompt+="${cli_prompt} ${agents_prompt} ${agents_suffix}" ;;
+  "CP")   prompt+="${cli_prompt} ${project_prompt}" ;;
+  "AP")   prompt+="${agents_prompt} ${project_prompt}" ;;
+  "EA")   prompt+="${env_prompt} ${agents_prompt} ${agents_suffix}" ;;
+  "EP")   prompt+="${env_prompt} ${project_prompt}" ;;
+  "E")    prompt+="${env_prompt} ${greeting_prompt}" ;;
+  "C")    prompt+="${cli_prompt} ${greeting_prompt}" ;;
+  "P")    prompt+="${project_prompt}" ;;
+  "A")    prompt+="${agents_prompt} ${agents_suffix}" ;;
+  *)      prompt+="${greeting_prompt}" ;;
 esac
 
 # Execute AI command with determined role file and prompt
