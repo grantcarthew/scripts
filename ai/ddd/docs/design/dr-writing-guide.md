@@ -76,14 +76,19 @@ Add as needed:
 Config structure and schema (TOML, JSON, etc.):
 
 ```toml
-[agents.claude]
-bin = "claude"
-command = "{bin} --model {model} '{prompt}'"
-default_model = "sonnet"
+[database]
+host = "localhost"
+port = 5432
+timeout = 30
+pool_size = 10
 
-  [agents.claude.models]
-  haiku = "claude-3-5-haiku-20241022"
-  sonnet = "claude-3-7-sonnet-20250219"
+[cache.redis]
+enabled = true
+ttl = 3600
+
+  [cache.redis.endpoints]
+  primary = "redis-01.example.com:6379"
+  secondary = "redis-02.example.com:6379"
 ```
 
 This is NOT implementation code - it's the schema/structure being defined.
@@ -93,59 +98,72 @@ This is NOT implementation code - it's the schema/structure being defined.
 Behavior and command usage:
 
 ```bash
-start --agent claude --model sonnet
-start task code-review "focus on security"
+myapp deploy --environment prod --verbose
+myapp run migration --dry-run "add user index"
 ```
 
 ### ✅ Field Descriptions
 
 Field meanings and constraints:
 
-role (string, optional):
+status (string, required):
 
-- Name reference to a role defined in `[roles.<name>]`
-- Example: `"code-reviewer"` (references `[roles.code-reviewer]`)
-- If omitted: Uses `default_role` from settings
+- Current state of the resource
+- Valid values: `"pending"`, `"active"`, `"completed"`, `"failed"`
+- Default: `"pending"`
+- Immutable once set to `"completed"` or `"failed"`
 
 ### ✅ Validation Rules
 
 Validation requirements:
 
-At configuration load:
+At resource creation:
 
-- Task name matches pattern: `/^[a-z0-9]+(-[a-z0-9]+)*$/`
-- At least one of `file`, `command`, or `prompt` present
-- `role` field (if present) references existing role name
+- Resource name matches pattern: `/^[a-z][a-z0-9-]*[a-z0-9]$/`
+- Name length between 3 and 63 characters
+- At least one of `endpoint`, `config_file`, or `inline_config` must be present
+- If `ttl` is specified, must be between 60 and 86400 seconds
 
 ### ✅ Execution Flows
 
 Step-by-step algorithms:
 
-When `start task <name>` is executed:
+When `myapp process <job-id>` is executed:
 
-1. Select role:
-   - CLI `--role` flag → use it
-   - Else task `role` field → use it
-   - Else `default_role` setting → use it
+1. Determine retry strategy:
+   - CLI `--retry-policy` flag → use specified policy
+   - Else job `retry_policy` field → use job-specific policy
+   - Else global `default_retry_policy` → use system default
+   - If all fail → use built-in exponential backoff
+
+2. Execute processing:
+   - Load job data from storage
+   - Apply retry policy if previous attempts exist
+   - Process according to job type
+   - Update status atomically
 
 ### ✅ Tables and Matrices
 
 Scope and behavior matrices:
 
-| Placeholder | Agent Commands | Roles | Contexts | Tasks |
-| ----------- | -------------- | ----- | -------- | ----- |
-| {model}     | ✓              | ✓     | ✓        | ✓     |
-| {prompt}    | ✓              | -     | -        | -     |
+| Feature      | Free Tier | Pro Tier | Enterprise |
+| ------------ | --------- | -------- | ---------- |
+| API Access   | ✓         | ✓        | ✓          |
+| Rate Limit   | 100/hour  | 1000/hr  | Unlimited  |
+| Webhooks     | -         | ✓        | ✓          |
+| SLA          | -         | 99.9%    | 99.99%     |
+| Support      | Community | Email    | 24/7 Phone |
 
 ### ✅ Breaking Changes Notes
 
 Historical changes:
 
-Breaking Changes from Original:
+Breaking Changes from v1.x:
 
-1. Changed: `role` field now references role name (not file path)
-2. Removed: `documents` array (auto-includes required contexts)
-3. Added: `agent` field for agent selection
+1. Changed: `timeout` field now measured in seconds (previously milliseconds)
+2. Removed: `legacy_mode` flag (superseded by compatibility layer)
+3. Added: `retry_strategy` field for configurable retry behavior
+4. Renamed: `endpoint_url` → `endpoint` for consistency
 
 ### ✅ Updates Section
 
@@ -153,8 +171,9 @@ Dated updates:
 
 Updates:
 
-- 2025-01-04: Changed from hardcoded tier names to flexible user-defined model names
-- 2025-01-05: Changed from global-only to both global + local support
+- 2025-01-15: Changed from fixed connection pool to dynamic sizing based on load
+- 2025-01-20: Added support for both environment variables and config files
+- 2025-02-01: Deprecated string-based status in favor of enum type
 
 ---
 
