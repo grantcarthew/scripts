@@ -1,6 +1,8 @@
 # Document Driven Development (DDD) Template - Bootstrap Guide
 
-This document guides AI agents through bootstrapping a new DDD project structure. It captures lessons learned from the `start` CLI project to minimize documentation churn and maximize clarity.
+This document guides AI agents through bootstrapping a new DDD project structure.
+
+**IMPORTANT:** Read `docs/design/dr-writing-guide.md` before continuing. That guide defines how to write Design Records. This guide defines how to bootstrap the project structure.
 
 ---
 
@@ -76,7 +78,13 @@ Update the existing AGENTS.md template with information gathered in Step 1:
 
 ### Step 4: Create Core DDD Files
 
-Generate these files with the templates below:
+Copy and generate these files:
+
+#### File: `docs/design/dr-writing-guide.md`
+
+Copy from template location: `docs/design/dr-writing-guide.md` (in same directory tree as this PROJECT.md)
+
+This is the complete guide for writing Design Records.
 
 #### File: `docs/design/README.md`
 
@@ -91,15 +99,11 @@ Design Records document significant technical decisions made during development.
 
 **Location:** `design-records/`
 
-**When to create a DR:** See AGENTS.md for guidelines.
+**Writing guidelines:** See [dr-writing-guide.md](dr-writing-guide.md)
 
 **Index:** See [design-records/README.md](design-records/README.md) for complete list.
 
 ## Quick Decision Log
-
-For reference, recent major decisions:
-
-- [DR-001](design-records/dr-001-template.md) - DR Template (example)
 
 _Update this list when adding significant DRs_
 ```
@@ -120,34 +124,13 @@ Design Records document the **why** behind technical decisions. They capture:
 - Alternatives considered
 - Trade-offs and consequences
 
-## DR Writing Guidelines
-
-**Focus on decisions, not implementation:**
-- DRs capture the reasoning behind choices
-- Implementation details belong in code/docs, not DRs
-- Code-level design decisions (map vs switch) can be included as supporting details
-
-**Structure:**
-- Problem: What constraint drove this decision?
-- Decision: Clear statement of what we chose
-- Why: Core reasoning behind the choice
-- Trade-offs: What we're giving up and gaining
-- Alternatives: Other options considered
-
-**Cross-linking:**
-- Avoid "Related:" sections in individual DRs
-- All relationships managed in this README index
-- Prevents maintenance overhead when DRs change
-
-## DR Template
-
-Use [dr-001-template.md](dr-001-template.md) as the template for new DRs.
+For DR writing guidelines, see [../dr-writing-guide.md](../dr-writing-guide.md)
 
 ## Active DRs
 
-| Number | Title    | Status  | Date   |
-| ------ | -------- | ------- | ------ |
-| DR-001 | Template | Example | [DATE] |
+| Number | Title | Status | Date |
+| ------ | ----- | ------ | ---- |
+| -      | -     | -      | -    |
 
 ## Superseded DRs
 
@@ -160,40 +143,6 @@ Use [dr-001-template.md](dr-001-template.md) as the template for new DRs.
 | Number | Title | Reason | Date |
 | ------ | ----- | ------ | ---- |
 | -      | -     | -      | -    |
-```
-
-#### File: `docs/design/design-records/dr-001-template.md`
-
-```markdown
-# DR-001: Design Record Template
-
-**Date:** [Current Date]
-**Status:** Example
-**Category:** Template
-
-## Problem
-
-This is the template for creating new Design Records. Replace this section with the problem or constraint that drove this decision: What specific issue needs to be resolved? What forces are at play?
-
-## Decision
-
-State your decision clearly and concisely. This should be specific and actionable.
-
-## Why
-
-Explain the core reasoning behind this choice. Why is this the right solution for our context? Include any code-level design decisions as supporting details.
-
-## Trade-offs
-
-**Accept:** What costs or limitations are we accepting?
-**Gain:** What benefits do we get from this choice?
-
-## Alternatives
-
-What other options were evaluated and why they didn't fit?
-
-- **Alternative 1:** Brief description and why rejected
-- **Alternative 2:** Brief description and why rejected
 ```
 
 #### File: `docs/guides/getting-started.md` (if applicable)
@@ -343,9 +292,9 @@ Confirm all files are created:
 **Essential files:**
 
 - [x] `AGENTS.md` - Populated with project information
+- [x] `docs/design/dr-writing-guide.md` - DR writing guidelines
 - [x] `docs/design/README.md`
 - [x] `docs/design/design-records/README.md` - DR index
-- [x] `docs/design/design-records/dr-001-template.md` - DR template
 - [x] `docs/ideas/README.md`
 
 **Conditional files:**
@@ -367,164 +316,16 @@ Provide summary of created structure:
 ✓ DDD project structure initialized
 
 Created:
+- DR writing guide (docs/design/dr-writing-guide.md)
 - Design Records system (docs/design/design-records/)
-- DR index and template (DR-001)
+- DR index (docs/design/design-records/README.md)
 - Ideas directory (docs/ideas/)
 [List conditional directories created]
 
 Next steps:
-1. Start documenting design decisions as DRs
-2. Follow DDD guidelines in AGENTS.md when making changes
+1. Read docs/design/dr-writing-guide.md
+2. Start documenting design decisions as DRs
 3. Run documentation reconciliation after ~5-10 DRs
 
 Ready to begin design phase.
 ```
-
----
-
-## Phase 2: DDD Reference
-
-This section explains the philosophy and guidelines for maintaining DDD projects.
-
-### Document Hierarchy and Cross-Linking Strategy
-
-#### Single Source of Truth (Link to these)
-
-**Design Records (DRs)**
-
-- Authoritative technical decisions
-- Never duplicate DR content elsewhere
-- Other documents reference DRs via links
-- Format: `See DR-XXX for details on [topic]`
-
-**Example:**
-
-```markdown
-<!-- In user documentation -->
-
-Asset resolution follows a three-tier lookup strategy.
-See [DR-033: Asset Resolution Algorithm](../design/design-records/dr-033-asset-resolution-algorithm.md) for complete details.
-```
-
-#### Duplication Allowed (Optimize for reader)
-
-**User-facing documentation**
-
-- Command/API docs can duplicate practical examples from DRs
-- Tutorial docs should be self-contained for learning flow
-- README can summarize key concepts without full detail
-- Include DR reference at bottom for deep dive
-
-**Example:**
-
-```markdown
-<!-- In getting-started.md -->
-
-## Installing Dependencies
-
-Quick example:
-$ npm install
-
-This will install all dependencies listed in package.json.
-
-For complete dependency resolution algorithm, see [DR-015: Dependency Resolution](../design/design-records/dr-015-dependency-resolution.md).
-```
-
-### When to Create Design Records
-
-**Always create a DR for:**
-
-- Architectural decisions (component structure, data flow)
-- Algorithm specifications (search, sorting, resolution)
-- Breaking changes or deprecations
-- Data formats, schemas, or protocols
-- Public API or CLI command structure
-- Security or performance trade-offs
-- Major UX decisions
-
-**Never create a DR for:**
-
-- Simple bug fixes
-- Documentation corrections
-- Code refactoring without behavior change
-- Cosmetic changes
-- Internal implementation details
-
-### DR Structure
-
-See `docs/design/design-records/dr-001-template.md` for the complete template.
-
-**Minimum required sections:**
-
-- **Status:** Proposed | Accepted | Superseded | Deprecated
-- **Date:** YYYY-MM-DD
-- **Context:** Why is this decision needed?
-- **Decision:** What are we deciding?
-- **Consequences:** What are the implications?
-
-**Recommended sections:**
-
-- **Alternatives Considered:** What else did we evaluate?
-- **Implementation Notes:** Practical guidance
-
-### DR Numbering
-
-- Sequential numbering: DR-001, DR-002, etc.
-- Gaps are acceptable (deleted/superseded DRs)
-- Maintain index in `design-records/README.md`
-
-### Documentation Reconciliation
-
-**When to reconcile:**
-
-1. After major design iteration (5-10 new DRs written)
-2. Before milestone releases
-3. When design stabilizes
-4. When user feedback indicates confusion
-
-**Reconciliation checklist:**
-
-- Remove references to deprecated/removed features
-- Update all cross-links to DRs
-- Verify examples still work with current design
-- Remove stale TODOs and placeholders
-- Check consistency of terminology
-- Ensure DR index is up to date
-- Verify README reflects current state
-
-**Commands for finding issues:**
-
-```bash
-# Find deprecated references (customize pattern)
-rg "old-pattern" docs/
-
-# Find placeholders
-rg "TODO|TBD|to be written" docs/
-
-# Verify DR links
-rg "\[DR-[0-9]+" docs/
-```
-
-### Success Criteria
-
-A successful DDD implementation achieves:
-
-- Design decisions are traceable to specific DRs
-- User documentation is readable without excessive navigation
-- Changes to design require minimal document updates
-- New team members can understand decisions through DRs
-- Documentation remains consistent through iterations
-- Reconciliation passes find minimal issues
-
----
-
-## Meta
-
-This framework was created through Document Driven Development. It represents distilled lessons from:
-
-- Building the `start` CLI tool (January 2025)
-- 5+ documentation reconciliation passes
-- Identifying documentation churn patterns
-- Discovering duplication vs. cross-linking trade-offs
-
-The goal: Start new DDD projects with minimal churn by establishing structure upfront.
