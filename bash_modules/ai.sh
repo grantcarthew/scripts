@@ -44,28 +44,34 @@ function ai_get_command() {
       ;;
   esac
 
-  # Build the base command
+  # Build base command with service-specific defaults
   local command="${actual_service} --model ${model}"
-  if [[ "${actual_service}" == "gemini" ]]; then
-    command="${command} --include-directories ${HOME}/reference"
-  fi
+  local env_prefix=""
+
+  case "${actual_service}" in
+    claude)
+      command="${command} --permission-mode default"
+      ;;
+    gemini)
+      command="${command} --include-directories ${HOME}/reference --approval-mode default --prompt-interactive"
+      ;;
+    aichat)
+      # aichat has no default flags
+      ;;
+  esac
 
   # Add service-specific system prompt handling if provided
   if [[ -n "${system_prompt_file}" ]]; then
-    # Read and properly escape the system prompt content
     local system_prompt_content
     system_prompt_content="$(cat "${system_prompt_file}")"
-    # Escape single quotes in the content
     system_prompt_content="${system_prompt_content//\'/\'\\\'\'}"
 
     case "${actual_service}" in
       claude)
         command="${command} --append-system-prompt '${system_prompt_content}'"
-        # Add permission mode for interactive usage
-        command="${command} --permission-mode default"
         ;;
       gemini)
-        command="GEMINI_SYSTEM_MD=\"${system_prompt_file}\" ${command} --approval-mode default --prompt-interactive"
+        env_prefix="GEMINI_SYSTEM_MD=\"${system_prompt_file}\" "
         ;;
       aichat)
         command="${command} --prompt '${system_prompt_content}'"
@@ -73,12 +79,11 @@ function ai_get_command() {
     esac
   fi
 
-  # Add prompt if provided
+  # Add user prompt if provided
   if [[ -n "${prompt}" ]]; then
-    # Escape single quotes in the prompt
     local escaped_prompt="${prompt//\'/\'\\\'\'}"
     command="${command} '${escaped_prompt}'"
   fi
 
-  printf "%s" "${command}"
+  printf "%s%s" "${env_prefix}" "${command}"
 }
