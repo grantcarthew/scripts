@@ -89,7 +89,7 @@ trap ctrlc_trap SIGINT
 log_title "Starting AI Agent"
 
 # Determine AI service class - default to alpha for interactive work
-declare service_class="alpha"
+declare service_class="beta"
 if [[ -n "${ai_service_class}" ]]; then
   service_class="${ai_service_class}"
 fi
