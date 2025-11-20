@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [directory]
+
+Formats markdown files recursively using markdownlint-cli2 with CommonMark-
+compliant configuration. Operates from current working directory or specified
+directory.
+
+Dependencies:
+  markdownlint-cli2  Node.js package for markdown formatting (or via npx)
+
+Optional arguments:
+  directory          Directory to format (default: current directory)
+  -h, --help         Show this help message and exit
+EOF
+}
+if [[ "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 0
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Title and Dependency Checks
+# -----------------------------------------------------------------------------
+log_title "Markdown Formatter"
+
+declare config_file="${SCRIPT_DIR}/templates/.markdownlint-cli2.jsonc"
+
+if [[ ! -f "${config_file}" ]]; then
+  log_error "Configuration file not found: '${config_file}'"
+  exit 1
+fi
+
+# Determine the executable
+declare cmd=""
+if command -v markdownlint-cli2 >/dev/null 2>&1; then
+  cmd="markdownlint-cli2"
+elif command -v npx >/dev/null 2>&1; then
+  cmd="npx markdownlint-cli2"
+else
+  log_error "Neither 'markdownlint-cli2' nor 'npx' found in PATH"
+  exit 1
+fi
+
+# Report Operational Values
+# -----------------------------------------------------------------------------
+log_heading "Operational Values"
+
+declare target_dir="${1:-.}"
+declare absolute_dir
+absolute_dir="$(cd "${target_dir}" 2>/dev/null && pwd)" || {
+  log_error "Invalid directory: '${target_dir}'"
+  exit 1
+}
+
+log_message "$(
+  cat <<EOF
+   Executable: '${cmd}'
+Configuration: '${config_file}'
+    Directory: '${absolute_dir}'
+EOF
+)"
+
+# Main Logic
+# -----------------------------------------------------------------------------
+log_heading "Formatting Markdown Files"
+
+cd "${absolute_dir}" || exit 1
+
+if ${cmd} --fix "**/*.md" --config "${config_file}"; then
+  log_success "Markdown files formatted successfully"
+else
+  log_failure "Markdown formatting encountered errors"
+  exit 1
+fi
