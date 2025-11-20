@@ -73,7 +73,7 @@ log_title "New AI Role Prompt Generator"
 # No external dependencies needed since we're using local files
 
 # Check if AI service is configured
-if ! ai_get_command "alpha" "fast" >/dev/null 2>&1; then
+if ! ai_get_command "claude" "fast" >/dev/null 2>&1; then
   log_error "ERROR: No AI service configured. Run 'set-aiconfig' to configure AI services."
   exit 1
 fi
@@ -142,7 +142,7 @@ Please create an AI role prompt for: ${user_role_request}"
 
 log_message "Sending request to AI service..."
 
-ai_command=$(ai_get_command "alpha" "mid" "" "${combined_prompt}")
+ai_command=$(ai_get_command "claude" "mid" "" "${combined_prompt}")
 ai_response=$(eval "${ai_command}")
 
 if [[ -z "${ai_response}" ]]; then

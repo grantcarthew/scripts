@@ -116,7 +116,7 @@ ${staged_changes}
 EOF
 )"
 
-if ! commit_message=$(eval "$(ai_get_command gamma fast "${SCRIPT_DIR}/gcm-prompt.md" "${prompt}")"); then
+if ! commit_message=$(eval "$(ai_get_command aichat fast "${SCRIPT_DIR}/gcm-prompt.md" "${prompt}")"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi

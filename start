@@ -15,7 +15,7 @@ source "${SCRIPT_DIR}/bash_modules/ai.sh"
 
 function print_usage() {
   cat <<EOF
-Usage: $(basename "$0") [--ai <service_class>] [prompt]
+Usage: $(basename "$0") [--ai <service>] [prompt]
 
 Start AI project development
 
@@ -23,7 +23,7 @@ Dependencies:
   claude, gemini, aichat   AI CLI tools
 
 Optional arguments:
-  --ai <service_class>  Use specific AI service class (alpha, beta, gamma)
+  --ai <service>       Use specific AI service (claude, gemini, aichat)
   prompt               Custom prompt to use instead of default file-based prompts
   -h, --help           Show this help message and exit
 
@@ -33,10 +33,13 @@ EOF
 function format_ai_command_display() {
   local ai_command="$1"
 
+  # Use a variable for the quote character to avoid Bash parsing issues with backslashes
+  local q="'"
+
   # Check if command contains single quotes (indicating a long prompt)
-  if [[ "${ai_command}" == *\'* ]]; then
-    local command_start="${ai_command%%\'*}"
-    local command_end="${ai_command##*\'}"
+  if [[ "${ai_command}" == *"${q}"* ]]; then
+    local command_start="${ai_command%%${q}*}"
+    local command_end="${ai_command##*${q}}"
     echo "${command_start}'...'${command_end}"
   else
     echo "${ai_command}"
@@ -44,7 +47,7 @@ function format_ai_command_display() {
 }
 
 # Parse arguments
-declare ai_service_class=""
+declare ai_service=""
 declare custom_prompt=""
 while [[ $# -gt 0 ]]; do
   case "${1}" in
@@ -54,10 +57,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --ai)
       if [[ -z "${2}" ]]; then
-        log_error "ERROR: --ai requires a service class argument (alpha, beta, gamma)"
+        log_error "ERROR: --ai requires a service argument (claude, gemini, aichat)"
         exit 1
       fi
-      ai_service_class="${2}"
+      ai_service="${2}"
       shift 2
       ;;
     -*)
@@ -88,18 +91,18 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "Starting AI Agent"
 
-# Determine AI service class - default to alpha for interactive work
-declare service_class="beta"
-if [[ -n "${ai_service_class}" ]]; then
-  service_class="${ai_service_class}"
+# Determine AI service - default to gemini for interactive work
+declare service="gemini"
+if [[ -n "${ai_service}" ]]; then
+  service="${ai_service}"
 fi
 
 declare model_tier
-case "${service_class}" in
-  alpha)
+case "${service}" in
+  claude)
     model_tier="mid"
     ;;
-  beta|gamma)
+  gemini|aichat)
     model_tier="pro"
     ;;
   *)
@@ -107,21 +110,20 @@ case "${service_class}" in
     ;;
 esac
 
-log_message "Using AI service class: '${service_class}'"
+log_message "Using AI service: '${service}'"
 
 # Validation Checks
 # -----------------------------------------------------------------------------
-if [[ -n "${ai_service_class}" ]]; then
-  case "${ai_service_class}" in
-    alpha|beta|gamma)
-      # Valid service classes
-      ;;
-    *)
-      log_error "ERROR: Invalid service class '${ai_service_class}'. Valid options: alpha, beta, gamma"
-      exit 1
-      ;;
-  esac
-fi
+case "${service}" in
+  claude|gemini|aichat)
+    # Valid services
+    ;;
+  *)
+    log_error "ERROR: Invalid service '${service}'. Valid options: claude, gemini, aichat"
+    exit 1
+    ;;
+esac
+
 
 # Main Logic - Exit Early Pattern
 # -----------------------------------------------------------------------------
@@ -134,7 +136,7 @@ fi
 # Handle custom prompt override - execute immediately and exit
 if [[ -n "${custom_prompt}" ]]; then
   log_message "Using custom prompt"
-  ai_command=$(ai_get_command "${service_class}" "${model_tier}" "${role_file}" "${custom_prompt}")
+  ai_command=$(ai_get_command "${service}" "${model_tier}" "${role_file}" "${custom_prompt}")
   log_message "Executing AI command..."
   log_message "❯ $(format_ai_command_display "${ai_command}")"
   eval "${ai_command}"
@@ -180,7 +182,7 @@ esac
 
 # Execute AI command with determined role file and prompt
 # -----------------------------------------------------------------------------
-ai_command=$(ai_get_command "${service_class}" "${model_tier}" "${role_file}" "${prompt}")
+ai_command=$(ai_get_command "${service}" "${model_tier}" "${role_file}" "${prompt}")
 log_message "Executing AI command..."
 log_message "❯ $(format_ai_command_display "${ai_command}")"
 eval "${ai_command}"
