@@ -36,4 +36,4 @@ fi
 prompt_file="${SCRIPT_DIR}/get-clihelp-prompt.md"
 prompt="$(cat "${prompt_file}")"
 prompt+=$'\n\n'"${*}"
-eval "$(ai_get_command gamma pro "${prompt_file}" "${*}")"
+eval "$(ai_get_command aichat pro "${prompt_file}" "${*}")"

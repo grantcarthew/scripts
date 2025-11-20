@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Configure AI model settings for alpha/beta/gamma service classes
+# Configure AI model settings for claude/gemini/aichat services
 
 # AI Model Configuration Script
 # -----------------------------------------------------------------------------
-# Interactive script to configure AI model settings for alpha/beta/gamma service classes.
+# Interactive script to configure AI model settings for claude/gemini/aichat.
 # Models are stored in the settings system for use by the ai.sh module.
 
 # Environment setup
@@ -11,7 +11,7 @@
 set -o pipefail
 [[ ${DEBUG-} ]] && set -o xtrace
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+[[ ":${PATH}:" != ":${SCRIPT_DIR}:" ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 source "${SCRIPT_DIR}/bash_modules/settings.sh"
@@ -21,7 +21,7 @@ function print_usage() {
 Usage: $(basename "$0")
 
 Interactive configuration script for AI model settings.
-Configures models for alpha/beta/gamma service classes and fast/mid/pro tiers.
+Configures models for claude, gemini, and aichat services and fast/mid/pro tiers.
 
 Dependencies:
   rg                 RipGrep for settings file management
@@ -42,37 +42,29 @@ function ctrlc_trap() {
 }
 trap ctrlc_trap SIGINT
 
-function get_service_name() {
-  case "${1}" in
-    alpha) echo "claude" ;;
-    beta) echo "gemini" ;;
-    gamma) echo "aichat" ;;
-  esac
-}
-
 function validate_model() {
-  local service_class="${1}"
+  local service="${1}"
   local model="${2}"
 
-  case "${service_class}" in
-    alpha)
+  case "${service}" in
+    claude)
       if [[ ! "${model}" =~ ^claude- ]]; then
         log_warning "Model '${model}' doesn't look like a Claude model"
         return 1
       fi
-      ;;
-    beta)
+      ;; 
+    gemini)
       if [[ ! "${model}" =~ ^gemini- ]]; then
         log_warning "Model '${model}' doesn't look like a Gemini model"
         return 1
       fi
-      ;;
-    gamma)
+      ;; 
+    aichat)
       if [[ ! "${model}" =~ ^vertexai: ]]; then
         log_warning "Model '${model}' doesn't look like an aichat model (should start with 'vertexai:')"
         return 1
       fi
-      ;;
+      ;; 
   esac
   return 0
 }
@@ -93,26 +85,26 @@ done
 # -----------------------------------------------------------------------------
 log_heading "Current Configuration"
 
-for class in alpha beta gamma; do
+for service in claude gemini aichat; do
   for tier in fast mid pro; do
-    key="AI_${class^^}_${tier^^}"
+    key="AI_${service^^}_${tier^^}"
     model="$(settings_get "${key}")"
-    printf "%-15s: %s\n" "${class} ${tier}" "${model:-<not set>}" >&2
+    printf "% -15s: %s\n" "${service} ${tier}" "${model:-<not set>}" >&2
   done
 done
 log_newline
 log_heading "Service Selection"
-log_message "Select service class:"
-echo "1) alpha (claude)" >&2
-echo "2) beta (gemini)" >&2
-echo "3) gamma (aichat)" >&2
-read -p "Choice [1-3]: " class_choice
+log_message "Select service:"
+echo "1) claude" >&2
+echo "2) gemini" >&2
+echo "3) aichat" >&2
+read -p "Choice [1-3]: " service_choice
 
-service_class=""
-case "${class_choice}" in
-  1) service_class="alpha" ;;
-  2) service_class="beta" ;;
-  3) service_class="gamma" ;;
+service=""
+case "${service_choice}" in
+  1) service="claude" ;;
+  2) service="gemini" ;;
+  3) service="aichat" ;;
   *) log_error "Invalid choice"; exit 1 ;;
 esac
 
@@ -132,13 +124,12 @@ case "${tier_choice}" in
 esac
 
 # Get current value
-key="AI_${service_class^^}_${tier^^}"
+key="AI_${service^^}_${tier^^}"
 current="$(settings_get "${key}")"
 
 log_heading "Model Configuration"
-log_message "Configuring: ${service_class} ${tier}"
+log_message "Configuring: ${service} ${tier}"
 log_message "Current value: ${current:-<not set>}"
-log_message "Service: $(get_service_name "${service_class}")"
 log_newline
 
 # Get new model
@@ -150,7 +141,7 @@ if [[ -z "${new_model}" ]]; then
 fi
 
 # Validate and save
-if validate_model "${service_class}" "${new_model}"; then
+if validate_model "${service}" "${new_model}"; then
   settings_set "${key}" "${new_model}"
   log_success "Saved: ${key}=${new_model}"
 else

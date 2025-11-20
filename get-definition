@@ -36,4 +36,4 @@ fi
 prompt_file="${SCRIPT_DIR}/get-definition-prompt.md"
 prompt="$(cat "${prompt_file}")"
 prompt+=$'\n\n'"${*}"
-eval "$(ai_get_command gamma mid "${prompt_file}" "${*}")"
+eval "$(ai_get_command aichat mid "${prompt_file}" "${*}")"

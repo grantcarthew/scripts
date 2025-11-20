@@ -2,53 +2,56 @@
 
 # AI Service Integration Module
 # -----------------------------------------------------------------------------
-# Provides unified AI service command generation with service class abstraction.
-# Service classes: alpha (claude), beta (gemini), gamma (aichat)
+# Provides unified AI service command generation.
+# Services: claude, gemini, aichat
 # Model tiers: fast, mid, pro
 
 MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${MODULES_DIR}/settings.sh"
-
+source "${MODULES_DIR}/utils.sh"
 
 function ai_get_command() {
-  local service_class="${1}"
+  local service="${1}"
   local model_tier="${2}"
   local system_prompt_file="${3:-}"
   local prompt="${4:-}"
 
   # Validate required parameters
-  if [[ -z "${service_class}" || -z "${model_tier}" ]]; then
-    echo "ERROR: ai_get_command requires service_class and model_tier" >&2
+  if [[ -z "${service}" || -z "${model_tier}" ]]; then
+    echo "ERROR: ai_get_command requires service and model_tier" >&2
     return 1
   fi
 
-  # Get model from settings
-  local model_key="AI_${service_class^^}_${model_tier^^}"
-  local model
-  model="$(settings_get "${model_key}")"
-
-  if [[ -z "${model}" ]]; then
-    echo "ERROR: No model configured for ${service_class} ${model_tier}. Run 'set-aiconfig' to configure." >&2
-    return 1
-  fi
-
-  # Map service classes to actual services
-  local actual_service=""
-  case "${service_class}" in
-    alpha) actual_service="claude" ;;
-    beta) actual_service="gemini" ;;
-    gamma) actual_service="aichat" ;;
+  # Validate service
+  case "${service}" in
+    claude|gemini|aichat)
+      ;;
     *)
-      echo "ERROR: Invalid service_class '${service_class}'. Use alpha, beta, or gamma" >&2
+      echo "ERROR: Invalid service '${service}'. Use claude, gemini, or aichat" >&2
       return 1
       ;;
   esac
 
+  # Get model from settings
+  local service_upper
+  service_upper="$(to_upper "${service}")"
+  local tier_upper
+  tier_upper="$(to_upper "${model_tier}")"
+  local model_key="AI_${service_upper}_${tier_upper}"
+  
+  local model
+  model="$(settings_get "${model_key}")"
+
+  if [[ -z "${model}" ]]; then
+    echo "ERROR: No model configured for ${service} ${model_tier}. Run 'set-aiconfig' to configure." >&2
+    return 1
+  fi
+
   # Build base command with service-specific defaults
-  local command="${actual_service} --model ${model}"
+  local command="${service} --model ${model}"
   local env_prefix=""
 
-  case "${actual_service}" in
+  case "${service}" in
     claude)
       command="${command} --permission-mode default"
       ;;
@@ -60,13 +63,17 @@ function ai_get_command() {
       ;;
   esac
 
+  # Define quoting variables for safe replacement
+  local q="'"
+  local escaped_q="'\\''"
+
   # Add service-specific system prompt handling if provided
   if [[ -n "${system_prompt_file}" ]]; then
     local system_prompt_content
     system_prompt_content="$(cat "${system_prompt_file}")"
-    system_prompt_content="${system_prompt_content//\'/\'\\\'\'}"
+    system_prompt_content="${system_prompt_content//${q}/${escaped_q}}"
 
-    case "${actual_service}" in
+    case "${service}" in
       claude)
         command="${command} --append-system-prompt '${system_prompt_content}'"
         ;;
@@ -81,7 +88,7 @@ function ai_get_command() {
 
   # Add user prompt if provided
   if [[ -n "${prompt}" ]]; then
-    local escaped_prompt="${prompt//\'/\'\\\'\'}"
+    local escaped_prompt="${prompt//${q}/${escaped_q}}"
     command="${command} '${escaped_prompt}'"
   fi
 
