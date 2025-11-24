@@ -8,7 +8,7 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
-source "${SCRIPT_DIR}/bash_modules/settings.sh"
+source "${SCRIPT_DIR}/bash_modules/config.sh"
 source "${SCRIPT_DIR}/bash_modules/utils.sh"
 source "${SCRIPT_DIR}/bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
@@ -92,7 +92,10 @@ trap ctrlc_trap SIGINT
 log_title "Starting AI Agent"
 
 # Determine AI service - default to gemini for interactive work
-declare service="gemini"
+declare service
+service="$(config_get "DEFAULT_AI_AGENT")"
+[[ -z "${service}" ]] && service="gemini"
+
 if [[ -n "${ai_service}" ]]; then
   service="${ai_service}"
 fi

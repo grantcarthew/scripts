@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
-# Open settings file in NeoVim
+# Open config file in NeoVim
 
 set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
-source "${SCRIPT_DIR}/bash_modules/settings.sh"
+source "${SCRIPT_DIR}/bash_modules/config.sh"
 
 function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [key] [value]
 
-Edit the settings configuration file in NeoVim
+Edit the config configuration file in NeoVim
 
 Optional arguments:
-  key                The setting key to add/update before editing
-  value              The setting value to set for the key (defaults to empty string)
+  key                The config key to add/update before editing
+  value              The config value to set for the key (defaults to empty string)
   -h, --help         Show this help message and exit
 EOF
 }
@@ -23,7 +23,7 @@ if [[ $# -gt 2 || "${1}" == "-h" || "${1}" == "--help" ]]; then
   exit 1
 fi
 
-log_title "Edit Settings Configuration"
+log_title "Edit Config Configuration"
 
 if ! command -v nvim >/dev/null; then
   log_error "ERROR: NeoVim (nvim) is not installed or not in PATH"
@@ -34,10 +34,10 @@ if [[ $# -ge 1 ]]; then
   key="${1}"
   value="${2:-}"
   log_message "Setting '${key}' = '${value}'"
-  settings_set "${key}" "${value}"
+  config_set "${key}" "${value}"
 fi
 
-settings_file="$(settings_get_path)"
-log_message "Opening settings file: '${settings_file}'"
+config_file="$(config_get_path)"
+log_message "Opening config file: '${config_file}'"
 
-nvim "${settings_file}"
+nvim "${config_file}"

@@ -1,91 +1,91 @@
 #!/usr/bin/env bash
 
-# Key-Value Settings File Management
+# Key-Value Config File Management
 # -----------------------------------------------------------------------------
 # Provides a simple key-value store using a plain text file.
 # Values are stored as quoted strings to handle special characters and newlines.
-# The user's settings file is located at ~/.config/scripts/settings.conf.
-# Default values are sourced from settings-defaults.conf in the same directory as this script.
+# The user's config file is located at ~/.config/scripts/config.conf.
+# Default values are sourced from config-defaults.conf in the same directory as this script.
 # Keys are always stored in uppercase for consistency and case-insensitive access.
 
 MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${MODULES_DIR}/utils.sh"
 
 if ! command -v rg >/dev/null 2>&1; then
-  echo "ERROR: settings.sh requires RipGrep (rg) but it's not installed" >&2
+  echo "ERROR: config.sh requires RipGrep (rg) but it's not installed" >&2
   echo "Install with: brew install ripgrep" >&2
   exit 1
 fi
 
-function _settings_ensure_file_exists() {
-  local settings_file="${1}"
-  local settings_dir
-  settings_dir="$(dirname "${settings_file}")"
-  if [[ ! -d "${settings_dir}" ]]; then
-    mkdir -p "${settings_dir}"
+function _config_ensure_file_exists() {
+  local config_file="${1}"
+  local config_dir
+  config_dir="$(dirname "${config_file}")"
+  if [[ ! -d "${config_dir}" ]]; then
+    mkdir -p "${config_dir}"
   fi
-  if [[ ! -f "${settings_file}" ]]; then
-    touch "${settings_file}"
+  if [[ ! -f "${config_file}" ]]; then
+    touch "${config_file}"
   fi
 }
 
-function settings_get_path() {
-  printf "%s" "${SETTINGS_FILE_PATH:-${HOME}/.config/scripts/settings.conf}"
+function config_get_path() {
+  printf "%s" "${CONFIG_FILE_PATH:-${HOME}/.config/scripts/config.conf}"
 }
 
-function settings_get_defaults_path() {
-  printf "%s" "${SETTINGS_DEFAULTS_PATH:-${MODULES_DIR}/settings-defaults.conf}"
+function config_get_defaults_path() {
+  printf "%s" "${CONFIG_DEFAULTS_PATH:-${MODULES_DIR}/config-defaults.conf}"
 }
 
-function settings_get() {
+function config_get() {
   local key
   key="$(to_upper "${1}")"
-  local user_settings_file
-  user_settings_file="$(settings_get_path)"
-  _settings_ensure_file_exists "${user_settings_file}"
+  local user_config_file
+  user_config_file="$(config_get_path)"
+  _config_ensure_file_exists "${user_config_file}"
 
-  # Extract value from user settings file
+  # Extract value from user config file
   local value
   value=$(awk -F= -v key="${key}" '
     $1 == key {
       val = substr($0, length(key) + 2)
-      if (val ~ /^".*"$/) {
+      if (val ~ /^\".*\"$/) {
         val = substr(val, 2, length(val) - 2)
       }
       # Decode in reverse order: special newlines first, then quotes, then backslashes
       gsub(/\\x0A/, "\n", val)  # Decode our special newline sequence
-      gsub(/\\"/, "\"", val)
+      gsub(/\\\"/, "\"", val)
       gsub(/\\\\/, "\\", val)
       print val
       exit
     }
-  ' "${user_settings_file}")
+  ' "${user_config_file}")
 
   if [[ -n "${value}" ]]; then
     printf "%s" "${value}"
     return
   fi
 
-  # Fall back to defaults file if key not found in user settings
-  local defaults_settings_file
-  defaults_settings_file="$(settings_get_defaults_path)"
-  if [[ -f "${defaults_settings_file}" ]]; then
+  # Fall back to defaults file if key not found in user config
+  local defaults_config_file
+  defaults_config_file="$(config_get_defaults_path)"
+  if [[ -f "${defaults_config_file}" ]]; then
     local default_value
     default_value=$(awk -F= -v key="${key}" '
       $1 == key {
         val = substr($0, length(key) + 2)
-        if (val ~ /^".*"$/) {
+        if (val ~ /^\".*\"$/) {
           val = substr(val, 2, length(val) - 2)
         }
         # Decode escaped quotes and backslashes from defaults file
-        gsub(/\\"/, "\"", val)
+        gsub(/\\\"/, "\"", val)
         gsub(/\\\\/, "\\", val)
         print val
         exit
       }
-    ' "${defaults_settings_file}")
+    ' "${defaults_config_file}")
     if [[ -n "${default_value}" ]]; then
-      settings_set "${key}" "${default_value}"
+      config_set "${key}" "${default_value}"
       printf "%s" "${default_value}"
       return
     fi
@@ -93,13 +93,13 @@ function settings_get() {
   printf ""
 }
 
-function settings_set() {
+function config_set() {
   local key
   key="$(to_upper "${1}")"
   local value="${2}"
-  local settings_file
-  settings_file="$(settings_get_path)"
-  _settings_ensure_file_exists "${settings_file}"
+  local config_file
+  config_file="$(config_get_path)"
+  _config_ensure_file_exists "${config_file}"
 
   local temp_file
   temp_file=$(mktemp)
@@ -118,61 +118,106 @@ function settings_set() {
   ')
 
   # Remove existing key and append new value
-  rg -v "^${key}=" "${settings_file}" > "${temp_file}" || true
+  rg -v "^${key}=" "${config_file}" > "${temp_file}" || true
   printf '%s="%s"\n' "${key}" "${escaped_value}" >> "${temp_file}"
-  mv "${temp_file}" "${settings_file}"
+  mv "${temp_file}" "${config_file}"
 }
 
-function settings_delete() {
+function config_delete() {
   local key
   key="$(to_upper "${1}")"
-  local settings_file
-  settings_file="$(settings_get_path)"
+  local config_file
+  config_file="$(config_get_path)"
 
-  if [[ ! -f "${settings_file}" ]]; then
+  if [[ ! -f "${config_file}" ]]; then
     return
   fi
 
   # Only modify the file if the key exists
-  if rg -q "^${key}=" "${settings_file}"; then
+  if rg -q "^${key}=" "${config_file}"; then
     local temp_file
     temp_file=$(mktemp)
-    rg -v "^${key}=" "${settings_file}" > "${temp_file}"
-    mv "${temp_file}" "${settings_file}"
+    rg -v "^${key}=" "${config_file}" > "${temp_file}"
+    mv "${temp_file}" "${config_file}"
   fi
 }
 
-function settings_list() {
-  local settings_file
-  settings_file="$(settings_get_path)"
-  if [[ ! -f "${settings_file}" ]]; then
+function _config_read_and_print() {
+
+  local file_path="${1}"
+
+  if [[ ! -f "${file_path}" ]]; then
+
     return
+
   fi
+
+
 
   # Read and decode each key-value pair
+
   while IFS= read -r line || [[ -n "${line}" ]]; do
+
     # Skip empty lines or comments
+
     [[ -z "${line}" || "${line}" =~ ^# ]] && continue
 
-    # Split key and value at the first '='
+
+
+    # Split key and value at the first '=' 
+
     local key="${line%%=*}"
+
     local value="${line#*=}"
 
+
+
     # Decode the value for display
+
     local display_value
+
     display_value=$(printf "%s" "${value}" | awk '
+
       {
-        if ($0 ~ /^".*"$/) {
+
+        if ($0 ~ /^\".*\"$/) {
+
           $0 = substr($0, 2, length($0) - 2)
+
         }
+
         # Decode in reverse order: special newlines first, then quotes, then backslashes
+
         gsub(/\\x0A/, "\n")  # Decode our special newline sequence
-        gsub(/\\"/, "\"")
+
+        gsub(/\\\"/, "\"")
+
         gsub(/\\\\/, "\\")
+
         print
+
       }
+
     ')
+
     printf '%s="%s"\n' "${key}" "${display_value}"
-  done < "${settings_file}"
+
+  done < "${file_path}"
+
 }
 
+
+
+function config_list() {
+
+  _config_read_and_print "$(config_get_path)"
+
+}
+
+
+
+function config_list_defaults() {
+
+  _config_read_and_print "$(config_get_defaults_path)"
+
+}

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Gets a script setting or lists all settings
+# Gets a script config or lists all configs
 
 # Environment setup
 # -----------------------------------------------------------------------------
 set -o pipefail # set -o errexit hides errors, don't use it
 [[ ${DEBUG-} ]] && set -o xtrace
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+[[ ":${PATH}:" != *:${SCRIPT_DIR}:* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
-source "${SCRIPT_DIR}/bash_modules/settings.sh"
+source "${SCRIPT_DIR}/bash_modules/config.sh"
 source "${SCRIPT_DIR}/bash_modules/utils.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
@@ -16,13 +16,13 @@ function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [key]
 
-Lists all script settings or returns a specific key/value pair.
+Lists all script configs or returns a specific key/value pair.
 
 Dependencies:
   rg                 RipGrep recursively searches directories for a regex pattern
 
 Optional arguments:
-  key                The specific setting key to retrieve
+  key                The specific config key to retrieve
   -h, --help         Show this help message and exit
 EOF
 }
@@ -44,14 +44,19 @@ done
 
 # Main Logic
 # -----------------------------------------------------------------------------
-log_title "Get Script Setting"
-log_message "Source: $(settings_get_path)"
+log_title "Get Script Config"
+log_message "Source: $(config_get_path)"
 
-# If no argument provided, list all settings
+# If no argument provided, list all configs
 if [[ -z "${1}" ]]; then
-  log_message "Listing all settings:"
+  log_heading "Default Configuration"
+  log_message "Source: $(config_get_defaults_path)"
+  config_list_defaults
   log_newline
-  settings_list
+
+  log_heading "User Configuration"
+  log_message "Source: $(config_get_path)"
+  config_list
   exit 0
 fi
 
@@ -65,7 +70,7 @@ fi
 # Get the value for the specified key
 declare key="${1}"
 declare value
-value="$(settings_get "${key}")"
+value="$(config_get "${key}")"
 
 if [[ -n "${value}" ]]; then
   log_newline
@@ -73,5 +78,5 @@ if [[ -n "${value}" ]]; then
   exit 0
 fi
 
-log_error "Key '$(to_upper "${key}")' not found in settings"
+log_error "Key '$(to_upper "${key}")' not found in config"
 exit 1
