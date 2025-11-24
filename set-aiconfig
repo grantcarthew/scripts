@@ -14,7 +14,7 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != ":${SCRIPT_DIR}:" ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/bash_modules/terminal.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
-source "${SCRIPT_DIR}/bash_modules/settings.sh"
+source "${SCRIPT_DIR}/bash_modules/config.sh"
 
 function print_usage() {
   cat <<EOF
@@ -88,7 +88,7 @@ log_heading "Current Configuration"
 for service in claude gemini aichat; do
   for tier in fast mid pro; do
     key="AI_${service^^}_${tier^^}"
-    model="$(settings_get "${key}")"
+    model="$(config_get "${key}")"
     printf "% -15s: %s\n" "${service} ${tier}" "${model:-<not set>}" >&2
   done
 done
@@ -125,7 +125,7 @@ esac
 
 # Get current value
 key="AI_${service^^}_${tier^^}"
-current="$(settings_get "${key}")"
+current="$(config_get "${key}")"
 
 log_heading "Model Configuration"
 log_message "Configuring: ${service} ${tier}"
@@ -142,13 +142,13 @@ fi
 
 # Validate and save
 if validate_model "${service}" "${new_model}"; then
-  settings_set "${key}" "${new_model}"
+  config_set "${key}" "${new_model}"
   log_success "Saved: ${key}=${new_model}"
 else
   log_newline
   read -p "Save anyway? [y/N]: " confirm
   if [[ "${confirm}" =~ ^[Yy] ]]; then
-    settings_set "${key}" "${new_model}"
+    config_set "${key}" "${new_model}"
     log_success "Saved: ${key}=${new_model}"
   else
     log_warning "Configuration cancelled"

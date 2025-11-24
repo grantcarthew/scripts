@@ -7,7 +7,7 @@
 # Model tiers: fast, mid, pro
 
 MODULES_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
-source "${MODULES_DIR}/settings.sh"
+source "${MODULES_DIR}/config.sh"
 source "${MODULES_DIR}/utils.sh"
 
 function ai_get_command() {
@@ -40,7 +40,7 @@ function ai_get_command() {
   local model_key="AI_${service_upper}_${tier_upper}"
   
   local model
-  model="$(settings_get "${model_key}")"
+  model="$(config_get "${model_key}")"
 
   if [[ -z "${model}" ]]; then
     echo "ERROR: No model configured for ${service} ${model_tier}. Run 'set-aiconfig' to configure." >&2

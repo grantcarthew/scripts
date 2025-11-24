@@ -4,7 +4,7 @@ set -o pipefail
 
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
-source "${SCRIPT_DIR}/../../bash_modules/settings.sh"
+source "${SCRIPT_DIR}/../../bash_modules/config.sh"
 source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 
 function ctrlc_trap() {
