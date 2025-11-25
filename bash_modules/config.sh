@@ -54,7 +54,7 @@ function config_get() {
       }
       # Decode in reverse order: special newlines first, then quotes, then backslashes
       gsub(/\\x0A/, "\n", val)  # Decode our special newline sequence
-      gsub(/\\\"/, "\"", val)
+      gsub(/\\"/, "\"", val)
       gsub(/\\\\/, "\\", val)
       print val
       exit
@@ -78,7 +78,7 @@ function config_get() {
           val = substr(val, 2, length(val) - 2)
         }
         # Decode escaped quotes and backslashes from defaults file
-        gsub(/\\\"/, "\"", val)
+        gsub(/\\"/, "\"", val)
         gsub(/\\\\/, "\\", val)
         print val
         exit
