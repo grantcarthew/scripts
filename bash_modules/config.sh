@@ -49,7 +49,7 @@ function config_get() {
   value=$(awk -F= -v key="${key}" '
     $1 == key {
       val = substr($0, length(key) + 2)
-      if (val ~ /^\".*\"$/) {
+      if (val ~ /^".*"$/) {
         val = substr(val, 2, length(val) - 2)
       }
       # Decode in reverse order: special newlines first, then quotes, then backslashes
@@ -74,7 +74,7 @@ function config_get() {
     default_value=$(awk -F= -v key="${key}" '
       $1 == key {
         val = substr($0, length(key) + 2)
-        if (val ~ /^\".*\"$/) {
+        if (val ~ /^".*"$/) {
           val = substr(val, 2, length(val) - 2)
         }
         # Decode escaped quotes and backslashes from defaults file
@@ -180,7 +180,7 @@ function _config_read_and_print() {
 
       {
 
-        if ($0 ~ /^\".*\"$/) {
+        if ($0 ~ /^".*"$/) {
 
           $0 = substr($0, 2, length($0) - 2)
 
@@ -190,7 +190,7 @@ function _config_read_and_print() {
 
         gsub(/\\x0A/, "\n")  # Decode our special newline sequence
 
-        gsub(/\\\"/, "\"")
+        gsub(/\\"/, "\"")
 
         gsub(/\\\\/, "\\")
 
