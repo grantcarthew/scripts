@@ -69,18 +69,17 @@ function ai_get_command() {
 
   # Add service-specific system prompt handling if provided
   if [[ -n "${system_prompt_file}" ]]; then
-    local system_prompt_content
-    system_prompt_content="$(cat "${system_prompt_file}")"
-    system_prompt_content="${system_prompt_content//${q}/${escaped_q}}"
-
     case "${service}" in
       claude)
-        command="${command} --append-system-prompt '${system_prompt_content}'"
+        command="${command} --append-system-prompt-file '${system_prompt_file}'"
         ;;
       gemini)
         env_prefix="GEMINI_SYSTEM_MD=\"${system_prompt_file}\" "
         ;;
       aichat)
+        local system_prompt_content
+        system_prompt_content="$(cat "${system_prompt_file}")"
+        system_prompt_content="${system_prompt_content//${q}/${escaped_q}}"
         command="${command} --prompt '${system_prompt_content}'"
         ;;
     esac
