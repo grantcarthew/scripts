@@ -38,7 +38,7 @@ function ai_get_command() {
   local tier_upper
   tier_upper="$(to_upper "${model_tier}")"
   local model_key="AI_${service_upper}_${tier_upper}"
-  
+
   local model
   model="$(config_get "${model_key}")"
 
@@ -56,7 +56,7 @@ function ai_get_command() {
       command="${command} --permission-mode default"
       ;;
     gemini)
-      command="${command} --include-directories ${HOME}/Context --approval-mode default --prompt-interactive"
+      command="${command} --include-directories ${HOME}/context --approval-mode default --prompt-interactive"
       ;;
     aichat)
       # aichat has no default flags
