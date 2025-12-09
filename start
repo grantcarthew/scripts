@@ -148,9 +148,9 @@ fi
 
 declare prompt=""
 prompt+="$(date "+%Y-%m-%dT%H:%M:%S%:z"): "
-declare env_prompt="Read the ${HOME}/ref/ENVIRONMENT.md file for environment context. "
-env_prompt+="Read the ${HOME}/ref/INDEX.csv for documentation context."
-declare cli_prompt="Read the ${HOME}/ref/cli/INDEX.csv for available CLI tool documentation."
+declare env_prompt="Read the ${HOME}/Context/ENVIRONMENT.md file for environment context. "
+env_prompt+="Read the ${HOME}/Context/INDEX.csv for documentation context."
+declare cli_prompt="Read the ${HOME}/Context/cli/INDEX.csv for available CLI tool documentation."
 declare agents_prompt="Read the AGENTS.md file for repository context."
 declare agents_suffix="Respond with the shortest possible summary of the AGENTS.md content."
 declare project_prompt="Read the PROJECT.md document. Respond with the project title, and the shortest possible summary of work required. Number the items for ease of reference."
@@ -163,8 +163,8 @@ fi
 
 # Build pattern based on file existence
 declare pattern=""
-[[ -f "${HOME}/ref/ENVIRONMENT.md" ]] && pattern+="E"
-[[ -f "${HOME}/ref/cli/INDEX.csv" ]] && pattern+="C"
+[[ -f "${HOME}/Context/ENVIRONMENT.md" ]] && pattern+="E"
+[[ -f "${HOME}/Context/cli/INDEX.csv" ]] && pattern+="C"
 [[ -f "AGENTS.md" ]] && pattern+="A"
 [[ -f "PROJECT.md" ]] && pattern+="P"
 

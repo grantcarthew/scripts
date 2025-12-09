@@ -56,7 +56,7 @@ function ai_get_command() {
       command="${command} --permission-mode default"
       ;;
     gemini)
-      command="${command} --include-directories ${HOME}/reference --approval-mode default --prompt-interactive"
+      command="${command} --include-directories ${HOME}/Context --approval-mode default --prompt-interactive"
       ;;
     aichat)
       # aichat has no default flags
