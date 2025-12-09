@@ -1,12 +1,12 @@
 ---
 argument-hint: [action] [section] [content]
-description: Intelligent PROJECT.md documentation manager for session continuity
+description: Intelligent project.md documentation manager for session continuity
 allowed-tools: Read, Write, Edit
 ---
 
-# PROJECT.md Update
+# project.md Update
 
-- Please update the PROJECT.md document with our progress.
+- Please update the project.md document with our progress.
 - Analyze entire conversation history and focus on productive outcomes and solutions.
 - Extract and organize key learnings then structure for future session utility.
 - Remove outdated information only if it is not relevant, completed tasks are not outdated information.

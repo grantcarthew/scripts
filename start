@@ -153,11 +153,11 @@ env_prompt+="Read the ${HOME}/context/INDEX.csv for documentation context."
 declare cli_prompt="Read the ${HOME}/context/cli/INDEX.csv for available CLI tool documentation."
 declare agents_prompt="Read the AGENTS.md file for repository context."
 declare agents_suffix="Respond with the shortest possible summary of the AGENTS.md content."
-declare project_prompt="Read the PROJECT.md document. Respond with the project title, and the shortest possible summary of work required. Number the items for ease of reference."
+declare project_prompt="Read the project.md document. Respond with the project title, and the shortest possible summary of work required. Number the items for ease of reference."
 declare greeting_prompt="Respond with a simple greeting."
 
 # Check if AGENTS.md has Active Project and adjust suffix
-if [[ -f "AGENTS.md" && ! -f "PROJECT.md" ]] && rg -q "^Active Project:" "AGENTS.md"; then
+if [[ -f "AGENTS.md" && ! -f "project.md" ]] && rg -q "^Active Project:" "AGENTS.md"; then
   agents_suffix="Read the Active Project document listed in AGENTS.md and respond with the project title and shortest possible summary of work required. Number the items for ease of reference."
 fi
 
@@ -166,7 +166,7 @@ declare pattern=""
 [[ -f "${HOME}/context/ENVIRONMENT.md" ]] && pattern+="E"
 [[ -f "${HOME}/context/cli/INDEX.csv" ]] && pattern+="C"
 [[ -f "AGENTS.md" ]] && pattern+="A"
-[[ -f "PROJECT.md" ]] && pattern+="P"
+[[ -f "project.md" ]] && pattern+="P"
 
 # Set prompt based on file combination pattern
 case "${pattern}" in

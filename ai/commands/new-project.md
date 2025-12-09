@@ -1,21 +1,21 @@
 ---
 argument-hint: [project-name] [project-type] [description]
-description: Generate a new PROJECT.md document from current session context
+description: Generate a new project.md document from current session context
 allowed-tools: Read, Write, Edit, Glob, Grep
 ---
 
 # New Project Documentation Generator
 
-Create a comprehensive PROJECT.md document based on current session context: $ARGUMENTS
+Create a comprehensive project.md document based on current session context: $ARGUMENTS
 
 ## Auto-Discovery Mode
 
-If no arguments provided, analyze the current conversation to automatically generate a PROJECT.md:
+If no arguments provided, analyze the current conversation to automatically generate a project.md:
 
 1. **Session Context Analysis**: Extract project goals, technologies, and decisions
 2. **Codebase Detection**: Scan for existing files to understand project structure
 3. **Technology Stack Identification**: Detect frameworks, languages, and tools
-4. **Documentation Generation**: Create structured PROJECT.md with relevant sections
+4. **Documentation Generation**: Create structured project.md with relevant sections
 
 ## Manual Mode
 
@@ -49,7 +49,7 @@ Use available tools to discover:
 
 ### 3. Document Structure
 
-Generate PROJECT.md with these sections:
+Generate project.md with these sections:
 
 #### Core Information
 
@@ -90,7 +90,7 @@ Generate PROJECT.md with these sections:
 
 ### Template Selection
 
-Choose appropriate PROJECT.md template based on:
+Choose appropriate project.md template based on:
 
 - **Web Applications**: Frontend/backend structure
 - **CLI Tools**: Installation, usage, and commands
@@ -112,7 +112,7 @@ Choose appropriate PROJECT.md template based on:
 
 ## Output Format
 
-Creates a comprehensive PROJECT.md file containing:
+Creates a comprehensive project.md file containing:
 
 - **Clear project description** and objectives
 - **Technology stack** with versions where relevant
