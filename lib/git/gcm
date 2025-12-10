@@ -162,5 +162,5 @@ else
   fi
 fi
 
-log_message "❯ gpush"
-"$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/gpush"
+log_message "❯ push"
+"$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)/push"
