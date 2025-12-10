@@ -9,7 +9,7 @@ function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [file_filter]
 
-Creates or replaces the contents of ROLE.md by executing get-airole with the
+Creates or replaces the contents of role.md by executing get-airole with the
 file filter and redirecting the output to the file.
 
 Dependencies:
@@ -33,7 +33,7 @@ function ctrlc_trap() {
 }
 trap ctrlc_trap SIGINT
 
-log_title "New AI Role - Create ROLE.md"
+log_title "New AI Role - Create role.md"
 
 # Check if get-airole exists
 get_airole_script="${SCRIPT_DIR}/get-airole"
@@ -50,15 +50,15 @@ fi
 log_heading "Executing get-airole"
 log_message "Running: get-airole ${1:-}"
 
-role_file="${PWD}/ROLE.md"
+role_file="${PWD}/role.md"
 
 if "${get_airole_script}" "${1:-}" > "${role_file}"; then
-  log_success "ROLE.md created successfully"
+  log_success "role.md created successfully"
   log_message "File: '${role_file}'"
 
   # Show first few lines of the created file
   if [[ -s "${role_file}" ]]; then
-    log_heading "ROLE.md Content Preview"
+    log_heading "role.md Content Preview"
     head -5 "${role_file}" | while IFS= read -r line; do
       log_message "  ${line}"
     done
@@ -66,10 +66,10 @@ if "${get_airole_script}" "${1:-}" > "${role_file}"; then
     file_size=$(wc -c < "${role_file}")
     log_message "Total file size: ${file_size} bytes"
   else
-    log_warning "ROLE.md file is empty"
+    log_warning "role.md file is empty"
   fi
 else
-  log_error "ERROR: Failed to execute get-airole or write to ROLE.md"
+  log_error "ERROR: Failed to execute get-airole or write to role.md"
   exit 1
 fi
 

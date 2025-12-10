@@ -17,7 +17,7 @@ Use the `get-airole` script to quickly access role prompts:
 get-airole [filter] [-i|--include-initial-response]
 ```
 
-Or save role prompts directly to a ROLE.md file:
+Or save role prompts directly to a role.md file:
 
 ```bash
 new-airole [filter]

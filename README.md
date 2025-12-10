@@ -123,7 +123,7 @@ The [`ai/`](ai/) directory contains a comprehensive collection of AI prompts, ro
 Use these scripts to work with AI prompts:
 
 - `get-airole [filter]`: Copy role prompts to clipboard
-- `new-airole [filter]`: Save role prompts to ROLE.md file
+- `new-airole [filter]`: Save role prompts to role.md file
 
 ## AI Enhanced Tools
 
@@ -132,7 +132,7 @@ Use these scripts to work with AI prompts:
 - [get-clihelp](get-clihelp): Get CLI command help
 - [get-definition](get-definition): Get word definition with options
 - [new-aiproject](new-aiproject): New AI Project Generator
-- [new-airole](new-airole): AI Role Document Creator - saves prompts directly to ROLE.md
+- [new-airole](new-airole): AI Role Document Creator - saves prompts directly to role.md
 - [gcm](lib/git/gcm): Git Commit Generator
 - [gdr](lib/git/gdr): Git Diff --staged Review
 - [gig](lib/git/gig): Git Ignore Generator (.gitignore)

@@ -12,7 +12,7 @@ Use with the `get-airole` script to copy to clipboard:
 get-airole [filter] [-i|--include-initial-response]
 ```
 
-Or use `new-airole` to save directly to a ROLE.md file:
+Or use `new-airole` to save directly to a role.md file:
 
 ```bash
 new-airole [filter]
