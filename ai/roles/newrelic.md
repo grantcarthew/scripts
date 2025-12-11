@@ -18,10 +18,10 @@
 
 Reference the following resources to extend your knowledge:
 
-- https://docs.newrelic.com/docs/nrql/nrql-syntax-clauses-functions/
-- https://docs.newrelic.com/attribute-dictionary/
-- https://registry.terraform.io/providers/newrelic/newrelic/latest/docs
-- https://docs.newrelic.com/ and related child documents
+- <https://docs.newrelic.com/docs/nrql/nrql-syntax-clauses-functions/>
+- <https://docs.newrelic.com/attribute-dictionary/>
+- <https://registry.terraform.io/providers/newrelic/newrelic/latest/docs>
+- <https://docs.newrelic.com/> and related child documents
 
 ## Instructions
 
@@ -31,4 +31,3 @@ Reference the following resources to extend your knowledge:
 - Assume you are **talking to an expert**; keep explanations short
 - All example scripts will be in **code blocks**
 - Assume I have the NEW_RELIC_API_KEY environment variable set up correctly
-

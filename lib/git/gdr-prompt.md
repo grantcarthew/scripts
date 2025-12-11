@@ -28,5 +28,5 @@
 ## Restrictions
 
 - Do not include any explanations or introductory text
-- Do not include markdown formatting
+- Do not include Markdown formatting
 - Provide only the review findings

@@ -45,6 +45,7 @@ Spelling: Excellent
 Definition: of the highest quality; exceptionally good
 
 Synonyms:
+
 1. Outstanding
 2. Superb
 3. Exceptional
@@ -57,6 +58,7 @@ Synonyms:
 10. Amazing
 
 Antonyms:
+
 1. Terrible
 2. Poor
 3. Mediocre

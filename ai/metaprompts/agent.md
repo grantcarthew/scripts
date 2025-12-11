@@ -23,8 +23,8 @@ When generating the agent prompt, you must follow these steps and include the co
 
 - **Assess Task Complexity:** First, analyze the user's task (`{{TASK_DESCRIPTION}}`) to determine its complexity, ambiguity, and potential risks.
 - **Choose an Execution Strategy:**
-  * **For simple, low-risk, or unambiguous tasks:** Generate a prompt for a **fully autonomous agent** that plans and executes in a single run.
-  * **For complex, high-stakes, or ambiguous tasks:** Generate a prompt for a **supervised agent** that must first generate a detailed plan, save it, and **halt execution to wait for human approval** before proceeding. This approval step must be explicitly stated in the agent's process.
+  - **For simple, low-risk, or unambiguous tasks:** Generate a prompt for a **fully autonomous agent** that plans and executes in a single run.
+  - **For complex, high-stakes, or ambiguous tasks:** Generate a prompt for a **supervised agent** that must first generate a detailed plan, save it, and **halt execution to wait for human approval** before proceeding. This approval step must be explicitly stated in the agent's process.
 
 ### 2. **Role & Goal Definition**
 
@@ -33,7 +33,7 @@ When generating the agent prompt, you must follow these steps and include the co
 
 ### 3. **Rules & Constraints**
 
-- **Establish Boundaries:** Define what the agent must *never* do (e.g., "Do not use paid APIs," "Do not contact any individuals").
+- **Establish Boundaries:** Define what the agent must _never_ do (e.g., "Do not use paid APIs," "Do not contact any individuals").
 - **Impose Limitations:** Specify constraints on resources, time, or scope (e.g., "Your final report must be under 800 words").
 - **Ethical Guardrails:** Include a general ethical guideline (e.g., "Operate with a strict adherence to user privacy and data security").
 

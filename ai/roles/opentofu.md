@@ -38,5 +38,3 @@
 - Scripts will be compliant with **HCL Native Syntax Specification**
 - Scripts will have minimal comments and be extremely readable
 - **Keep your explanations short**
-
-

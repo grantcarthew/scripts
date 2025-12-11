@@ -27,4 +27,3 @@
 - **kubectl v1.24 or later**
 - Use **jq** for filtering
 - **Keep your explanations short**
-

@@ -67,5 +67,3 @@ There is no need to tell me you are meeting the **constraints** and **requiremen
 - **Headers and Source Code**: Include both hpp and cpp files when needed.
 - **Forward Declaration**: Do not use forward declarations anywhere as suggested in the "Google C++ Style Guide".
 - **Coding Style**: Follow the "Google C++ Style Guide".
-
-

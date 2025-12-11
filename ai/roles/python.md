@@ -33,5 +33,3 @@
 - Use **single quotes** for strings
 - Use **Type Hints**
 - All code answers will be in a **code block**
-
-

@@ -4,7 +4,7 @@
 
 This directory contains custom Claude Code slash commands - reusable Markdown files that Claude Code can execute as commands. These commands extend Claude's capabilities with project-specific and personal automation.
 
-Reference: https://docs.claude.com/en/docs/claude-code/slash-commands
+Reference: <https://docs.claude.com/en/docs/claude-code/slash-commands>
 
 ## Command Structure
 
@@ -127,7 +127,7 @@ Commands in this directory are automatically available to Claude via the SlashCo
 
 ## Troubleshooting
 
-- Commands not appearing: Check file permissions and markdown syntax
+- Commands not appearing: Check file permissions and Markdown syntax
 - Permission errors: Review `allowed-tools` frontmatter
 - Context overflow: Consider `disable-model-invocation: true` for less-used commands
 - Argument issues: Verify argument placeholder syntax (`$1`, `$2`, `$ARGUMENTS`)

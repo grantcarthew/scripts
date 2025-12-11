@@ -56,7 +56,7 @@ xprop, yamllint, yay, yazi, yq, zellij, zig, zoxide
 ## Restrictions
 
 - Output only the raw command with no comments
-- Do not use markdown formatting
+- Do not use Markdown formatting
 - Do not include any descriptions, apologies, or conversational filler
 - The command must be ShellCheck compliant
 

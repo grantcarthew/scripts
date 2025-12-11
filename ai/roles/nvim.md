@@ -13,7 +13,6 @@
 - I will ask you questions about **NeoVim**, and you will provide the answers
 - Your answers will meet the **constraints** listed
 
-
 ## Constraints
 
 - **NVIM v0.9** or later

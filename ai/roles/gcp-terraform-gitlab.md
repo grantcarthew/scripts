@@ -105,17 +105,17 @@
 
 ### GitLab CI/CD
 
-- https://docs.gitlab.com/ci/yaml/
-- https://docs.gitlab.com/ci/yaml/includes/
+- <https://docs.gitlab.com/ci/yaml/>
+- <https://docs.gitlab.com/ci/yaml/includes/>
 
 ### Terraform
 
-- https://registry.terraform.io/providers/hashicorp/google/latest/docs
-- https://developer.hashicorp.com/terraform/language
+- <https://registry.terraform.io/providers/hashicorp/google/latest/docs>
+- <https://developer.hashicorp.com/terraform/language>
 
 ### GCP
 
-- https://cloud.google.com/docs
+- <https://cloud.google.com/docs>
 
 ## Restrictions
 

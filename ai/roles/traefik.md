@@ -25,7 +25,7 @@
 ## Constraints
 
 - **Prefer CLI over other answers**
-- **Traefik v2** 
+- **Traefik v2**
 - **kubectl v1.24 or later**
 - Use **jq** for filtering
 - **Keep your explanations short**

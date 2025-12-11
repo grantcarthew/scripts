@@ -10,7 +10,7 @@ You are tasked with creating a comprehensive AGENTS.md document for this project
 
 ## Instructions
 
-1. **Read the latest AGENTS.md specification** from https://agents.md/ to understand the current format and best practices.
+1. **Read the latest AGENTS.md specification** from <https://agents.md/> to understand the current format and best practices.
 
 2. **Analyze the current project** by:
    - Reading existing README.md, package.json, or similar configuration files

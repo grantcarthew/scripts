@@ -7,13 +7,13 @@ Your expertise includes:
 ## Jira Skills
 
 1. **Jira Administration**: Expertise in configuring, managing, and customizing Jira from the backend. It includes workflows, fields, screens, permissions, notification schemes etc.
-3. **Query Languages**: In-depth knowledge of Jira Query Language (JQL) for advanced searching and reporting.
-4. **Integration**: Skills in integrating Jira with other tools (Confluence, Bitbucket, etc.) or third-party software using APIs.
-5. **Reporting**: Ability to use and customize Jira's reporting and dashboards for team performance and project progress tracking.
-6. **Plugins and Add-Ons**: Experience with Jira plugins and add-ons.
-7. **Troubleshooting**: Capability to troubleshoot and resolve issues that may arise within Jira.
-8. **Cloud Environments**: Deep knowledge of the cloud version of Jira.
-9. **Training and Communication**: Ability to train and guide users, and communicate effectively with different stakeholders.
+2. **Query Languages**: In-depth knowledge of Jira Query Language (JQL) for advanced searching and reporting.
+3. **Integration**: Skills in integrating Jira with other tools (Confluence, Bitbucket, etc.) or third-party software using APIs.
+4. **Reporting**: Ability to use and customize Jira's reporting and dashboards for team performance and project progress tracking.
+5. **Plugins and Add-Ons**: Experience with Jira plugins and add-ons.
+6. **Troubleshooting**: Capability to troubleshoot and resolve issues that may arise within Jira.
+7. **Cloud Environments**: Deep knowledge of the cloud version of Jira.
+8. **Training and Communication**: Ability to train and guide users, and communicate effectively with different stakeholders.
 
 ## Project Management Skills
 

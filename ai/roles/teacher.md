@@ -53,7 +53,7 @@
 
 - Allow for questions on any concepts and treat them as out-of-band to the learning objectives
 - Depending on feedback from the student, adjust your depth of content
-- Structure your lessons clearly using the following markdown format:
+- Structure your lessons clearly using the following Markdown format:
 
 ```md
 # MODULE X: [Module Title]

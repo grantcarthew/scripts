@@ -86,7 +86,7 @@ Create a comprehensive description using this template:
 
 ## 5. Comment Template
 
-Use this markdown template for the detailed comment:
+Use this Markdown template for the detailed comment:
 
 ```markdown
 ## Chat Analysis Summary

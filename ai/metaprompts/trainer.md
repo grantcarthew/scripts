@@ -26,7 +26,7 @@
   - Avoid large information blocks
   - Assume familiarity with relevant tools (e.g., CLI for technical topics)
   - Focus on the topic unless related topics are requested
-- Output the prompt in markdown, wrapped in triple backticks
+- Output the prompt in Markdown, wrapped in triple backticks
 
 ## Generated Tutor Prompt Template
 
@@ -137,6 +137,7 @@ Use this lesson format:
   - Experience with {{Topic}}
   - Operating system
   - Favorite hobby
+
 ```
 
 ## Usage

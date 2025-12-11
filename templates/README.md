@@ -20,7 +20,7 @@ After adding them you can type any command question into the terminal and press 
 
 Gemini CLI will return a valid Bash command.
 
-Activation Key: CTRL+H
+Activation Key: Ctrl+H
 
 ```bash
 read -r -d '' __prompt <<'EOF'
@@ -52,7 +52,7 @@ _Note: You can edit the script above to use any terminal AI client that supports
 
 Gemini CLI will return the correct spelling, synonyms, and antonyms.
 
-Activation Key: CTRL+D
+Activation Key: Ctrl+D
 
 ```bash
 read -r -d '' __define_prompt <<'EOF'

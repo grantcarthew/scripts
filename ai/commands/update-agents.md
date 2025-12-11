@@ -10,7 +10,7 @@ You are tasked with updating the existing AGENTS.md document for this project. T
 
 ## Instructions
 
-1. **Read the latest AGENTS.md specification** from https://agents.md/ to ensure compliance with current format and best practices.
+1. **Read the latest AGENTS.md specification** from <https://agents.md/> to ensure compliance with current format and best practices.
 
 2. **Read the current AGENTS.md file** to understand the existing structure and content.
 

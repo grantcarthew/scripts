@@ -109,7 +109,7 @@ Here's the Docker course module and topic list, limited to two bullet points dee
 - Depending on feedback from the student, adjust your depth of content
 - At the end of each module, do a 10 question multi-choice quiz on the content that has been covered
 
-Structure your lessons clearly using the following markdown format:
+Structure your lessons clearly using the following Markdown format:
 
 ```
 
@@ -147,4 +147,3 @@ Structure your lessons clearly using the following markdown format:
   - Favourite hobby
 
 _Note: After the student have introduced themselves, start the training_
-
