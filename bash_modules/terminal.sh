@@ -25,9 +25,9 @@ export ERASE_LINE='\033[2K'
 # -----------------------------------------------------------------------------
 function log_line() {
   # Usage: log_line [character] [length]
-  # Defaults character: '-' length: 80
+  # Defaults character: '─' (U+2500) length: 80
   local length=80
-  local char="-"
+  local char="─"
 
   if [[ -n "${1}" ]]; then
     char="${1}"
@@ -37,15 +37,17 @@ function log_line() {
     length="${2}"
   fi
 
-  # Create a string of repeated characters more safely
-  printf "${BOLD}${MAGENTA}%*s${NORMAL}\n" "${length}" | tr " " "${char}" >&2
+  # Create a string of repeated characters (supports multi-byte Unicode)
+  local line
+  printf -v line '%*s' "${length}" ''
+  printf "${BOLD}${MAGENTA}%s${NORMAL}\n" "${line// /${char}}" >&2
 }
 
 function log_fullline() {
   # Usage: log_fullline [character]
   # Draws a line that fills the entire terminal width
-  # Default character: '-'
-  local char="-"
+  # Default character: '─' (U+2500)
+  local char="─"
   local length=80  # Default fallback length
 
   if [[ -n "${1}" ]]; then
@@ -57,8 +59,10 @@ function log_fullline() {
     length=$(tput cols)
   fi
 
-  # Create a string of repeated characters spanning terminal width
-  printf "${BOLD}${MAGENTA}%*s${NORMAL}\n" "${length}" '' | tr ' ' "${char}" >&2
+  # Create a string of repeated characters spanning terminal width (supports multi-byte Unicode)
+  local line
+  printf -v line '%*s' "${length}" ''
+  printf "${BOLD}${MAGENTA}%s${NORMAL}\n" "${line// /${char}}" >&2
 }
 
 # Text
@@ -68,14 +72,14 @@ function log_title() {
   # Displays a bold green title with a full-width double line separator
 
   printf "\n ${BOLD}${GREEN}%s${NORMAL}\n" "$@" >&2
-  log_fullline "="
+  log_fullline "═"
 }
 
 function log_heading() {
   # Usage: log_heading <text>
   # Displays a bold green heading with a single line separator
   printf "\n ${BOLD}${GREEN}%s${NORMAL}\n" "$@" >&2
-  log_line "-"
+  log_line "─"
 }
 
 function log_subheading() {
@@ -87,14 +91,14 @@ function log_subheading() {
   if [[ ${length} -lt 1 ]]; then
     length=30
   fi
-  log_line "-" "$((length + 2))"
+  log_line "─" "$((length + 2))"
 }
 
 function log_sectionheading() {
   # Usage: log_sectionheading <text>
   # Displays a bold yellow section heading with a double line separator
   printf "\n ${BOLD}${YELLOW}%s${NORMAL}\n" "$@" >&2
-  log_line "="
+  log_line "═"
 }
 
 function log_message() {
