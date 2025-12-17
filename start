@@ -24,6 +24,7 @@ Dependencies:
 
 Optional arguments:
   --ai <service>       Use specific AI service (claude, gemini, aichat)
+  --acon <page-id>     Read Confluence page into context
   prompt               Custom prompt to use instead of default file-based prompts
   -h, --help           Show this help message and exit
 
@@ -48,6 +49,7 @@ function format_ai_command_display() {
 
 # Parse arguments
 declare ai_service=""
+declare acon_page_id=""
 declare custom_prompt=""
 while [[ $# -gt 0 ]]; do
   case "${1}" in
@@ -61,6 +63,14 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       ai_service="${2}"
+      shift 2
+      ;;
+    --acon)
+      if [[ -z "${2}" ]]; then
+        log_error "ERROR: --acon requires a Confluence page ID"
+        exit 1
+      fi
+      acon_page_id="${2}"
       shift 2
       ;;
     -*)
@@ -154,6 +164,10 @@ declare cli_prompt="Read the ${HOME}/context/cli/index.csv for available CLI too
 declare agents_prompt="Read the AGENTS.md file for repository context."
 declare agents_suffix="Respond with the shortest possible summary of the AGENTS.md content."
 declare project_prompt="Read the project.md document. Respond with the project title, and the shortest possible summary of work required. Number the items for ease of reference."
+declare acon_prompt=""
+if [[ -n "${acon_page_id}" ]]; then
+  acon_prompt="Read the Confluence document using 'acon page view ${acon_page_id}'. Respond with the document title and shortest possible summary of work required. Number the items for ease of reference."
+fi
 declare greeting_prompt="Respond with a simple greeting."
 
 # Check if AGENTS.md has Active Project and adjust suffix
@@ -187,6 +201,11 @@ case "${pattern}" in
   "A")    prompt+="${agents_prompt} ${agents_suffix}" ;;
   *)      prompt+="${greeting_prompt}" ;;
 esac
+
+# Append acon prompt if provided
+if [[ -n "${acon_prompt}" ]]; then
+  prompt+=" ${acon_prompt}"
+fi
 
 # Execute AI command with determined role file and prompt
 # -----------------------------------------------------------------------------
