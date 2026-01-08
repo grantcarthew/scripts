@@ -217,8 +217,9 @@ if [[ -n "${acon_page_id}" ]]; then
 fi
 declare jira_prompt=""
 if [[ -n "${jira_ticket_id}" ]]; then
+  [[ "${jira_ticket_id}" =~ ^[0-9]+$ ]] && jira_ticket_id="GCP-${jira_ticket_id}"
   jira_ticket_id="${jira_ticket_id^^}"
-  jira_prompt="Read the Jira ticket using 'jira issue view ${jira_ticket_id} --plain'. Respond with the ticket summary and shortest possible summary of work required. Number the items for ease of reference."
+  jira_prompt="Read the Jira ticket using 'ajira issue view ${jira_ticket_id} --plain'. Respond with the ticket summary and shortest possible summary of work required. Number the items for ease of reference."
 fi
 declare greeting_prompt="Respond with a simple greeting."
 
