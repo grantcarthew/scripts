@@ -111,6 +111,43 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "Starting AI Agent"
 
+# Session Context Report
+# -----------------------------------------------------------------------------
+log_heading "Session Context"
+log_message "Directory: '${PWD}'"
+
+if git rev-parse --is-inside-work-tree &>/dev/null; then
+  declare git_branch git_status_line git_ahead_behind git_last_commit
+  git_branch="$(git branch --show-current 2>/dev/null)"
+  [[ -z "${git_branch}" ]] && git_branch="(detached)"
+
+  if [[ -z "$(git status --porcelain 2>/dev/null)" ]]; then
+    git_status_line="clean"
+  else
+    git_status_line="dirty ($(git status --porcelain | wc -l | tr -d ' ') changes)"
+  fi
+
+  git_ahead_behind=""
+  if git rev-parse --abbrev-ref '@{u}' &>/dev/null; then
+    declare ahead behind
+    ahead="$(git rev-list --count '@{u}..HEAD' 2>/dev/null)"
+    behind="$(git rev-list --count 'HEAD..@{u}' 2>/dev/null)"
+    [[ "${ahead}" -gt 0 ]] && git_ahead_behind+="↑${ahead}"
+    [[ "${behind}" -gt 0 ]] && git_ahead_behind+="${git_ahead_behind:+ }↓${behind}"
+    [[ -z "${git_ahead_behind}" ]] && git_ahead_behind="in sync"
+  else
+    git_ahead_behind="no upstream"
+  fi
+
+  git_last_commit="$(git log -1 --format='%h %s' 2>/dev/null)"
+  [[ ${#git_last_commit} -gt 60 ]] && git_last_commit="${git_last_commit:0:57}..."
+
+  log_message "Git: '${git_branch}' - ${git_status_line} - ${git_ahead_behind}"
+  log_message "Last commit: ${git_last_commit}"
+else
+  log_message "Git: not a repository"
+fi
+
 # Determine AI service - default to gemini for interactive work
 declare service
 service="$(config_get "DEFAULT_AI_AGENT")"

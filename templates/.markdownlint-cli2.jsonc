@@ -16,12 +16,7 @@
 			"style": "---"
 		},
 		"line-length": false,
-		"link-image-style": {
-			"autolink": true,
-			"collapsed": false,
-			"shortcut": false,
-			"url_inline": false
-		},
+		"link-image-style": false,
 		"no-duplicate-heading": {
 			"siblings_only": true
 		},
