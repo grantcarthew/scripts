@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [d]iff [path]"
+git status
 
 [[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 

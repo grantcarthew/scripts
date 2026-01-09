@@ -5,14 +5,17 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [r]eset [path]"
+git status
 
 [[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ $# -lt 1 ]]; then
   log_message "❯ git reset"
   git reset
+  git status
   exit 0
 fi
 
 log_message "❯ git reset ${*}"
 git reset "${@}"
+git status

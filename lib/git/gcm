@@ -76,6 +76,7 @@ trap ctrlc_trap SIGINT
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
 log_title "[g]it [c]ommit [m]essage generator"
+git status
 
 dependencies=(git aichat)
 for cmd in "${dependencies[@]}"; do

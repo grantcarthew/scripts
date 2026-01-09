@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [c]ommit --message [message]"
+git status
 
 [[ $# -lt 1 ]] && log_error "Commit message is required." && exit 1
 

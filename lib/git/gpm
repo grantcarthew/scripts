@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "[g]it [p]ull [m]ain or master"
+git status
 
 [[ $# -gt 0 ]] && log_error "Arguments not allowed" && exit 1
 
@@ -31,9 +32,11 @@ fi
 
 log_message "❯ git checkout ${main_or_master}"
 git checkout "${main_or_master}"
+git status
 log_newline
 log_message "❯ git pull origin ${main_or_master}"
 git pull origin "${main_or_master}"
 log_newline
 log_message "❯ git checkout ${current_branch}"
 git checkout "${current_branch}"
+git status

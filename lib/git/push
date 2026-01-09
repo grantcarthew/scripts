@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
 log_title "git [push] origin current-branch"
+git status
 
 [[ $# -gt 0 ]] && exit 1
 
