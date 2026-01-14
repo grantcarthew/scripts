@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "[G]olang [L]int"
+
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+dependencies=(go gofmt golangci-lint staticcheck ineffassign govulncheck)
+for cmd in "${dependencies[@]}"; do
+  if ! command -v "${cmd}" >/dev/null; then
+    log_error "Missing dependency: '${cmd}'"
+    exit 1
+  fi
+done
+
+declare -i failures=0
+
+log_message "❯ gofmt -l ."
+if output=$(gofmt -l .); then
+  if [[ -z "${output}" ]]; then
+    log_success "gofmt"
+  else
+    log_failure "gofmt"
+    log_message "${output}"
+    ((failures++))
+  fi
+else
+  log_failure "gofmt"
+  ((failures++))
+fi
+
+log_message "❯ go vet ./..."
+if go vet ./... 2>&1; then
+  log_success "go vet"
+else
+  log_failure "go vet"
+  ((failures++))
+fi
+
+log_message "❯ golangci-lint run"
+if golangci-lint run 2>&1; then
+  log_success "golangci-lint"
+else
+  log_failure "golangci-lint"
+  ((failures++))
+fi
+
+log_message "❯ staticcheck ./..."
+if staticcheck ./... 2>&1; then
+  log_success "staticcheck"
+else
+  log_failure "staticcheck"
+  ((failures++))
+fi
+
+log_message "❯ ineffassign ./..."
+if ineffassign ./... 2>&1; then
+  log_success "ineffassign"
+else
+  log_failure "ineffassign"
+  ((failures++))
+fi
+
+log_message "❯ govulncheck ./..."
+if govulncheck ./... 2>&1; then
+  log_success "govulncheck"
+else
+  log_failure "govulncheck"
+  ((failures++))
+fi
+
+log_message "❯ go test ./..."
+if go test ./... 2>&1; then
+  log_success "go test"
+else
+  log_failure "go test"
+  ((failures++))
+fi
+
+log_newline
+if [[ ${failures} -eq 0 ]]; then
+  log_done "All checks passed"
+else
+  log_error "Checks failed: '${failures}'"
+  exit 1
+fi
