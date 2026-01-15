@@ -23,9 +23,14 @@ if output=$(gofmt -l .); then
   if [[ -z "${output}" ]]; then
     log_success "gofmt"
   else
-    log_failure "gofmt"
     log_message "${output}"
-    ((failures++))
+    log_message "❯ gofmt -w ."
+    if gofmt -w .; then
+      log_success "gofmt (fixed)"
+    else
+      log_failure "gofmt"
+      ((failures++))
+    fi
   fi
 else
   log_failure "gofmt"
