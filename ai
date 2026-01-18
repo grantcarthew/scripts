@@ -1,0 +1,533 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+source "${SCRIPT_DIR}/bash_modules/desktop.sh"
+
+PROMPTS_DIR="${SCRIPT_DIR}/agents/ai-prompts"
+VERBOSE=false
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [alias] [input]
+       $(basename "$0") [--flag] [args]
+
+AI prompt manager with clipboard integration and fzf selection.
+
+Arguments:
+  alias              Prompt alias to load (e.g., ps, one, pr)
+  input              Optional input for \${INPUT} variable substitution
+
+Flags:
+  --help             Show this help message
+  --list             List all available prompts with details
+  --edit <alias>     Edit prompt file in \$EDITOR
+  --new              Interactively create a new prompt
+  --find <keyword>   Search prompt content for keyword
+  --doctor           Validate all prompt files
+  --verbose          Show detailed operation information
+
+Examples:
+  ai                 Launch fzf to select a prompt
+  ai ps              Load 'ps' prompt and copy to clipboard
+  ai ps "auth work"  Load 'ps' with INPUT substitution
+  ai --list          Show all available prompts
+  ai --edit ps       Edit the 'ps' prompt
+  ai --new           Create a new prompt interactively
+  ai --find "git"    Find prompts containing "git"
+EOF
+}
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Parse frontmatter from markdown file
+function parse_frontmatter() {
+  local file="${1}"
+  local field="${2}"
+
+  if ! awk '
+    BEGIN { in_fm = 0; found = 0 }
+    /^---$/ {
+      if (NR == 1) { in_fm = 1; next }
+      if (in_fm) { exit }
+    }
+    in_fm && /^'"${field}"':/ {
+      sub(/^'"${field}"':[ ]*/, "")
+      print
+      found = 1
+      exit
+    }
+  ' "${file}"; then
+    return 1
+  fi
+}
+
+# Get prompt content (everything after frontmatter)
+function get_prompt_content() {
+  local file="${1}"
+
+  awk '
+    BEGIN { in_fm = 0; after_fm = 0 }
+    /^---$/ {
+      if (NR == 1) { in_fm = 1; next }
+      if (in_fm) { after_fm = 1; next }
+    }
+    after_fm { print }
+  ' "${file}"
+}
+
+# Derive title from filename if not in frontmatter
+function derive_title_from_filename() {
+  local filename="${1}"
+  local base="${filename%.md}"
+  local title_part="${base#*-}"
+
+  echo "${title_part}" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1'
+}
+
+# Get alias from filename
+function get_alias_from_filename() {
+  local filename="${1}"
+  local base="${filename%.md}"
+  echo "${base%%-*}"
+}
+
+# Find prompt file by alias
+function find_prompt_by_alias() {
+  local alias="${1}"
+  local matches=()
+
+  while IFS= read -r file; do
+    [[ $(basename "${file}") == "README.md" ]] && continue
+    local file_alias
+    file_alias=$(get_alias_from_filename "$(basename "${file}")")
+    if [[ "${file_alias}" == "${alias}" ]]; then
+      matches+=("${file}")
+    fi
+  done < <(find "${PROMPTS_DIR}" -maxdepth 1 -name "*.md" -type f 2>/dev/null)
+
+  if [[ ${#matches[@]} -eq 0 ]]; then
+    return 1
+  elif [[ ${#matches[@]} -gt 1 ]]; then
+    log_warning "Multiple prompts found for alias '${alias}', using first match"
+    [[ ${VERBOSE} == true ]] && log_message "Matches: ${matches[*]}"
+  fi
+
+  echo "${matches[0]}"
+}
+
+# Fuzzy match alias
+function fuzzy_match_alias() {
+  local input="${1}"
+  local matches=()
+
+  while IFS= read -r file; do
+    [[ $(basename "${file}") == "README.md" ]] && continue
+    local alias
+    alias=$(get_alias_from_filename "$(basename "${file}")")
+    if [[ "${alias}" == *"${input}"* ]]; then
+      matches+=("${alias}")
+    fi
+  done < <(find "${PROMPTS_DIR}" -maxdepth 1 -name "*.md" -type f 2>/dev/null)
+
+  if [[ ${#matches[@]} -eq 1 ]]; then
+    echo "${matches[0]}"
+    return 0
+  elif [[ ${#matches[@]} -gt 1 ]]; then
+    log_message "Did you mean: ${matches[*]}"
+  fi
+
+  return 1
+}
+
+# Launch fzf to select prompt
+function launch_fzf() {
+  local header="${1:-Select a prompt:}"
+  local selected
+
+  if ! command -v fzf >/dev/null; then
+    log_error "ERROR: fzf is required but not installed"
+    exit 1
+  fi
+
+  # Build selection list
+  local list=()
+  while IFS= read -r file; do
+    [[ $(basename "${file}") == "README.md" ]] && continue
+    local alias title
+    alias=$(get_alias_from_filename "$(basename "${file}")")
+    title=$(parse_frontmatter "${file}" "title")
+    [[ -z ${title} ]] && title=$(derive_title_from_filename "$(basename "${file}")")
+    list+=("${alias}: ${title}|${file}")
+  done < <(find "${PROMPTS_DIR}" -maxdepth 1 -name "*.md" -type f 2>/dev/null | sort)
+
+  if [[ ${#list[@]} -eq 0 ]]; then
+    log_error "ERROR: No prompts found in '${PROMPTS_DIR}'"
+    exit 1
+  fi
+
+  selected=$(printf "%s\n" "${list[@]}" | fzf \
+    --delimiter="|" \
+    --with-nth=1 \
+    --header="${header}" \
+    --preview='cat {2}' \
+    --preview-window=right:60%:wrap)
+
+  if [[ -z ${selected} ]]; then
+    exit 0
+  fi
+
+  echo "${selected##*|}"
+}
+
+# Load and process prompt
+function load_prompt() {
+  local file="${1}"
+  local input_arg="${2:-}"
+
+  [[ ${VERBOSE} == true ]] && log_message "Loading: ${file}"
+
+  local title description input_type input_hint content
+  title=$(parse_frontmatter "${file}" "title")
+  [[ -z ${title} ]] && title=$(derive_title_from_filename "$(basename "${file}")")
+  description=$(parse_frontmatter "${file}" "description")
+  input_type=$(parse_frontmatter "${file}" "input")
+  input_hint=$(parse_frontmatter "${file}" "input_hint")
+  content=$(get_prompt_content "${file}")
+
+  # Handle INPUT variable
+  if [[ ${content} == *'${INPUT}'* ]]; then
+    if [[ ${input_type} == "required" && -z ${input_arg} ]]; then
+      log_error "ERROR: INPUT required for this prompt"
+      [[ -n ${input_hint} ]] && log_message "Expected: ${input_hint}"
+      exit 1
+    fi
+    content="${content//\$\{INPUT\}/${input_arg}}"
+  elif [[ -n ${input_arg} ]]; then
+    log_warning "Warning: Prompt doesn't use \${INPUT}, ignoring argument"
+  fi
+
+  # Copy to clipboard
+  if send_to_clipboard "${content}"; then
+    log_success "Copied to clipboard: ${title}"
+    [[ ${VERBOSE} == true ]] && log_message "Content:\n${content}"
+    echo "${content}"
+  else
+    log_error "ERROR: Failed to copy to clipboard"
+    exit 1
+  fi
+}
+
+# List all prompts
+function list_prompts() {
+  log_title "Available Prompts"
+
+  printf "%-10s %-40s %-10s %s\n" "Alias" "Title" "Input" "Description"
+  log_line "-" 120
+
+  while IFS= read -r file; do
+    [[ $(basename "${file}") == "README.md" ]] && continue
+    local alias title description input_type input_hint input_display
+    alias=$(get_alias_from_filename "$(basename "${file}")")
+    title=$(parse_frontmatter "${file}" "title")
+    [[ -z ${title} ]] && title=$(derive_title_from_filename "$(basename "${file}")")
+    description=$(parse_frontmatter "${file}" "description")
+    input_type=$(parse_frontmatter "${file}" "input")
+    input_hint=$(parse_frontmatter "${file}" "input_hint")
+
+    if [[ -n ${input_type} ]]; then
+      input_display="${input_type}"
+      [[ -n ${input_hint} ]] && input_display="${input_type}: ${input_hint}"
+    else
+      input_display="-"
+    fi
+
+    printf "%-10s %-40s %-10s %s\n" "${alias}" "${title:0:40}" "${input_type:-"-"}" "${description:0:60}"
+  done < <(find "${PROMPTS_DIR}" -maxdepth 1 -name "*.md" -type f 2>/dev/null | sort)
+}
+
+# Edit prompt
+function edit_prompt() {
+  local alias="${1}"
+  local file
+
+  if ! file=$(find_prompt_by_alias "${alias}"); then
+    log_error "ERROR: Prompt '${alias}' not found"
+    exit 1
+  fi
+
+  local editor="${EDITOR:-vim}"
+  [[ ${VERBOSE} == true ]] && log_message "Editing: ${file}"
+
+  "${editor}" "${file}"
+}
+
+# Create new prompt interactively
+function create_new_prompt() {
+  log_title "Create New Prompt"
+
+  # Prompt for alias
+  local alias
+  while true; do
+    read -rp "Alias: " alias
+    if [[ -z ${alias} ]]; then
+      log_error "Alias is required"
+      continue
+    fi
+    if [[ ! ${alias} =~ ^[a-z0-9-]+$ ]]; then
+      log_error "Alias must be lowercase alphanumeric with hyphens only"
+      continue
+    fi
+    if find_prompt_by_alias "${alias}" >/dev/null 2>&1; then
+      log_error "Alias '${alias}' already exists"
+      continue
+    fi
+    break
+  done
+
+  # Prompt for title
+  local title
+  while true; do
+    read -rp "Title: " title
+    if [[ -z ${title} ]]; then
+      log_error "Title is required"
+      continue
+    fi
+    break
+  done
+
+  # Prompt for description
+  local description
+  read -rp "Description (optional): " description
+
+  # Prompt for input type
+  local input_type
+  read -rp "Input (required/optional/none) [none]: " input_type
+  [[ -z ${input_type} ]] && input_type="none"
+
+  # Prompt for input hint
+  local input_hint
+  if [[ ${input_type} == "required" || ${input_type} == "optional" ]]; then
+    read -rp "Input hint: " input_hint
+  fi
+
+  # Generate filename
+  local filename_title="${title,,}"
+  filename_title="${filename_title// /-}"
+  local filename="${alias}-${filename_title}.md"
+  local filepath="${PROMPTS_DIR}/${filename}"
+
+  # Create file content
+  local content="---\n"
+  content+="title: ${title}\n"
+  [[ -n ${description} ]] && content+="description: ${description}\n"
+  [[ ${input_type} != "none" ]] && content+="input: ${input_type}\n"
+  [[ -n ${input_hint} ]] && content+="input_hint: ${input_hint}\n"
+  content+="---\n\n"
+  content+="<Your prompt here>\n"
+  [[ ${input_type} != "none" ]] && content+="\n\${INPUT}\n"
+
+  echo -e "${content}" > "${filepath}"
+
+  log_success "Created: ${filepath}"
+  log_message "Edit the file to add your prompt content"
+
+  # Ask if they want to edit now
+  read -rp "Edit now? (y/N): " edit_now
+  if [[ ${edit_now} =~ ^[Yy]$ ]]; then
+    "${EDITOR:-vim}" "${filepath}"
+  fi
+}
+
+# Find prompts by content
+function find_prompts() {
+  local keyword="${1}"
+
+  log_title "Search Results for '${keyword}'"
+
+  if ! command -v rg >/dev/null; then
+    log_error "ERROR: ripgrep (rg) is required but not installed"
+    exit 1
+  fi
+
+  local results
+  results=$(rg -i -l "${keyword}" "${PROMPTS_DIR}"/*.md 2>/dev/null)
+
+  if [[ -z ${results} ]]; then
+    log_message "No prompts found containing '${keyword}'"
+    exit 0
+  fi
+
+  while IFS= read -r file; do
+    local alias title
+    alias=$(get_alias_from_filename "$(basename "${file}")")
+    title=$(parse_frontmatter "${file}" "title")
+    [[ -z ${title} ]] && title=$(derive_title_from_filename "$(basename "${file}")")
+    log_message "${alias}: ${title}"
+    rg -i --context 1 --color always "${keyword}" "${file}" | sed 's/^/  /'
+    log_newline
+  done <<< "${results}"
+}
+
+# Validate all prompts
+function doctor_prompts() {
+  log_title "Validating Prompts"
+
+  local error_count=0
+  local warn_count=0
+  local file_count=0
+  local alias_map=()
+
+  while IFS= read -r file; do
+    local filename
+    filename=$(basename "${file}")
+    [[ ${filename} == "README.md" ]] && continue
+
+    ((file_count++))
+    local alias title
+    alias=$(get_alias_from_filename "${filename}")
+
+    # Check filename format
+    if [[ ! ${filename} =~ ^[a-z0-9-]+-[a-z0-9-]+\.md$ ]]; then
+      log_failure "Invalid filename format: ${filename}"
+      ((error_count++))
+      continue
+    fi
+
+    # Check for duplicate aliases
+    if [[ " ${alias_map[*]} " == *" ${alias} "* ]]; then
+      log_warning "Duplicate alias '${alias}': ${filename}"
+      ((warn_count++))
+    fi
+    alias_map+=("${alias}")
+
+    # Check title
+    title=$(parse_frontmatter "${file}" "title")
+    if [[ -z ${title} ]]; then
+      log_warning "Missing title in frontmatter: ${filename}"
+      ((warn_count++))
+    fi
+
+    # Check file is not empty
+    if [[ ! -s ${file} ]]; then
+      log_failure "Empty file: ${filename}"
+      ((error_count++))
+    fi
+
+    # Check for INPUT usage consistency
+    local content input_type
+    content=$(get_prompt_content "${file}")
+    input_type=$(parse_frontmatter "${file}" "input")
+
+    if [[ ${content} == *'${INPUT}'* && -z ${input_type} ]]; then
+      log_warning "Has \${INPUT} but no 'input' field: ${filename}"
+      ((warn_count++))
+    fi
+
+    if [[ ${content} != *'${INPUT}'* && -n ${input_type} ]]; then
+      log_warning "Has 'input' field but no \${INPUT} in content: ${filename}"
+      ((warn_count++))
+    fi
+
+  done < <(find "${PROMPTS_DIR}" -maxdepth 1 -name "*.md" -type f 2>/dev/null)
+
+  log_newline
+  log_heading "Summary"
+  log_message "Total prompts: ${file_count}"
+  log_message "Warnings: ${warn_count}"
+  log_message "Errors: ${error_count}"
+
+  if [[ ${error_count} -eq 0 && ${warn_count} -eq 0 ]]; then
+    log_success "All prompts are valid"
+  elif [[ ${error_count} -eq 0 ]]; then
+    log_warning "Validation completed with warnings"
+    exit 0
+  else
+    log_failure "Validation failed with errors"
+    exit 1
+  fi
+}
+
+# Dependency Checks
+# -----------------------------------------------------------------------------
+if [[ ! -d ${PROMPTS_DIR} ]]; then
+  log_error "ERROR: Prompts directory not found: '${PROMPTS_DIR}'"
+  exit 1
+fi
+
+# Parse Arguments
+# -----------------------------------------------------------------------------
+if [[ $# -eq 0 ]]; then
+  file=$(launch_fzf)
+  load_prompt "${file}"
+  exit 0
+fi
+
+case "${1}" in
+  -h|--help)
+    print_usage
+    exit 0
+    ;;
+  --list)
+    list_prompts
+    exit 0
+    ;;
+  --edit)
+    if [[ $# -lt 2 ]]; then
+      log_error "ERROR: --edit requires an alias argument"
+      exit 1
+    fi
+    edit_prompt "${2}"
+    exit 0
+    ;;
+  --new)
+    create_new_prompt
+    exit 0
+    ;;
+  --find)
+    if [[ $# -lt 2 ]]; then
+      log_error "ERROR: --find requires a keyword argument"
+      exit 1
+    fi
+    find_prompts "${2}"
+    exit 0
+    ;;
+  --doctor)
+    doctor_prompts
+    exit 0
+    ;;
+  --verbose)
+    VERBOSE=true
+    if [[ $# -lt 2 ]]; then
+      log_error "ERROR: --verbose requires an alias argument"
+      exit 1
+    fi
+    shift
+    ;;
+esac
+
+# Load prompt by alias
+alias="${1}"
+input_arg="${2:-}"
+
+if file=$(find_prompt_by_alias "${alias}"); then
+  load_prompt "${file}" "${input_arg}"
+elif fuzzy_alias=$(fuzzy_match_alias "${alias}"); then
+  log_message "Using fuzzy match: '${fuzzy_alias}'"
+  file=$(find_prompt_by_alias "${fuzzy_alias}")
+  load_prompt "${file}" "${input_arg}"
+else
+  file=$(launch_fzf "⚠ Alias '${alias}' not found. Select a prompt:")
+  load_prompt "${file}" "${input_arg}"
+fi
