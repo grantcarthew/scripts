@@ -82,7 +82,7 @@ fi
 # -----------------------------------------------------------------------------
 log_heading "Operational Values"
 
-declare local_file_path="${SCRIPT_DIR}/ai/metaprompts/role.md"
+declare local_file_path="${SCRIPT_DIR}/agents/metaprompts/role.md"
 declare output_file="role.md"
 
 log_message "$(
