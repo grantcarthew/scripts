@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+
+log_title "{{[h]ighlighted [t]itle [optional-arg]}}"
+
+[[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+
+if [[ $# -eq 0 ]]; then
+  log_message "❯ {{command}}"
+  {{command}}
+  exit 0
+fi
+
+log_message "❯ {{command}} ${1}"
+{{command}} "${1}"
+
+# AI Instructions
+# -----------------------------------------------------------------------------
+# Small script pattern for simple command wrappers in lib/ subdirectories
+# - Always display the title with log_title using [b]racket highlights
+# - Validate arguments and check for -h/--help immediately after the title
+# - Log every command before execution with log_message "❯ {{command}}"
+# - Keep main logic at the root level; no single-use functions
+# - Use the log_* functions from terminal.sh for all output
+# -----------------------------------------------------------------------------
+# Patterns
+# -----------------------------------------------------------------------------
+#
+# No argument:
+#
+#   log_title "[g]it [f]etch --all --prune"
+#
+#   [[ $# -gt 0 ]] && exit 1
+#
+#   log_message "❯ git fetch --all --prune"
+#   git fetch --all --prune
+#
+# -----------------------------------------------------------------------------
+#
+# Optional argument:
+#
+#   log_title "[g]it [s]tatus [path]"
+#
+#   [[ $# -gt 1 || "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
+#
+#   if [[ $# -eq 0 ]]; then
+#     log_message "❯ git status"
+#     git status
+#     exit 0
+#   fi
+#
+#   log_message "❯ git status ${1}"
+#   git status "${1}"
+#
+# -----------------------------------------------------------------------------
+#
+# Required argument:
+#
+#   log_title "[g]it [c]ommit --message [message]"
+#
+#   [[ $# -lt 1 ]] && log_error "Commit message is required." && exit 1
+#
+#   log_message "❯ git commit --message \"${*}\""
+#   git commit --message "${*}"
+#
+# -----------------------------------------------------------------------------
+# Log_* Functions
+# -----------------------------------------------------------------------------
+# A list of the terminal.sh module log functions that send output to stderr:
+# RipGrep Command: rg -o 'log_.*\(' scripts/bash_modules/terminal.sh | tr -d '('
+#
+# log_line            - Prints a horizontal line with customizable character and length
+# log_title           - Displays a bold green title with a double line separator
+# log_heading         - Displays a bold green heading with a single line separator
+# log_subheading      - Displays a bold green subheading with a line matching its length
+# log_sectionheading  - Displays a bold yellow section heading with a double line separator
+# log_message         - Prints a normal message to stderr
+# log_messagewithdate - Prints a message with UTC timestamp prefix
+# log_newline         - Inserts an empty line
+# log_sameline        - Updates text on the current line, erasing previous content
+# log_clearline       - Clears the current line without printing anything
+# log_warning         - Prints a yellow warning message
+# log_error           - Prints a red error message
+# log_success         - Prints a message with a green checkmark (✔)
+# log_failure         - Prints a message with a red cross (✖)
+# log_json            - Pretty prints JSON data using jq
+# log_percent         - Displays a percentage completion counter
+# log_progressbar     - Shows a visual progress bar with percentage
+# log_spinner         - Displays an animated spinner while a process is running
+# log_wait            - Waits for a specified duration, showing a spinner
+# log_pressanykey     - Prompts the user to press any key to continue
+# log_done            - Prints a completion message with a green checkmark

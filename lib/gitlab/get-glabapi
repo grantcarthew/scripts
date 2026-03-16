@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <endpoint> [glab-options...]
+
+Read-only wrapper for glab api. Blocks write operations (POST, PUT, DELETE, PATCH).
+
+Dependencies:
+  glab               GitLab CLI
+
+Required arguments:
+  endpoint           API endpoint path (e.g., "projects?search=foo")
+
+Optional arguments:
+  [glab-options]     Additional glab api options (write methods blocked)
+  -h, --help         Show this help message and exit
+
+Examples:
+  $(basename "$0") "projects?search=terraform&per_page=20"
+  $(basename "$0") "groups?search=cloud&per_page=10"
+  $(basename "$0") "projects/123/repository/files/README.md/raw?ref=main"
+EOF
+}
+if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Dependency Check
+# -----------------------------------------------------------------------------
+if ! command -v glab >/dev/null; then
+  log_error "ERROR: Missing dependency - 'glab'"
+  exit 1
+fi
+
+# Validate: Only GET method or no method permitted
+# -----------------------------------------------------------------------------
+declare all_args="$*"
+declare all_args_upper="${all_args^^}"
+
+# Check for -X flag
+if [[ "${all_args_upper}" == *"-X"* ]]; then
+  # Permit: -X GET (with space)
+  if [[ "${all_args_upper}" == *"-X GET"* ]]; then
+    : # Allowed
+  # Permit: -XGET (no space)
+  elif [[ "${all_args_upper}" == *"-XGET"* ]]; then
+    : # Allowed
+  # Block: -X with any other method
+  else
+    log_error "ERROR: Only GET method is permitted"
+    exit 1
+  fi
+fi
+
+# Check for --method flag
+if [[ "${all_args_upper}" == *"--METHOD"* ]]; then
+  # Permit: --method GET (with space)
+  if [[ "${all_args_upper}" == *"--METHOD GET"* ]]; then
+    : # Allowed
+  # Permit: --method=GET (with equals)
+  elif [[ "${all_args_upper}" == *"--METHOD=GET"* ]]; then
+    : # Allowed
+  # Block: --method with any other method
+  else
+    log_error "ERROR: Only GET method is permitted"
+    exit 1
+  fi
+fi
+
+# Execute glab api
+# -----------------------------------------------------------------------------
+glab api "$@"

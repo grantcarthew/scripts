@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0")
+
+Read Claude Code settings and display a formatted summary of configuration
+and permissions.
+
+Dependencies:
+  jq                 JSON processor
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+if [[ $# -gt 0 ]]; then
+  print_usage
+  exit 0
+fi
+
+# Dependency Check
+# -----------------------------------------------------------------------------
+if ! command -v jq >/dev/null; then
+  log_error "ERROR: Missing dependency - 'jq'"
+  exit 1
+fi
+
+# Configuration
+# -----------------------------------------------------------------------------
+settings_file="${HOME}/.claude/settings.json"
+
+if [[ ! -f "${settings_file}" ]]; then
+  log_error "ERROR: Settings file not found - '${settings_file}'"
+  exit 1
+fi
+
+settings=$(cat "${settings_file}")
+
+# Helper function to extract and format permissions by type
+function format_permissions() {
+  local -r permission_type="${1}"
+  local -r json_path="${2}"
+  local -r home_path="${HOME}"
+
+  local items
+  items=$(echo "${settings}" | jq -r "${json_path}[]? // empty" 2>/dev/null)
+
+  [[ -z "${items}" ]] && return
+
+  local bash_items=()
+  local read_items=()
+  local write_items=()
+  local other_items=()
+
+  while IFS= read -r item; do
+    if [[ "${item}" =~ ^Bash\((.+):\*\)$ ]]; then
+      bash_items+=("${BASH_REMATCH[1]}")
+    elif [[ "${item}" =~ ^Bash\((.+)\)$ ]]; then
+      bash_items+=("${BASH_REMATCH[1]}")
+    elif [[ "${item}" =~ ^Read\((.+)\)$ ]]; then
+      local path="${BASH_REMATCH[1]}"
+      path="${path/${home_path}/\~}"
+      read_items+=("${path}")
+    elif [[ "${item}" =~ ^Write\((.+)\)$ ]]; then
+      local path="${BASH_REMATCH[1]}"
+      path="${path/${home_path}/\~}"
+      write_items+=("${path}")
+    else
+      other_items+=("${item}")
+    fi
+  done <<< "${items}"
+
+  echo "## ${permission_type}"
+  echo
+
+  if [[ ${#bash_items[@]} -gt 0 ]]; then
+    echo "Bash:"
+    printf "  %s\n" "$(printf '%s, ' "${bash_items[@]}" | sed 's/, $//')"
+    echo
+  fi
+
+  if [[ ${#read_items[@]} -gt 0 ]]; then
+    echo "Read:"
+    printf "  %s\n" "$(printf '%s, ' "${read_items[@]}" | sed 's/, $//')"
+    echo
+  fi
+
+  if [[ ${#write_items[@]} -gt 0 ]]; then
+    echo "Write:"
+    printf "  %s\n" "$(printf '%s, ' "${write_items[@]}" | sed 's/, $//')"
+    echo
+  fi
+
+  if [[ ${#other_items[@]} -gt 0 ]]; then
+    echo "Other:"
+    printf "  %s\n" "$(printf '%s, ' "${other_items[@]}" | sed 's/, $//')"
+    echo
+  fi
+}
+
+# Output
+# -----------------------------------------------------------------------------
+echo "# Claude Settings"
+echo
+
+model=$(echo "${settings}" | jq -r '.model // "not set"')
+echo "- model: ${model}"
+
+plugins=$(echo "${settings}" | jq -r '.enabledPlugins | keys[]? // empty' 2>/dev/null | paste -sd ',' - | sed 's/,/, /g')
+if [[ -n "${plugins}" ]]; then
+  echo "- enabledPlugins: ${plugins}"
+else
+  echo "- enabledPlugins: none"
+fi
+
+echo
+echo "# Permissions"
+echo
+
+format_permissions "Allowed" ".permissions.allow"
+format_permissions "Ask" ".permissions.ask"
+format_permissions "Denied" ".permissions.deny"

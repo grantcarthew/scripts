@@ -18,9 +18,9 @@ Usage: $(basename "$0") [--test] [-h|--help]
 Compare AI configuration files between user config and repository backup.
 
 This script compares:
-  - ~/.claude/settings.json vs ai/config/claude-code/
-  - ~/.claude/commands/ vs ai/commands/
-  - ~/.claude/agents/ vs ai/config/claude-code/agents/
+  - ~/.claude/settings.json vs agents/config/claude-code/
+  - ~/.claude/commands/ vs agents/commands/
+  - ~/.claude/agents/ vs agents/config/claude-code/agents/
 
 The user configuration is considered authoritative. Differences are shown
 as what has changed in the user config compared to the backup.
@@ -85,10 +85,10 @@ fi
 
 declare -r OS_NAME="$(get_os_name)"
 declare -r USER_CLAUDE_DIR="${HOME}/.claude"
-declare -r REPO_CLAUDE_DIR="${SCRIPT_DIR}/ai/config/claude-code"
+declare -r REPO_CLAUDE_DIR="${SCRIPT_DIR}/agents/config/claude-code"
 declare -r USER_COMMANDS_DIR="${USER_CLAUDE_DIR}/commands"
-declare -r REPO_COMMANDS_DIR="${SCRIPT_DIR}/ai/commands"
-declare -r REPO_CONFIG_DIR="${SCRIPT_DIR}/ai/config"
+declare -r REPO_COMMANDS_DIR="${SCRIPT_DIR}/agents/commands"
+declare -r REPO_CONFIG_DIR="${SCRIPT_DIR}/agents/config"
 
 declare -i DIFFERENCES_FOUND=0
 

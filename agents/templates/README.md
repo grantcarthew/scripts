@@ -17,8 +17,8 @@ They will not work as standalone prompts.
 
 ## Raw Text Links
 
-- [Resume Writer](https://raw.githubusercontent.com/grantcarthew/scripts/refs/heads/main/ai/templates/resume-writer.md)
-- [Cover Letter Writer](https://raw.githubusercontent.com/grantcarthew/scripts/refs/heads/main/ai/templates/cover-letter.md)
+- [Resume Writer](https://raw.githubusercontent.com/grantcarthew/scripts/refs/heads/main/agents/templates/resume-writer.md)
+- [Cover Letter Writer](https://raw.githubusercontent.com/grantcarthew/scripts/refs/heads/main/agents/templates/cover-letter.md)
 
 ## Autobiography
 

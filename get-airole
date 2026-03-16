@@ -82,7 +82,7 @@ done
 # -----------------------------------------------------------------------------
 log_heading "Loading Local Prompts"
 
-local_path="${SCRIPT_DIR}/ai/roles"
+local_path="${SCRIPT_DIR}/agents/roles"
 
 if [[ ! -d "${local_path}" ]]; then
   log_error "ERROR: Local AI roles directory not found at '${local_path}'"

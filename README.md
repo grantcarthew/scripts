@@ -111,12 +111,12 @@ echo 'export PATH="${PATH}:${HOME}/bin/scripts/lib/terraform"' >> "${HOME}/.bash
 
 ## AI Prompts Collection
 
-The [`ai/`](ai/) directory contains a comprehensive collection of AI prompts, roles, and templates:
+The [`agents/`](agents/) directory contains a comprehensive collection of AI prompts, roles, and templates:
 
-- **[AI Roles](ai/roles/)**: Domain-specific expert personas for cloud, development, and analysis
-- **[Commands](ai/commands/)**: Quick task-oriented prompts for immediate use
-- **[Metaprompts](ai/metaprompts/)**: Advanced templates for creating other prompts
-- **[Templates](ai/templates/)**: Customizable frameworks for resumes and cover letters
+- **[AI Roles](agents/roles/)**: Domain-specific expert personas for cloud, development, and analysis
+- **[Commands](agents/commands/)**: Quick task-oriented prompts for immediate use
+- **[Metaprompts](agents/metaprompts/)**: Advanced templates for creating other prompts
+- **[Templates](agents/templates/)**: Customizable frameworks for resumes and cover letters
 
 ### Quick Access
 

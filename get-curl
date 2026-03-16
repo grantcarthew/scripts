@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") <url> [curl-options...]
+
+Read-only wrapper for curl. Blocks write operations.
+
+Dependencies:
+  curl               Command line URL transfer tool
+
+Required arguments:
+  url                URL to fetch
+
+Optional arguments:
+  [curl-options]     Additional curl options (write methods and data flags blocked)
+  -h, --help         Show this help message and exit
+
+Permitted:
+  GET requests (default)
+  HEAD requests (-I, --head)
+
+Blocked:
+  Non-GET/HEAD methods (-X POST, -X PUT, -X DELETE, -X PATCH, etc.)
+  Data flags (-d, --data, -F, --form, -T, --upload-file)
+
+Examples:
+  $(basename "$0") "https://api.example.com/resource"
+  $(basename "$0") -s "https://api.example.com/resource" | jq .
+  $(basename "$0") -I "https://example.com"
+EOF
+}
+if [[ $# -lt 1 || "${1}" == "-h" || "${1}" == "--help" ]]; then
+  print_usage
+  exit 1
+fi
+
+function ctrlc_trap() {
+  log_newline
+  log_warning "Script interrupted. Exiting."
+  exit 130
+}
+trap ctrlc_trap SIGINT
+
+# Dependency Check
+# -----------------------------------------------------------------------------
+if ! command -v curl >/dev/null; then
+  log_error "ERROR: Missing dependency - 'curl'"
+  exit 1
+fi
+
+# Validate: Only GET/HEAD method or no method permitted
+# -----------------------------------------------------------------------------
+declare all_args="$*"
+declare all_args_upper="${all_args^^}"
+
+# Check for -X flag (curl uses -X or --request)
+if [[ "${all_args_upper}" == *"-X"* ]]; then
+  # Permit: -X GET (with space)
+  if [[ "${all_args_upper}" == *"-X GET"* ]]; then
+    : # Allowed
+  # Permit: -XGET (no space)
+  elif [[ "${all_args_upper}" == *"-XGET"* ]]; then
+    : # Allowed
+  # Permit: -X HEAD (with space)
+  elif [[ "${all_args_upper}" == *"-X HEAD"* ]]; then
+    : # Allowed
+  # Permit: -XHEAD (no space)
+  elif [[ "${all_args_upper}" == *"-XHEAD"* ]]; then
+    : # Allowed
+  # Block: -X with any other method
+  else
+    log_error "ERROR: Only GET and HEAD methods are permitted"
+    exit 1
+  fi
+fi
+
+# Check for --request flag (curl's long form of -X)
+if [[ "${all_args_upper}" == *"--REQUEST"* ]]; then
+  # Permit: --request GET (with space)
+  if [[ "${all_args_upper}" == *"--REQUEST GET"* ]]; then
+    : # Allowed
+  # Permit: --request=GET (with equals)
+  elif [[ "${all_args_upper}" == *"--REQUEST=GET"* ]]; then
+    : # Allowed
+  # Permit: --request HEAD (with space)
+  elif [[ "${all_args_upper}" == *"--REQUEST HEAD"* ]]; then
+    : # Allowed
+  # Permit: --request=HEAD (with equals)
+  elif [[ "${all_args_upper}" == *"--REQUEST=HEAD"* ]]; then
+    : # Allowed
+  # Block: --request with any other method
+  else
+    log_error "ERROR: Only GET and HEAD methods are permitted"
+    exit 1
+  fi
+fi
+
+# Block data flags (these imply POST)
+if [[ "${all_args_upper}" == *" -D "* ]] || [[ "${all_args_upper}" == " -D"* ]] || [[ "${all_args_upper}" == *" -D" ]]; then
+  # Note: -D is --dump-header, not data. Skip this check.
+  : # Not a data flag
+fi
+
+# Block: -d (data flag, implies POST)
+if [[ "${all_args}" == *" -d "* ]] || [[ "${all_args}" == "-d "* ]]; then
+  log_error "ERROR: Data flag -d is not permitted (implies POST)"
+  exit 1
+fi
+
+# Block: --data variants
+if [[ "${all_args_upper}" == *"--DATA"* ]]; then
+  log_error "ERROR: Data flags are not permitted (implies POST)"
+  exit 1
+fi
+
+# Block: -F (form flag, implies POST)
+if [[ "${all_args}" == *" -F "* ]] || [[ "${all_args}" == "-F "* ]]; then
+  log_error "ERROR: Form flag -F is not permitted (implies POST)"
+  exit 1
+fi
+
+# Block: --form variants
+if [[ "${all_args_upper}" == *"--FORM"* ]]; then
+  log_error "ERROR: Form flags are not permitted (implies POST)"
+  exit 1
+fi
+
+# Block: -T (upload-file, implies PUT)
+if [[ "${all_args}" == *" -T "* ]] || [[ "${all_args}" == "-T "* ]]; then
+  log_error "ERROR: Upload flag -T is not permitted (implies PUT)"
+  exit 1
+fi
+
+# Block: --upload-file
+if [[ "${all_args_upper}" == *"--UPLOAD-FILE"* ]]; then
+  log_error "ERROR: Upload flag is not permitted (implies PUT)"
+  exit 1
+fi
+
+# Execute curl
+# -----------------------------------------------------------------------------
+curl "$@"

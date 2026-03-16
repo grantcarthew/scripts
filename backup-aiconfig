@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Backup AI configuration files to ai/config/
+# Backup AI configuration files to agents/config/
 
 # Environment setup
 # -----------------------------------------------------------------------------
@@ -14,12 +14,12 @@ function print_usage() {
   cat <<EOF
 Usage: $(basename "$0") [-h|--help]
 
-Backup AI configuration files to ai/config/
+Backup AI configuration files to agents/config/
 
 This script copies:
-  - ~/.claude/settings.json to ai/config/claude-code/
-  - ~/.claude/commands/ to ai/commands/
-  - ~/.claude/agents/ to ai/config/claude-code/agents/
+  - ~/.claude/settings.json to agents/config/claude-code/
+  - ~/.claude/commands/ to agents/commands/
+  - ~/.claude/agents/ to agents/config/claude-code/agents/
 
 Non-existent files or directories are skipped without error.
 
@@ -67,9 +67,9 @@ log_title "Configuration Backup"
 
 declare -r OS_NAME="$(get_os_name)"
 declare -r CLAUDE_SOURCE_DIR="${HOME}/.claude"
-declare -r CLAUDE_TARGET_DIR="${SCRIPT_DIR}/ai/config/claude-code"
-declare -r COMMANDS_TARGET_DIR="${SCRIPT_DIR}/ai/commands"
-declare -r CONFIG_TARGET_DIR="${SCRIPT_DIR}/ai/config"
+declare -r CLAUDE_TARGET_DIR="${SCRIPT_DIR}/agents/config/claude-code"
+declare -r COMMANDS_TARGET_DIR="${SCRIPT_DIR}/agents/commands"
+declare -r CONFIG_TARGET_DIR="${SCRIPT_DIR}/agents/config"
 
 # Create target directories if they don't exist
 if ! mkdir -p "${CLAUDE_TARGET_DIR}" "${COMMANDS_TARGET_DIR}" "${CONFIG_TARGET_DIR}"; then
