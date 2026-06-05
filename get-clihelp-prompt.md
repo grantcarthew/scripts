@@ -42,7 +42,7 @@ ollama, opentofu, orion, ouch, p7zip, pastel, pinta, podman, postgresql,
 procs, progress, python, ranger, ripgrep, rmlint, rsync, rust, sd,
 shellcheck, slack, speedtest-cli, starship, strace, stu, stylua, sudo,
 systemctl, terraform, terraform-docs, tflint, threshy, tlp, tlpui, tmux,
-trivy, tumbler, uv, vegeta, visual-studio-code, vlc, vnstat, watch, xclip,
+tumbler, uv, vegeta, visual-studio-code, vlc, vnstat, watch, xclip,
 xprop, yamllint, yay, yazi, yq, zellij, zig, zoxide
 ```
 

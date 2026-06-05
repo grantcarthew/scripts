@@ -5,7 +5,7 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 
-dependencies=(tofu jq fd rg entr tflint trivy terraform-docs)
+dependencies=(tofu jq fd rg entr tflint terraform-docs)
 missing_dependencies=()
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then

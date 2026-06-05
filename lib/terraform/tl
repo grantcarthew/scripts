@@ -19,7 +19,3 @@ terraform validate
 log_heading "Linting"
 log_message "❯ tflint --recursive"
 tflint --recursive
-
-log_heading "Security scanning with trivy"
-log_message "❯ trivy config ."
-trivy config .

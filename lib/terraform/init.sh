@@ -14,7 +14,7 @@ function ctrlc_trap() {
 }
 trap ctrlc_trap SIGINT
 
-dependencies=(terraform jq fd rg entr tflint trivy terraform-docs)
+dependencies=(terraform jq fd rg entr tflint terraform-docs)
 missing_dependencies=()
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then

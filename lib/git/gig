@@ -8,8 +8,6 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/../../bash_modules/user-input.sh"
-source "${SCRIPT_DIR}/../../bash_modules/config.sh"
-source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
@@ -20,7 +18,7 @@ Generate a .gitignore file using AI for the specified request.
 
 Dependencies:
   git                Git version control
-  aichat             AI chat tool
+  claude             Claude Code CLI
 
 Required arguments:
   request            Technology name or detailed request
@@ -50,7 +48,8 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "[g]it [i]gnore [g]enerator"
 
-dependencies=(git aichat)
+# dependencies=(git agy)
+dependencies=(git claude)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -114,7 +113,8 @@ ${existing_content}
 EOF
 )"
 
-if ! gitignore_content=$(eval "$(ai_get_command aichat fast "${SCRIPT_DIR}/gig-prompt.md" "${prompt}")"); then
+# if ! gitignore_content=$(agy --print "${prompt}"); then
+if ! gitignore_content=$(claude --model haiku --print "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi
@@ -124,12 +124,11 @@ if [[ -z "${gitignore_content}" ]]; then
   exit 1
 fi
 
-# Extract content between the first code fence markers
+raw_gitignore_content="${gitignore_content}"
 gitignore_content=$(echo "${gitignore_content}" | awk '/^```/{flag=1;next} /^```/{flag=0} flag')
 
 if [[ -z "${gitignore_content}" ]]; then
-  # If code block extraction failed, use the entire output
-  gitignore_content=$(eval "$(ai_get_command aichat fast "${SCRIPT_DIR}/gig-prompt.md" "${prompt}")")
+  gitignore_content="${raw_gitignore_content}"
 fi
 
 log_newline

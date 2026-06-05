@@ -8,8 +8,6 @@ SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
 source "${SCRIPT_DIR}/../../bash_modules/user-input.sh"
-source "${SCRIPT_DIR}/../../bash_modules/config.sh"
-source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
@@ -20,7 +18,7 @@ Update CHANGELOG.md using AI based on current branch changes.
 
 Dependencies:
   git                Git version control
-  aichat             AI chat tool
+  claude             Claude Code CLI
 
 Arguments:
   special-instructions  Optional special instructions for the AI prompt
@@ -56,7 +54,8 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "[u]pdate [c]hange [l]og"
 
-dependencies=(git aichat)
+# dependencies=(git agy)
+dependencies=(git claude)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -163,7 +162,8 @@ ${branch_diff}
 EOF
 )"
 
-if ! updated_changelog=$(eval "$(ai_get_command aichat pro "${SCRIPT_DIR}/ucl-prompt.md" "${prompt}")"); then
+# if ! updated_changelog=$(agy --print "${prompt}"); then
+if ! updated_changelog=$(claude --model haiku --print "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi

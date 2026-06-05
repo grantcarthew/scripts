@@ -7,8 +7,6 @@ set -o pipefail
 SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
 [[ ":${PATH}:" != *":${SCRIPT_DIR}:"* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
 source "${SCRIPT_DIR}/../../bash_modules/terminal.sh"
-source "${SCRIPT_DIR}/../../bash_modules/config.sh"
-source "${SCRIPT_DIR}/../../bash_modules/ai.sh"
 [[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
 
 function print_usage() {
@@ -19,7 +17,7 @@ Review git changes using AI - staged changes or branch diff.
 
 Dependencies:
   git                Git version control
-  aichat             AI chat tool
+  claude             Claude Code CLI
 
 Optional arguments:
   special-instructions  Special instructions for the AI reviewer
@@ -54,7 +52,8 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "[g]it [d]iff [r]eview"
 
-dependencies=(git aichat)
+# dependencies=(git agy)
+dependencies=(git claude)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -132,7 +131,8 @@ ${diff_content}
 EOF
 )"
 
-if ! review=$(eval "$(ai_get_command aichat pro "${SCRIPT_DIR}/gdr-prompt.md" "${prompt}")"); then
+# if ! review=$(agy --print "${prompt}"); then
+if ! review=$(claude --model haiku --print "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi
