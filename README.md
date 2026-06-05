@@ -52,7 +52,6 @@ You may not need them all if you are only interested in a few scripts.
 - [terraform](https://www.terraform.io/): Infrastructure as code tool
 - [terraform-docs](https://github.com/terraform-docs/terraform-docs): Generate documentation for Terraform modules
 - [tflint](https://github.com/terraform-linters/tflint): Terraform linter
-- [trivy](https://github.com/aquasecurity/trivy): Vulnerability scanner for containers and infrastructure as code
 
 ## Installation
 
