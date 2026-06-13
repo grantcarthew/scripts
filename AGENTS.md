@@ -82,17 +82,25 @@ echo 'export PATH="${PATH}:${HOME}/bin/scripts/lib/terraform"' >> "${HOME}/.bash
 
 **Branch Management:** Work on `main` branch (personal repository)
 
-**Commit Message Format:** Conventional Commits style
+**Commit Message Format:** Scoped Commits (<https://scopedcommits.com>)
 
 ```
-type(scope): description
+<scope>: <description>
+
+[optional body]
+
+[optional trailer(s)]
+```
+
+- Scope is the subsystem, module, or area touched (no `feat`/`fix`/`type` prefix)
+- Multiple scopes are comma-separated; treewide changes may use `treewide`
+- A single commit may span multiple scopes — do not split a cohesive change
 
 Examples:
-feat(git): add new commit message generator
-fix(aws): correct IAM policy lookup logic
-docs(readme): update installation instructions
-chore(config): update shellcheck rules
-```
+git: add new commit message generator
+aws: correct IAM policy lookup logic
+readme: update installation instructions
+config: update shellcheck rules
 
 **Before Committing:**
 

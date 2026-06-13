@@ -18,7 +18,7 @@ Update CHANGELOG.md using AI based on current branch changes.
 
 Dependencies:
   git                Git version control
-  claude             Claude Code CLI
+  agy                AI CLI tool
 
 Arguments:
   special-instructions  Optional special instructions for the AI prompt
@@ -54,8 +54,8 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "[u]pdate [c]hange [l]og"
 
-# dependencies=(git agy)
-dependencies=(git claude)
+# dependencies=(git claude)
+dependencies=(git agy)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -162,8 +162,8 @@ ${branch_diff}
 EOF
 )"
 
-# if ! updated_changelog=$(agy --print "${prompt}"); then
-if ! updated_changelog=$(claude --model haiku --print "${prompt}"); then
+# if ! updated_changelog=$(claude --model haiku --print "${prompt}"); then
+if ! updated_changelog=$(agy --print "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi

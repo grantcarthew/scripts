@@ -18,7 +18,7 @@ Generate a commit message using AI for the currently staged changes.
 
 Dependencies:
   git                Git version control
-  claude             Claude Code CLI
+  agy                AI CLI tool
 
 Options:
   -y, --yes            Skip confirmation prompts and auto-commit/push
@@ -76,8 +76,8 @@ trap ctrlc_trap SIGINT
 log_title "[g]it [c]ommit [m]essage generator"
 git status
 
-# dependencies=(git agy)
-dependencies=(git claude)
+# dependencies=(git claude)
+dependencies=(git agy)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -116,8 +116,8 @@ ${staged_changes}
 EOF
 )"
 
-# if ! commit_message=$(agy --print "${prompt}"); then
-if ! commit_message=$(claude --model haiku --print "${prompt}"); then
+# if ! commit_message=$(claude --model haiku --print "${prompt}"); then
+if ! commit_message=$(agy --print "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi
