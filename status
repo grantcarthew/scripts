@@ -29,20 +29,30 @@ EOF
 # Main Logic
 # -----------------------------------------------------------------------------
 status_file="status"
+had_status=false
+[[ -e "${status_file}" ]] && had_status=true
 
-if [[ -e "${status_file}" ]]; then
-  log_heading "Status"
-  cat "${status_file}"
-elif [[ $# -eq 0 ]]; then
-  log_warning "No status"
+if [[ $# -eq 0 ]]; then
+  if [[ "${had_status}" == true ]]; then
+    log_heading "Status"
+    cat "${status_file}"
+  else
+    log_warning "No status"
+  fi
+  exit 0
 fi
-
-[[ $# -eq 0 ]] && exit 0
 
 if [[ "${status_file}" -ef "${BASH_SOURCE[0]}" ]]; then
   log_error "ERROR: Refusing to overwrite the 'status' script itself"
   exit 1
 fi
 
+if [[ "${had_status}" == true ]]; then
+  log_heading "Old Status"
+  cat "${status_file}"
+fi
+
 printf '%s\n' "${*}" > "${status_file}"
-log_success "Status set: '${*}'"
+
+log_heading "New Status"
+cat "${status_file}"
