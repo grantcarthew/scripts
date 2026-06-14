@@ -9,14 +9,14 @@ log_title "[g]it [a]dd [file-path]"
 [[ "${1}" == "-h" || "${1}" == "--help" ]] && exit 1
 
 if [[ $# -eq 0 ]]; then
-  log_message "❯ git add ."
-  git add .
+  log_message "❯ git add . ':(exclude,glob)**/status'"
+  git add . ':(exclude,glob)**/status'
   log_message "❯ git status"
   git status
   exit 0
 fi
 
-log_message "❯ git add ${*}"
-git add "${@}"
+log_message "❯ git add ${*} ':(exclude,glob)**/status'"
+git add "${@}" ':(exclude,glob)**/status'
 log_message "❯ git status"
 git status

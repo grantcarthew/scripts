@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [status text]
+
+Read or write a 'status' note file in the current directory.
+
+With no arguments, display the status file content, or report "No status".
+With arguments, display the existing content then overwrite it with the new
+text. The 'status' file is intended to be ignored by the git add scripts.
+
+Optional arguments:
+  status text        One or more words to store as the new status
+  -h, --help         Show this help message and exit
+EOF
+}
+[[ "${1}" == "-h" || "${1}" == "--help" ]] && { print_usage; exit 0; }
+
+# Main Logic
+# -----------------------------------------------------------------------------
+status_file="status"
+
+if [[ -e "${status_file}" ]]; then
+  log_heading "Status"
+  cat "${status_file}"
+elif [[ $# -eq 0 ]]; then
+  log_warning "No status"
+fi
+
+[[ $# -eq 0 ]] && exit 0
+
+if [[ "${status_file}" -ef "${BASH_SOURCE[0]}" ]]; then
+  log_error "ERROR: Refusing to overwrite the 'status' script itself"
+  exit 1
+fi
+
+printf '%s\n' "${*}" > "${status_file}"
+log_success "Status set: '${*}'"

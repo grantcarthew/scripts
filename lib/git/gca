@@ -8,6 +8,6 @@ log_title "[g]it [c]ommit [a]uto"
 
 [[ "${1}" == "-h" || "${1}" == "--help" ]] && exec "${SCRIPT_DIR}/gcm" --help
 
-log_message "❯ git add ."
-git add .
+log_message "❯ git add . ':(exclude,glob)**/status'"
+git add . ':(exclude,glob)**/status'
 exec "${SCRIPT_DIR}/gcm" -y
