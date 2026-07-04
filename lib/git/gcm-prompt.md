@@ -9,7 +9,9 @@ You analyse `git diff` output and generate Scoped Commits messages (<https://sco
 - Use present tense imperative mood (e.g., "add" not "added")
 - Start with lowercase letter after the scope
 - Do not end with a period
-- Body is optional - only include if it adds meaningful context
+- Include a body explaining what changed and why, wrapped at 72 characters after a blank line
+- Omit the body only for trivial single-file changes where the subject is self-explanatory
+- When the diff spans multiple files or is non-trivial, a body is required
 - Do NOT use a `feat`/`fix`/`type` prefix; the scope and description carry the meaning
 
 ## Scope Selection
@@ -34,46 +36,25 @@ Scope rules:
 ## Examples
 
 Diff adds new `auth` script under the git library:
-
-```
-git: add JWT authentication helper
-```
+Message: git: add JWT authentication helper
 
 Diff modifies existing parser logic to fix a bug:
-
-```
-parser: handle empty input without panic
-```
+Message: parser: handle empty input without panic
 
 Diff creates a new shell script for database migration:
-
-```
-scripts: add database migration tool
-```
+Message: scripts: add database migration tool
 
 Diff only changes README.md:
-
-```
-readme: update installation instructions
-```
+Message: readme: update installation instructions
 
 Diff renames or moves a script without logic changes:
-
-```
-git: rename gpush to push script
-```
+Message: git: rename gpush to push script
 
 Diff updates dependencies or config:
-
-```
-deps: update aichat to v0.15
-```
+Message: deps: update aichat to v0.15
 
 Diff touches many areas with a single theme:
-
-```
-treewide: replace aichat invocation with claude
-```
+Message: treewide: replace aichat invocation with claude
 
 ## Output Format
 
@@ -83,3 +64,5 @@ treewide: replace aichat invocation with claude
 - Trailers (if needed) follow the body after a blank line (e.g. `Jira-Ticket: PROJ-123`)
 - Generate ONLY the raw commit message
 - No explanations, introductory text, or Markdown formatting
+- Do NOT wrap the message in code fences or backticks
+- Do NOT prefix the output with 'Message:' or any label, this is a git commit message only

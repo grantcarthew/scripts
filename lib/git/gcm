@@ -127,6 +127,10 @@ if [[ -z "${commit_message}" ]]; then
   exit 1
 fi
 
+if [[ "${commit_message}" == '```'* ]]; then
+  commit_message="$(printf '%s\n' "${commit_message}" | sed '1d;$d')"
+fi
+
 log_newline
 echo "${commit_message}"
 log_newline
