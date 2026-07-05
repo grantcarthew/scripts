@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail # set -o errexit hides errors, don't use it
+[[ ${DEBUG-} ]] && set -o xtrace
+SCRIPT_DIR="$(cd "${BASH_SOURCE[0]%/*}" || exit 1; pwd)"
+[[ ":${PATH}:" != *:"${SCRIPT_DIR}":* ]] && export PATH="${SCRIPT_DIR}:${PATH}"
+source "${SCRIPT_DIR}/bash_modules/terminal.sh"
+[[ -z ${BASH_MODULES_DIR-} ]] && echo "ERROR: terminal.sh module missing" && exit 1
+
+function print_usage() {
+  cat <<EOF
+Usage: $(basename "$0")
+
+Generate a self-deleting 'resume' script in the current directory that
+resumes the current Claude Code session.
+
+The session id is read from the CLAUDE_CODE_SESSION_ID environment variable, so
+this must be run from inside a Claude Code session. The generated 'resume'
+script deletes itself and then runs 'claude --resume <session-id>', so after
+you shut down and run ./resume the session continues and the file is gone.
+
+The generated 'resume' file is intended to be ignored by the git add scripts.
+
+Optional arguments:
+  -h, --help         Show this help message and exit
+EOF
+}
+[[ "${1-}" == "-h" || "${1-}" == "--help" ]] && { print_usage; exit 0; }
+
+# Main Logic
+# -----------------------------------------------------------------------------
+[[ -z ${CLAUDE_CODE_SESSION_ID-} ]] && log_error "CLAUDE_CODE_SESSION_ID is not set; run this inside a Claude Code session" && exit 1
+
+resume_file="resume"
+
+if [[ "${resume_file}" -ef "${BASH_SOURCE[0]}" ]]; then
+  log_error "Refusing to overwrite the 'resume' script itself; run from your working directory"
+  exit 1
+fi
+
+cat > "${resume_file}" <<EOF
+#!/usr/bin/env bash
+
+# Environment setup
+# -----------------------------------------------------------------------------
+set -o pipefail
+
+# Self-delete, then resume the Claude Code session
+rm -- "\$0"
+exec claude --resume ${CLAUDE_CODE_SESSION_ID}
+EOF
+
+chmod +x "${resume_file}"
+
+log_success "Wrote executable './${resume_file}' for session ${CLAUDE_CODE_SESSION_ID}"
+log_message "Shut down when ready; run ./${resume_file} to continue this session."
