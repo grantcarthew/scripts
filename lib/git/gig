@@ -114,7 +114,7 @@ EOF
 )"
 
 # if ! gitignore_content=$(claude --model haiku --print "${prompt}"); then
-if ! gitignore_content=$(agy --print "${prompt}"); then
+if ! gitignore_content=$(agy --effort low --print "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi

@@ -132,7 +132,7 @@ EOF
 )"
 
 # if ! review=$(claude --model haiku --print "${prompt}"); then
-if ! review=$(agy --print "${prompt}"); then
+if ! review=$(agy --effort low --print "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi
