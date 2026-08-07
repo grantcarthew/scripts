@@ -18,7 +18,7 @@ Generate a commit message using AI for the currently staged changes.
 
 Dependencies:
   git                Git version control
-  agy                AI CLI tool
+  grok               Grok Build CLI
 
 Options:
   -y, --yes            Skip confirmation prompts and auto-commit/push
@@ -76,8 +76,7 @@ trap ctrlc_trap SIGINT
 log_title "[g]it [c]ommit [m]essage generator"
 git status
 
-# dependencies=(git claude)
-dependencies=(git agy)
+dependencies=(git grok)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -116,8 +115,8 @@ ${staged_changes}
 EOF
 )"
 
-# if ! commit_message=$(claude --model haiku --print "${prompt}"); then
-if ! commit_message=$(agy --effort low --print "${prompt}"); then
+# --effort low is the lowest reasoning level supported by grok-4.5 (high|medium|low)
+if ! commit_message=$(grok --effort low --max-turns 1 --tools "" -p "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi
