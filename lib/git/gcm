@@ -64,12 +64,20 @@ else
   special_instructions="${args[*]}"
 fi
 
+prompt_file=""
+
+function cleanup() {
+  [[ -n "${prompt_file}" ]] && rm -f "${prompt_file}"
+}
+
 function ctrlc_trap() {
+  cleanup
   log_newline
   log_warning "Script interrupted. Exiting."
   exit 130
 }
 trap ctrlc_trap SIGINT
+trap cleanup EXIT
 
 # Title and Dependency Checks
 # -----------------------------------------------------------------------------
@@ -89,8 +97,8 @@ if ! git rev-parse --is-inside-work-tree &>/dev/null; then
   exit 1
 fi
 
-staged_changes="$(git diff --staged)"
-if [[ $? -ne 0 || -z "${staged_changes}" ]]; then
+# Exit 0 = no staged diff; exit 1 = has staged changes (not an error here).
+if git diff --staged --quiet; then
   log_error "ERROR: No staged changes found. Use 'git add' to stage changes first."
   exit 1
 fi
@@ -99,8 +107,12 @@ fi
 # -----------------------------------------------------------------------------
 log_message "Generating commit message..."
 
-prompt="$(cat <<EOF
-$(cat "${SCRIPT_DIR}/gcm-prompt.md")
+# Write the full prompt to a temp file so large diffs do not hit Linux
+# MAX_ARG_STRLEN (~128KiB per argv) when passed via -p.
+prompt_file="$(mktemp "${TMPDIR:-/tmp}/gcm-prompt.XXXXXX")"
+{
+  cat "${SCRIPT_DIR}/gcm-prompt.md"
+  cat <<EOF
 
 ## Special Instructions
 
@@ -109,14 +121,14 @@ ${special_instructions}
 ## Git Diff
 
 \`\`\`md
-${staged_changes}
-\`\`\`
-
 EOF
-)"
+  git diff --staged
+  printf '\n```\n'
+} > "${prompt_file}"
 
-# --effort low is the lowest reasoning level supported by grok-4.5 (high|medium|low)
-if ! commit_message=$(grok --effort low --max-turns 1 --tools "" -p "${prompt}"); then
+# --effort low is the lowest reasoning level supported by grok (high|medium|low);
+# --prompt-file avoids embedding the diff in argv (Argument list too long).
+if ! commit_message=$(grok --effort low --tools "" --prompt-file "${prompt_file}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi
