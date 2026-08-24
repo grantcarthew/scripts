@@ -65,9 +65,11 @@ else
 fi
 
 prompt_file=""
+work_dir=""
 
 function cleanup() {
   [[ -n "${prompt_file}" ]] && rm -f "${prompt_file}"
+  [[ -n "${work_dir}" ]] && rm -rf "${work_dir}"
 }
 
 function ctrlc_trap() {
@@ -126,20 +128,42 @@ EOF
   printf '\n```\n'
 } > "${prompt_file}"
 
-# --effort low is the lowest reasoning level supported by grok (high|medium|low);
+# Isolated cwd so the target repo AGENTS.md is not injected (that prompt
+# is why grok narrates "I'll read the..."). --effort low is the lowest
+# level grok-4.6 advertises; thinking cannot be disabled.
 # --prompt-file avoids embedding the diff in argv (Argument list too long).
-if ! commit_message=$(grok --effort low --tools "" --prompt-file "${prompt_file}"); then
+work_dir="$(mktemp -d "${TMPDIR:-/tmp}/gcm-cwd.XXXXXX")"
+if ! commit_message=$(grok \
+  --effort low \
+  --tools "" \
+  --no-subagents \
+  --no-plan \
+  --disable-web-search \
+  --cwd "${work_dir}" \
+  --system-prompt-override "Your entire reply is the raw git commit message. No preamble, no thinking, no markdown, no labels." \
+  --prompt-file "${prompt_file}"); then
   log_error "ERROR: AI chat command failed"
-  exit 1
-fi
-
-if [[ -z "${commit_message}" ]]; then
-  log_error "ERROR: Generated commit message is empty"
   exit 1
 fi
 
 if [[ "${commit_message}" == '```'* ]]; then
   commit_message="$(printf '%s\n' "${commit_message}" | sed '1d;$d')"
+fi
+
+# Drop assistant preamble; keep from the first scoped-commit subject line.
+scoped="$(printf '%s\n' "${commit_message}" | awk '
+  BEGIN { found = 0 }
+  found == 0 && $0 ~ /^[[:alnum:]][[:alnum:]/_.-]*(, [[:alnum:]][[:alnum:]/_.-]*)*: / {
+    found = 1
+  }
+  found { print }
+')"
+[[ -n "${scoped}" ]] && commit_message="${scoped}"
+commit_message="${commit_message%"${commit_message##*[![:space:]]}"}"
+
+if [[ -z "${commit_message}" ]]; then
+  log_error "ERROR: Generated commit message is empty"
+  exit 1
 fi
 
 log_newline
