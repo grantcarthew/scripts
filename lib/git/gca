@@ -8,6 +8,6 @@ log_title "[g]it [c]ommit [a]uto"
 
 [[ "${1}" == "-h" || "${1}" == "--help" ]] && exec "${SCRIPT_DIR}/gcm" --help
 
-log_message "❯ git add . ':(exclude,glob)**/status' ':(exclude,glob)**/resume.sh' ':(exclude,glob)**/continue.sh'"
-git add . ':(exclude,glob)**/status' ':(exclude,glob)**/resume.sh' ':(exclude,glob)**/continue.sh'
+log_message "❯ git add . ':(exclude,glob)**/resume.sh' ':(exclude,glob)**/continue.sh'"
+git add . ':(exclude,glob)**/resume.sh' ':(exclude,glob)**/continue.sh'
 exec "${SCRIPT_DIR}/gcm" -y
