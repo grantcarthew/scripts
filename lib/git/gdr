@@ -17,7 +17,7 @@ Review git changes using AI - staged changes or branch diff.
 
 Dependencies:
   git                Git version control
-  grok               Grok Build CLI
+  claude             Claude Code CLI
 
 Optional arguments:
   special-instructions  Special instructions for the AI reviewer
@@ -52,7 +52,7 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "[g]it [d]iff [r]eview"
 
-dependencies=(git grok)
+dependencies=(git claude)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -130,8 +130,14 @@ ${diff_content}
 EOF
 )"
 
-# --effort low is the lowest reasoning level supported by grok-4.5 (high|medium|low)
-if ! review=$(grok --effort low --max-turns 1 --tools "" -p "${prompt}"); then
+if ! review=$(claude -p \
+  --model claude-sonnet-5-5 \
+  --effort low \
+  --tools "" \
+  --strict-mcp-config \
+  --no-session-persistence \
+  --system-prompt "Reply with only the requested output. No preamble." \
+  <<< "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi

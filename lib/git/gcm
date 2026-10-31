@@ -18,7 +18,7 @@ Generate a commit message using AI for the currently staged changes.
 
 Dependencies:
   git                Git version control
-  grok               Grok Build CLI
+  claude             Claude Code CLI
 
 Options:
   -y, --yes            Skip confirmation prompts and auto-commit/push
@@ -86,7 +86,7 @@ trap cleanup EXIT
 log_title "[g]it [c]ommit [m]essage generator"
 git status
 
-dependencies=(git grok)
+dependencies=(git claude)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -128,20 +128,17 @@ EOF
   printf '\n```\n'
 } > "${prompt_file}"
 
-# Isolated cwd so the target repo AGENTS.md is not injected (that prompt
-# is why grok narrates "I'll read the..."). --effort low is the lowest
-# level grok-4.6 advertises; thinking cannot be disabled.
-# --prompt-file avoids embedding the diff in argv (Argument list too long).
+# Isolated cwd so the target repo CLAUDE.md is not injected.
+# The prompt is read from stdin to avoid embedding the diff in argv.
 work_dir="$(mktemp -d "${TMPDIR:-/tmp}/gcm-cwd.XXXXXX")"
-if ! commit_message=$(grok \
+if ! commit_message=$(cd "${work_dir}" && claude -p \
+  --model claude-sonnet-5-5 \
   --effort low \
   --tools "" \
-  --no-subagents \
-  --no-plan \
-  --disable-web-search \
-  --cwd "${work_dir}" \
-  --system-prompt-override "Your entire reply is the raw git commit message. No preamble, no thinking, no markdown, no labels." \
-  --prompt-file "${prompt_file}"); then
+  --strict-mcp-config \
+  --no-session-persistence \
+  --system-prompt "Your entire reply is the raw git commit message. No preamble, no thinking, no markdown, no labels." \
+  < "${prompt_file}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi

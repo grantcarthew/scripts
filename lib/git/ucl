@@ -18,7 +18,7 @@ Update CHANGELOG.md using AI based on current branch changes.
 
 Dependencies:
   git                Git version control
-  grok               Grok Build CLI
+  claude             Claude Code CLI
 
 Arguments:
   special-instructions  Optional special instructions for the AI prompt
@@ -54,7 +54,7 @@ trap ctrlc_trap SIGINT
 # -----------------------------------------------------------------------------
 log_title "[u]pdate [c]hange [l]og"
 
-dependencies=(git grok)
+dependencies=(git claude)
 for cmd in "${dependencies[@]}"; do
   if ! command -v "${cmd}" >/dev/null; then
     log_error "ERROR: Missing dependency - '${cmd}'"
@@ -161,8 +161,14 @@ ${branch_diff}
 EOF
 )"
 
-# --effort low is the lowest reasoning level supported by grok-4.5 (high|medium|low)
-if ! updated_changelog=$(grok --effort low --max-turns 1 --tools "" -p "${prompt}"); then
+if ! updated_changelog=$(claude -p \
+  --model claude-sonnet-5-5 \
+  --effort low \
+  --tools "" \
+  --strict-mcp-config \
+  --no-session-persistence \
+  --system-prompt "Reply with only the requested output. No preamble." \
+  <<< "${prompt}"); then
   log_error "ERROR: AI chat command failed"
   exit 1
 fi
